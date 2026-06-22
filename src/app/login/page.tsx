@@ -67,7 +67,7 @@ export default function LoginPage() {
   const redirectUser = (role: UserRole) => {
     switch (role) {
       case "issuer":
-        router.push("/issuer/dashboard");
+        router.push("/admin/dashboard");
         break;
       case "student":
         router.push("/student/dashboard");
@@ -76,7 +76,7 @@ export default function LoginPage() {
         router.push("/verify");
         break;
       case "sysadmin":
-        router.push("/issuer/dashboard");
+        router.push("/admin/dashboard");
         break;
       default:
         router.push("/");

@@ -107,11 +107,11 @@ export default function Home() {
                 <Link
                   href={
                     user.role === "issuer"
-                      ? "/issuer/dashboard"
+                      ? "/admin/dashboard"
                       : user.role === "student"
                       ? "/student/dashboard"
                       : user.role === "sysadmin"
-                      ? "/issuer/dashboard"
+                      ? "/admin/dashboard"
                       : "/verify"
                   }
                   className="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all hover:shadow-md hover:shadow-primary/10"
@@ -219,11 +219,11 @@ export default function Home() {
                   <Link
                     href={
                       user.role === "issuer"
-                        ? "/issuer/dashboard"
+                        ? "/admin/dashboard"
                         : user.role === "student"
                         ? "/student/dashboard"
                         : user.role === "sysadmin"
-                        ? "/issuer/dashboard"
+                        ? "/admin/dashboard"
                         : "/verify"
                     }
                     onClick={() => setMobileMenuOpen(false)}
