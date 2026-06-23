@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useAuth } from "../../../core/context/AuthContext";
+import { useAuth } from "../../../features/auth/components/AuthContext";
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "../core/context/AuthContext";
+import { useAuth } from "../features/auth/components/AuthContext";
 
 export default function Home() {
   const { user, logout } = useAuth();
@@ -83,7 +83,7 @@ export default function Home() {
               So sánh
             </a>
             <Link
-              href="/verify"
+              href="/public/verify"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
             >
               Xác minh bằng
@@ -128,13 +128,13 @@ export default function Home() {
             ) : (
               <>
                 <Link
-                  href="/login"
+                  href="/auth/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
                 >
                   Đăng nhập
                 </Link>
                 <Link
-                  href="/login?register=employer"
+                  href="/auth/login?register=employer"
                   className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md shadow-primary/15 transition-all hover:scale-[1.02]"
                 >
                   Đăng ký tuyển dụng
@@ -201,7 +201,7 @@ export default function Home() {
                 So sánh
               </a>
               <Link
-                href="/verify"
+                href="/public/verify"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
               >
@@ -224,7 +224,7 @@ export default function Home() {
                         ? "/student/dashboard"
                         : user.role === "sysadmin"
                         ? "/admin/dashboard"
-                        : "/verify"
+: "/public/verify"
                     }
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-xl"
@@ -244,14 +244,14 @@ export default function Home() {
               ) : (
                 <div className="flex flex-col gap-3">
                   <Link
-                    href="/login"
+                    href="/auth/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-center px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-xl"
                   >
                     Đăng nhập
                   </Link>
                   <Link
-                    href="/login?register=employer"
+                    href="/auth/login?register=employer"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-xl"
                   >
@@ -298,7 +298,7 @@ export default function Home() {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <Link
-                  href="/verify"
+                  href="/public/verify"
                   className="flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-white bg-primary hover:bg-primary-hover rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/35 transition-all hover:scale-[1.02]"
                 >
                   <svg
@@ -318,7 +318,7 @@ export default function Home() {
                   Xác minh ngay
                 </Link>
                 <Link
-                  href="/login"
+                  href="/auth/login"
                   className="flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm transition-all hover:scale-[1.02]"
                 >
                   Đăng nhập hệ thống

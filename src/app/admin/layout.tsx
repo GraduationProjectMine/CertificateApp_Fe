@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "../../core/context/AuthContext";
+import { useAuth } from "../../features/auth/components/AuthContext";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout } = useAuth();
@@ -169,7 +169,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </p>
         <div className="flex gap-4 mt-8">
           <Link
-            href="/login"
+            href="/auth/login"
             className="px-6 py-3 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md transition-all select-none"
           >
             Đăng nhập lại
