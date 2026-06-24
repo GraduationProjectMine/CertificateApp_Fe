@@ -1,102 +1,127 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../features/auth/components/AuthContext";
+import { useTheme } from "../features/theme/ThemeContext";
+import { useI18n } from "../features/i18n/I18nContext";
+
+const staticNavItems = [
+  { labelKey: "nav.solutions", href: "#features" },
+  { labelKey: "nav.technology", href: "#how-it-works" },
+
+  { labelKey: "nav.verify", href: "/public/verify" },
+];
+
+const faqs = [
+  { q: "CertiChain hoạt động như thế nào?", a: "CertiChain là nền tảng cấp phát chứng chỉ số cho phép bạn cấp chứng chỉ và huy hiệu có thể xác thực trên blockchain. Kết nối hệ thống LMS, CRM của bạn. Đặt quy tắc cấp phát khi hoàn thành hoặc theo tiêu chí tùy chỉnh. Người nhận nhận được chứng chỉ có thể chia sẻ với URL công khai và mã QR." },
+  { q: "Ai nên sử dụng CertiChain?", a: "Hai nhóm chính: (1) Các trường đại học, cao đẳng cần cấp phát bằng cấp số tuân thủ tiêu chuẩn. (2) Doanh nghiệp chạy chương trình đào tạo nội bộ và đào tạo khách hàng." },
+  { q: "CertiChain giải quyết vấn đề gì so với bằng giấy truyền thống?", a: "Không còn mẫu bằng và bảng tính. Không còn PDF dễ bị làm giả. CertiChain tự động hóa cấp phát, thêm xác thực tức thì, mở khóa chia sẻ LinkedIn và cung cấp phân tích để chứng minh tương tác và ROI." },
+  { q: "Làm thế nào để xác thực chứng chỉ?", a: "Mỗi chứng chỉ bao gồm một liên kết xác thực duy nhất và mã QR. Bất kỳ ai cũng có thể quét hoặc nhấp vào để xác nhận tính xác thực trong vài giây." },
+  { q: "Người nhận có cần tài khoản để chia sẻ hoặc xác thực không?", a: "Không. Người nhận có trang chứng chỉ công khai mà họ có thể chia sẻ ở bất cứ đâu. Người xác thực có thể xác nhận tính xác thực mà không cần đăng nhập." },
+  { q: "Làm thế nào để cấp phát ở quy mô lớn?", a: "Sử dụng trigger thông minh trong CertiChain hoặc gọi REST API và webhooks của chúng tôi." },
+];
+
+const testimonials = [
+  { quote: "Sử dụng nền tảng thực sự hiệu quả. Dễ sử dụng và cho phép chúng tôi cung cấp dịch vụ hậu mãi xuất sắc.", author: "TS. Nguyễn Văn An", role: "Trưởng phòng Đào tạo", org: "Đại học Bách Khoa Hà Nội" },
+  { quote: "Phản hồi từ sinh viên rất tích cực — bằng cấp số là yếu tố quan trọng trong nhận thức toàn bộ chương trình.", author: "PGS. Trần Thị Lan", role: "Phó Hiệu trưởng", org: "Đại học Kinh tế Quốc dân" },
+  { quote: "An toàn, dễ sử dụng và là cách đáng tin cậy để xác nhận tính xác thực của bằng cấp phù hợp với quy trình của chúng tôi.", author: "Lê Hoàng Minh", role: "Giám đốc Nhân sự", org: "Tập đoàn FPT" },
+  { quote: "Chúng tôi thiết kế chứng chỉ và huy hiệu theo ý muốn, gửi chúng và theo dõi nơi chúng được chia sẻ — tất cả tại một nơi.", author: "Nguyễn Thị Hương", role: "Chuyên viên Đào tạo", org: "Ngân hàng Vietcombank" },
+];
+
+const integrations = [
+  "Canvas", "Moodle", "Blackboard", "Google Classroom",
+  "Salesforce", "Zapier", "WordPress", "Zoom",
+];
 
 export default function Home() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { t, tArr, locale, toggleLocale } = useI18n();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Monitor scroll position to apply background styling to Navbar
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans">
-      {/* Navigation Header */}
+    <div className="min-h-screen flex flex-col font-sans bg-white dark:bg-[#030712]">
+      {/* ===== NAVIGATION ===== */}
       <header
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
           isScrolled
-            ? "bg-white/80 dark:bg-[#030712]/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 dark:border-gray-800/30 py-3"
-            : "bg-transparent py-5"
+            ? "bg-white/90 dark:bg-[#030712]/90 backdrop-blur-lg shadow-sm border-b border-gray-100 dark:border-gray-800/50 py-2"
+            : "bg-transparent py-3"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                ></path>
-              </svg>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center gap-6">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:scale-105 transition-transform duration-300">
+              C
             </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight text-gray-900 dark:text-white block leading-none">
-                CertiChain
-              </span>
-              <span className="text-[10px] text-primary dark:text-teal-400 font-semibold uppercase tracking-widest block mt-0.5">
-                Blockchain Creds
-              </span>
-            </div>
+            <span className="font-bold text-base tracking-tight text-gray-900 dark:text-white">
+              CertiChain
+            </span>
           </Link>
 
-          {/* Desktop Nav Items */}
-          <nav className="hidden md:flex items-center gap-8">
-            <a
-              href="#solution"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
-            >
-              Giải pháp
-            </a>
-            <a
-              href="#technology"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
-            >
-              Công nghệ
-            </a>
-            <a
-              href="#comparison"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
-            >
-              So sánh
-            </a>
-            <Link
-              href="/public/verify"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
-            >
-              Xác minh bằng
-            </Link>
+          <nav className="hidden lg:flex items-center gap-1">
+            {staticNavItems.map((item) =>
+              item.href.startsWith("/") ? (
+                <Link
+                  key={item.labelKey}
+                  href={item.href}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-teal-400"
+                >
+                  {t(item.labelKey)}
+                </Link>
+              ) : (
+                <a
+                  key={item.labelKey}
+                  href={item.href}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-teal-400"
+                >
+                  {t(item.labelKey)}
+                </a>
+              )
+            )}
           </nav>
 
-          {/* CTA & Profile Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="ml-auto hidden lg:flex items-center gap-2">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+            {/* Locale toggle */}
+            <button
+              onClick={toggleLocale}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-2.5 text-xs font-bold uppercase text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+              aria-label="Toggle language"
+            >
+              {locale === "vi" ? "EN" : "VI"}
+            </button>
+
+            <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-white/10" />
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 font-medium dark:text-gray-400 max-w-[150px] truncate" title={user.walletAddress || user.name}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 max-w-[150px] truncate">
                   {user.loginType === "metamask" ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-200/50">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-200/50 text-[11px]">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                       {user.walletAddress?.slice(0, 6)}...{user.walletAddress?.slice(-4)}
                     </span>
@@ -106,139 +131,116 @@ export default function Home() {
                 </span>
                 <Link
                   href={
-                    user.role === "issuer"
+                    user.role === "issuer" || user.role === "sysadmin"
                       ? "/admin/dashboard"
                       : user.role === "student"
-                      ? "/student/dashboard"
-                      : user.role === "sysadmin"
-                      ? "/admin/dashboard"
-                      : "/verify"
+                        ? "/student/dashboard"
+                        : "/public/verify"
                   }
-                  className="px-4 py-2 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all hover:shadow-md hover:shadow-primary/10"
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-xs font-bold text-white shadow-sm transition-all hover:bg-primary-hover hover:shadow-md"
                 >
-                  Bảng điều khiển
+                  {t("nav.dashboard")}
                 </Link>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-danger dark:hover:text-red-400 border border-gray-200 dark:border-gray-800 rounded-xl transition-all"
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-gray-200 px-4 text-xs font-bold text-gray-600 transition-all hover:border-danger/30 hover:text-danger dark:border-white/10 dark:text-gray-300"
                 >
-                  Đăng xuất
+                  {t("nav.logout")}
                 </button>
               </div>
             ) : (
               <>
                 <Link
                   href="/auth/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-teal-400 transition-colors"
+                  className="inline-flex h-10 items-center rounded-lg px-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-white/5"
                 >
-                  Đăng nhập
+                  {t("nav.login")}
                 </Link>
+
+
                 <Link
-                  href="/auth/login?register=employer"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md shadow-primary/15 transition-all hover:scale-[1.02]"
+                  href="/auth/register"
+                  className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-hover hover:shadow-md hover:scale-[1.02]"
                 >
-                  Đăng ký tuyển dụng
+                  {t("nav.register")}
                 </Link>
               </>
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="ml-auto lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Toggle menu"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16M4 18h16"
-                ></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               )}
             </svg>
           </button>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden px-4 pt-2 pb-6 bg-white dark:bg-[#030712] border-b border-gray-100 dark:border-gray-800/50 shadow-lg animate-fadeIn">
+          <div className="lg:hidden px-4 pt-2 pb-6 bg-white dark:bg-[#030712] border-b border-gray-100 dark:border-gray-800/50 shadow-lg animate-slideDown">
             <div className="flex flex-col gap-4">
-              <a
-                href="#solution"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
-              >
-                Giải pháp
-              </a>
-              <a
-                href="#technology"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
-              >
-                Công nghệ
-              </a>
-              <a
-                href="#comparison"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
-              >
-                So sánh
-              </a>
-              <Link
-                href="/public/verify"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
-              >
-                Xác minh bằng
-              </Link>
+              {staticNavItems.map((item) =>
+                item.href.startsWith("/") ? (
+                  <Link
+                    key={item.labelKey}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
+                  >
+                    {t(item.labelKey)}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.labelKey}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-base font-medium text-gray-700 dark:text-gray-300 py-1"
+                  >
+                    {t(item.labelKey)}
+                  </a>
+                )
+              )}
+              {/* Theme & locale toggles for mobile */}
+              <div className="flex items-center gap-2 py-1">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? "☀️" : "🌙"}
+                </button>
+                <button
+                  onClick={toggleLocale}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors uppercase tracking-wider"
+                >
+                  {locale === "vi" ? "EN" : "VI"}
+                </button>
+              </div>
               <hr className="border-gray-100 dark:border-gray-800" />
               {user ? (
                 <div className="flex flex-col gap-3">
                   <span className="text-sm text-gray-500">
-                    Xin chào,{" "}
-                    {user.loginType === "metamask"
-                      ? `${user.walletAddress?.slice(0, 6)}...${user.walletAddress?.slice(-4)} (MetaMask)`
-                      : user.name}
+                    {t("auth.hello")}, {user.name || `${user.walletAddress?.slice(0, 6)}...${user.walletAddress?.slice(-4)}`}
                   </span>
                   <Link
-                    href={
-                      user.role === "issuer"
-                        ? "/admin/dashboard"
-                        : user.role === "student"
-                        ? "/student/dashboard"
-                        : user.role === "sysadmin"
-                        ? "/admin/dashboard"
-: "/public/verify"
-                    }
+                    href="/admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-xl"
+                    className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg"
                   >
-                    Bảng điều khiển
+                    {t("nav.dashboard")}
                   </Link>
                   <button
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full text-center px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-xl"
+                    onClick={() => { logout(); setMobileMenuOpen(false); }}
+                    className="w-full text-center px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg"
                   >
-                    Đăng xuất
+                    {t("nav.logout")}
                   </button>
                 </div>
               ) : (
@@ -246,16 +248,17 @@ export default function Home() {
                   <Link
                     href="/auth/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-center px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-xl"
+                    className="w-full text-center px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg"
                   >
-                    Đăng nhập
+                    {t("nav.login")}
                   </Link>
+
                   <Link
-                    href="/auth/login?register=employer"
+                    href="/auth/register"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-xl"
+                    className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg"
                   >
-                    Đăng ký tuyển dụng
+                    {t("nav.register")}
                   </Link>
                 </div>
               )}
@@ -264,153 +267,130 @@ export default function Home() {
         )}
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-44 md:pb-28 overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-light/30 via-transparent to-transparent dark:from-primary/10">
-        {/* Background blobs */}
-        <div className="absolute top-1/4 right-0 w-80 h-80 bg-secondary/10 dark:bg-secondary/5 rounded-full filter blur-3xl -z-10 animate-pulse-slow"></div>
-        <div className="absolute top-1/3 left-10 w-72 h-72 bg-primary/10 dark:bg-primary/5 rounded-full filter blur-3xl -z-10 animate-float-delayed"></div>
+      {/* ===== HERO ===== */}
+      <section className="relative pt-32 pb-20 md:pt-44 md:pb-28 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#ccfbf1_0%,_transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top_right,_#0f766e15_0%,_transparent_60%)] pointer-events-none" />
+        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-secondary/5 dark:bg-secondary/3 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-primary/5 dark:bg-primary/3 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            {/* Left Column Text */}
-            <div className="lg:col-span-7 text-center lg:text-left flex flex-col items-center lg:items-start">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary-light text-primary dark:bg-primary/20 dark:text-teal-300 text-xs font-semibold tracking-wide mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
-                Ứng dụng Blockchain & IPFS Bảo mật cao
+            <div className="lg:col-span-7 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-lighter dark:bg-primary/10 text-primary dark:text-teal-300 text-xs font-semibold tracking-wide mb-6 border border-primary/10 dark:border-primary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                {t("hero.badge")}
               </div>
 
-              {/* Heading */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-[1.1] mb-6">
-                Cấp phát & Xác minh
-                <span className="block mt-2 gradient-text-teal-blue">
-                  Văn Bằng Số Chống Giả
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-gray-900 dark:text-white leading-[1.05] mb-6">
+                {t("hero.title1")}
+                <span className="block mt-2 gradient-text-premium">
+                  {t("hero.title2")}
                 </span>
               </h1>
 
-              {/* Description */}
-              <p className="max-w-xl text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
-                Giải pháp toàn diện tối ưu hóa W3C Verifiable Credentials. Số hóa quy trình cấp bằng, 
-                đảm bảo tính toàn vẹn 100% bằng cách đối chiếu mã băm on-chain và lưu trữ 
-                phi tập trung trên hệ thống IPFS.
+              <p className="max-w-xl text-lg text-gray-500 dark:text-gray-400 leading-relaxed mb-8">
+                {t("hero.desc")}
               </p>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link
                   href="/public/verify"
-                  className="flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-white bg-primary hover:bg-primary-hover rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/35 transition-all hover:scale-[1.02]"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/35 transition-all hover:scale-[1.02]"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    ></path>
+                  {t("hero.cta_verify")}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
-                  Xác minh ngay
                 </Link>
                 <Link
                   href="/auth/login"
-                  className="flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm transition-all hover:scale-[1.02]"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all hover:scale-[1.02]"
                 >
-                  Đăng nhập hệ thống
+                  {t("hero.cta_login")}
                 </Link>
               </div>
 
-              {/* Stats badges */}
-              <div className="mt-12 grid grid-cols-3 gap-6 sm:gap-8 border-t border-gray-100 dark:border-gray-800/80 pt-8 w-full max-w-md">
+              <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+                {t("hero.no_card")}
+              </p>
+
+              <div className="mt-12 grid grid-cols-3 gap-6 sm:gap-8 border-t border-gray-100 dark:border-gray-800 pt-8 w-full max-w-md">
                 <div>
                   <span className="block text-2xl font-bold text-gray-900 dark:text-white">100%</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Không thể làm giả</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t("hero.stat1_label")}</span>
                 </div>
                 <div>
                   <span className="block text-2xl font-bold text-gray-900 dark:text-white">&lt; 3s</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Xác minh tức thì</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t("hero.stat2_label")}</span>
                 </div>
                 <div>
-                  <span className="block text-2xl font-bold text-gray-900 dark:text-white">0đ</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Chi phí xác thực</span>
+                  <span className="block text-2xl font-bold text-gray-900 dark:text-white">0₫</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t("hero.stat3_label")}</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Column Graphic */}
-            <div className="lg:col-span-5 flex justify-center items-center relative">
-              {/* Outer Decorative Circle */}
-              <div className="absolute w-[420px] h-[420px] rounded-full border border-primary/20 dark:border-primary/10 animate-spin-slow -z-10"></div>
-              
-              {/* Interactive Certificate Card */}
-              <div className="w-full max-w-sm relative bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 shadow-2xl shadow-primary/10 dark:shadow-black/60 animate-float">
-                {/* Ribbon border effect */}
-                <div className="absolute top-0 left-0 w-full h-2 rounded-t-3xl bg-gradient-to-r from-primary via-secondary to-teal-400"></div>
-                
-                {/* Header */}
-                <div className="flex justify-between items-start mb-6 mt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950 flex items-center justify-center text-primary dark:text-teal-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider">HUST UNIVERSITY</span>
-                      <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Đại học Bách Khoa</span>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-[10px] font-bold border border-green-200/50 dark:border-green-900/50">
-                    ✓ Verified on-chain
-                  </span>
-                </div>
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="relative w-full max-w-sm">
+                <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent rounded-3xl blur-2xl" />
+                <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl shadow-primary/5 animate-float">
+                  <div className="absolute top-0 left-0 w-full h-1.5 rounded-t-2xl bg-gradient-to-r from-primary via-teal-400 to-secondary" />
 
-                {/* Body */}
-                <div className="space-y-4">
-                  <div className="text-center py-2 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200/60 dark:border-gray-800">
-                    <span className="block text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Bằng Cử Nhân Kỹ Thuật</span>
-                    <span className="block text-lg font-bold text-gray-800 dark:text-white mt-1">CÔNG NGHỆ THÔNG TIN</span>
+                  <div className="flex items-center justify-between mb-5 mt-1">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950 flex items-center justify-center text-primary">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">ĐẠI HỌC BÁCH KHOA HÀ NỘI</p>
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Hanoi University of S&amp;T</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-[10px] font-semibold border border-green-200/50">
+                      ✓ On-chain
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center py-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-200/60 dark:border-gray-700 mb-4">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Bằng Cử Nhân</p>
+                    <p className="text-base font-bold text-gray-800 dark:text-white mt-1">CÔNG NGHỆ THÔNG TIN</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div>
-                      <span className="block text-[10px] text-gray-400 uppercase font-medium">Sinh viên nhận</span>
-                      <span className="block text-sm font-semibold text-gray-800 dark:text-gray-200">Nguyễn Hoàng Nam</span>
+                      <p className="text-[10px] text-gray-400 uppercase font-medium">Sinh viên</p>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Nguyễn Hoàng Nam</p>
                     </div>
                     <div>
-                      <span className="block text-[10px] text-gray-400 uppercase font-medium">Xếp loại tốt nghiệp</span>
-                      <span className="block text-sm font-semibold text-gray-800 dark:text-gray-200">Xuất Sắc (GPA: 3.82)</span>
+                      <p className="text-[10px] text-gray-400 uppercase font-medium">Xếp loại</p>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Xuất Sắc (3.82)</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
                     <div>
-                      <span className="block text-[9px] text-gray-400 uppercase font-bold tracking-wider">IPFS CID</span>
-                      <span className="block text-[10px] font-mono text-primary dark:text-teal-400 truncate w-36">QmXoypizjW3WknFiJnKLwHC...</span>
+                      <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Blockchain Hash</p>
+                      <p className="text-[10px] font-mono text-primary dark:text-teal-400 truncate w-32">0x71C7...8976F</p>
                     </div>
-                    <div className="w-12 h-12 bg-white dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-                      <svg className="w-full h-full text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <rect x="2" y="2" width="6" height="6" rx="1" />
-                        <rect x="16" y="2" width="6" height="6" rx="1" />
-                        <rect x="2" y="16" width="6" height="6" rx="1" />
-                        <rect x="16" y="16" width="4" height="4" rx="0.5" />
-                        <path d="M10 4h2M10 7h2M4 10v2M7 10h5v2M12 12h2v4M16 10h4v2M10 16h2v4" />
-                      </svg>
+                    <div className="flex gap-1">
+                      <div className="w-7 h-7 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="7" height="7" rx="1" />
+                          <rect x="14" y="3" width="7" height="7" rx="1" />
+                          <rect x="3" y="14" width="7" height="7" rx="1" />
+                          <rect x="14" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                      </div>
+                      <div className="w-7 h-7 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" d="M7 17l9.2-9.2M17 17V7H7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Sub blockchain details banner */}
-                <div className="mt-4 bg-slate-900 text-slate-300 rounded-xl p-2.5 text-[9px] font-mono flex items-center gap-2 overflow-hidden border border-slate-800">
-                  <span className="text-teal-400 font-bold">ETH:</span>
-                  <span className="truncate">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span>
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping"></span>
                 </div>
               </div>
             </div>
@@ -418,301 +398,340 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Solution Section (3 Steps W3C VC Model) */}
-      <section id="solution" className="py-20 bg-gray-50 dark:bg-gray-900/30">
+      {/* ===== TRUSTED BY ===== */}
+      <section className="py-14 border-y border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-8">
+            {t("trusted.title")}
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-6">
+            {["ĐH Bách Khoa HN", "ĐH Kinh tế QD", "ĐH Quốc gia HN", "ĐH FPT", "ĐH RMIT", "Vietcombank", "FPT", "VNG"].map((name) => (
+              <span key={name} className="text-sm font-semibold text-gray-400 dark:text-gray-600 tracking-wide">
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FEATURES ===== */}
+      <section id="features" className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-3">
-              MÔ HÌNH VẬN HÀNH
-            </h2>
-            <p className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
-              Quy Trình 3 Bước Chuẩn W3C Verifiable Credentials
+            <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
+              {t("features.badge")}
             </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+              {t("features.title")}
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
+              {t("features.desc")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(tArr("features.items") as { title: string; desc: string; tag: string }[]).map((f, idx) => (
+              <div
+                key={idx}
+                className="group bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl p-6 hover:border-primary/20 dark:hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary-lighter dark:bg-primary/10 text-primary dark:text-teal-400 flex items-center justify-center font-bold text-sm mb-4 group-hover:scale-110 transition-transform">
+                  {String(idx + 1).padStart(2, "0")}
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  {f.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+                  {f.desc}
+                </p>
+                <p className="text-xs text-primary dark:text-teal-400 font-medium">
+                  {f.tag}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              {t("features.integrations")}:{" "}
+              {integrations.slice(0, 4).join(" • ")}{" "}
+              <span className="text-primary font-medium">{t("features.integrations_more")}</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== STATISTICS ===== */}
+      <section className="py-16 bg-gray-50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">8K+</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("stats.issued")}</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">34%</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("stats.engagement")}</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">&lt; 24h</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("stats.response")}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== HOW IT WORKS ===== */}
+      <section id="how-it-works" className="py-20 md:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
+              {t("howItWorks.badge")}
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+              {t("howItWorks.title")}
+            </h2>
             <p className="text-gray-500 dark:text-gray-400 mt-4">
-              Hệ thống hóa ba nhân tố cốt lõi của quy trình xác minh bằng công nghệ mật mã hóa.
+              {t("howItWorks.desc")}
             </p>
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Step 1: Issuer */}
-            <div className="bg-white dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800/80 rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-primary dark:text-teal-400 flex items-center justify-center font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
-                01
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                step: "01", titleKey: "step1_title", descKey: "step1_desc",
+                color: "text-primary", bg: "bg-primary-lighter dark:bg-primary/10", border: "hover:border-primary/30",
+              },
+              {
+                step: "02", titleKey: "step2_title", descKey: "step2_desc",
+                color: "text-secondary", bg: "bg-secondary-light dark:bg-secondary/10", border: "hover:border-secondary/30",
+              },
+              {
+                step: "03", titleKey: "step3_title", descKey: "step3_desc",
+                color: "text-primary", bg: "bg-primary-lighter dark:bg-primary/10", border: "hover:border-primary/30",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className={`bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl p-8 shadow-sm hover:shadow-md ${item.border} transition-all duration-300 group`}
+              >
+                <div className={`w-12 h-12 rounded-xl ${item.bg} ${item.color} flex items-center justify-center font-bold text-lg mb-5 group-hover:scale-110 transition-transform`}>
+                  {item.step}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                  {t("howItWorks." + item.titleKey)}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  {t("howItWorks." + item.descKey)}
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Trường Đại Học (Issuer)
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                Tổ chức giáo dục khai báo danh sách tốt nghiệp, sinh tệp tin PDF động từ mẫu bằng có sẵn, 
-                sau đó ký số số hóa thông qua ví mật mã để xác thực quyền sở hữu nội dung.
-              </p>
-              <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-primary dark:text-teal-400">
-                <span>Thiết kế & Cấp phát</span>
-                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </div>
-            </div>
-
-            {/* Step 2: Storage */}
-            <div className="bg-white dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800/80 rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-secondary dark:text-blue-400 flex items-center justify-center font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
-                02
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Blockchain & IPFS (Secure)
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                Tệp tin PDF được lưu phi tập trung lên IPFS để nhận mã băm CID. Tiếp theo, mã CID kèm thông tin 
-                metadata được ghi nhận vĩnh viễn lên Blockchain, tạo thành hồ sơ bất biến.
-              </p>
-              <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-secondary dark:text-blue-400">
-                <span>Lưu trữ phi tập trung</span>
-                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </div>
-            </div>
-
-            {/* Step 3: Verifier */}
-            <div className="bg-white dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800/80 rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-primary dark:text-teal-400 flex items-center justify-center font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
-                03
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Nhà Tuyển Dụng (Verifier)
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                Bên thứ ba/Nhà tuyển dụng truy cập công khai không cần tài khoản, quét mã QR trên bằng, 
-                tra cứu ID hoặc tải tệp PDF để so khớp tức thì mã băm với dữ liệu đã lưu on-chain.
-              </p>
-              <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-primary dark:text-teal-400">
-                <span>Đối chiếu tức thì</span>
-                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Technology Details Section */}
-      <section id="technology" className="py-20 bg-white dark:bg-[#030712]">
+      {/* ===== TESTIMONIALS ===== */}
+      <section className="py-16 bg-gray-50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left text description */}
-            <div className="lg:col-span-5">
-              <h2 className="text-xs font-bold text-secondary dark:text-blue-400 uppercase tracking-widest mb-3">
-                CÔNG NGHỆ ÁP DỤNG
-              </h2>
-              <p className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6">
-                Những Công Nghệ Tiên Tiến Tạo Nên Sự Tin Cậy Tuyệt Đối
-              </p>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
-                Hệ thống CertiChain kết hợp hài hòa giữa cơ sở dữ liệu truyền thống cùng các giao thức phi tập trung 
-                Web3, mang đến trải nghiệm nhanh chóng nhưng vẫn đáp ứng tính an toàn, minh bạch cao nhất.
-              </p>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-teal-50 dark:bg-teal-950 text-primary dark:text-teal-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    ✓
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Tuân thủ tiêu chuẩn W3C Verifiable Credentials số hóa.
-                  </span>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-teal-50 dark:bg-teal-950 text-primary dark:text-teal-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    ✓
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Tối ưu hóa phí gas giao dịch bằng cấu trúc lưu hash thông minh.
-                  </span>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-5 h-5 rounded-full bg-teal-50 dark:bg-teal-950 text-primary dark:text-teal-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    ✓
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Hỗ trợ quét QR trên di động và trích xuất PDF trực tuyến.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right tech grid */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Tech 1 */}
-              <div className="p-6 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-gray-150 dark:border-gray-850">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary dark:text-teal-400 mb-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                  </svg>
-                </div>
-                <h4 className="text-base font-bold text-gray-900 dark:text-white mb-2">Smart Contract</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Lưu trữ trạng thái hợp lệ, thu hồi trực tiếp trên mạng Blockchain. Phân quyền chặt chẽ thông qua chữ ký số.
-                </p>
-              </div>
-
-              {/* Tech 2 */}
-              <div className="p-6 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-gray-150 dark:border-gray-850">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-secondary dark:text-blue-400 mb-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                  </svg>
-                </div>
-                <h4 className="text-base font-bold text-gray-900 dark:text-white mb-2">IPFS Pinning</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Lưu trữ dữ liệu phân tán, chống sửa đổi tập tin. File được trích xuất trực tiếp qua Cổng kết nối IPFS Gateway.
-                </p>
-              </div>
-
-              {/* Tech 3 */}
-              <div className="p-6 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-gray-150 dark:border-gray-850">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary dark:text-teal-400 mb-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                  </svg>
-                </div>
-                <h4 className="text-base font-bold text-gray-900 dark:text-white mb-2">QR Code & Hash PDF</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Mã hóa đường dẫn xác thực thành QR code gắn liền với bằng. Khóa mã băm SHA-256 đối chiếu tập tin PDF tại chỗ.
-                </p>
-              </div>
-
-              {/* Tech 4 */}
-              <div className="p-6 bg-slate-50 dark:bg-gray-800/30 rounded-2xl border border-gray-150 dark:border-gray-850">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-secondary dark:text-blue-400 mb-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
-                </div>
-                <h4 className="text-base font-bold text-gray-900 dark:text-white mb-2">Báo Cáo & Kiểm Toán</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Lưu trữ vết hoạt động (Audit log) chi tiết, theo dõi lịch sử và tần suất xác minh cho người nhận bằng và tổ chức.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Comparison Section */}
-      <section id="comparison" className="py-20 bg-gray-50 dark:bg-gray-900/30 border-t border-b border-gray-200/50 dark:border-gray-800/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-3">
-              SO SÁNH CÔNG NGHỆ
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
+              {t("testimonials.badge")}
+            </p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {t("testimonials.title")}
             </h2>
-            <p className="text-3xl font-extrabold text-gray-900 dark:text-white">
-              Sự Khác Biệt Giữa Lưu Trữ Truyền Thống Và Blockchain
-            </p>
           </div>
-
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-3xl overflow-hidden shadow-lg">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                    <th className="p-6 text-sm font-bold text-gray-700 dark:text-gray-200">Tiêu chí so sánh</th>
-                    <th className="p-6 text-sm font-bold text-gray-600 dark:text-gray-400">Lưu trữ truyền thống</th>
-                    <th className="p-6 text-sm font-bold text-primary dark:text-teal-400 bg-teal-50/40 dark:bg-teal-950/20">Blockchain + IPFS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-150 dark:divide-gray-700">
-                  <tr>
-                    <td className="p-6 text-sm font-bold text-gray-900 dark:text-white">Khả năng sửa đổi dữ liệu</td>
-                    <td className="p-6 text-sm text-gray-600 dark:text-gray-400">Dễ bị quản trị viên database sửa âm thầm hoặc do tấn công hacker</td>
-                    <td className="p-6 text-sm text-gray-700 dark:text-gray-300 bg-teal-50/20 dark:bg-teal-950/10">Bất biến, không thể sửa đổi một khi đã ghi giao dịch thành công</td>
-                  </tr>
-                  <tr>
-                    <td className="p-6 text-sm font-bold text-gray-900 dark:text-white">Xác minh công khai</td>
-                    <td className="p-6 text-sm text-gray-600 dark:text-gray-400">Thủ công, phụ thuộc cổng thông tin nhà trường, phản hồi chậm</td>
-                    <td className="p-6 text-sm text-gray-700 dark:text-gray-300 bg-teal-50/20 dark:bg-teal-950/10">Công khai tức thì 24/7 qua mã định danh, quét QR hoặc so sánh file</td>
-                  </tr>
-                  <tr>
-                    <td className="p-6 text-sm font-bold text-gray-900 dark:text-white">Chống giả mạo tập tin</td>
-                    <td className="p-6 text-sm text-gray-600 dark:text-gray-400">Thấp, file PDF dễ chỉnh sửa nội dung bằng phần mềm đồ họa</td>
-                    <td className="p-6 text-sm text-gray-700 dark:text-gray-300 bg-teal-50/20 dark:bg-teal-950/10">Tuyệt đối, mọi thay đổi dù 1 ký tự sẽ làm thay đổi hoàn toàn mã hash</td>
-                  </tr>
-                  <tr>
-                    <td className="p-6 text-sm font-bold text-gray-900 dark:text-white">Tính sẵn sàng dữ liệu</td>
-                    <td className="p-6 text-sm text-gray-600 dark:text-gray-400">Phụ thuộc server đơn lẻ (SPOF - Single Point of Failure)</td>
-                    <td className="p-6 text-sm text-gray-700 dark:text-gray-300 bg-teal-50/20 dark:bg-teal-950/10">Phân tán cao trên hàng nghìn node IPFS và Blockchain, không sợ sập server</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {testimonials.map((item) => (
+              <div key={item.author} className="bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl p-6">
+                <svg className="w-8 h-8 text-primary/20 dark:text-primary/10 mb-3" fill="currentColor" viewBox="0 0 32 32">
+                  <path d="M10 8c-3.3 0-6 2.7-6 6v10h10V14H8c0-1.1.9-2 2-2V8zm16 0c-3.3 0-6 2.7-6 6v10h10V14h-6c0-1.1.9-2 2-2V8z" />
+                </svg>
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                  {item.quote}
+                </p>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{item.author}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{item.role}, {item.org}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-16 border-t border-slate-800">
+      {/* ===== INTEGRATIONS ===== */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
+            {t("integrations.badge")}
+          </p>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            {t("integrations.title")}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10">
+            {t("integrations.desc")}
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-4">
+            {integrations.map((name) => (
+              <span
+                key={name}
+                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 shadow-sm"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+          <p className="mt-6 text-sm text-primary dark:text-teal-400 font-medium">
+            {t("integrations.more")}
+          </p>
+        </div>
+      </section>
+
+      {/* ===== FAQ ===== */}
+      <section className="py-20 md:py-28 bg-gray-50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
+              {t("faq.badge")}
+            </p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {t("faq.title")}
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between gap-4 p-5 text-left"
+                >
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{faq.q}</span>
+                  <svg
+                    className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-5 animate-fadeIn">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CTA ===== */}
+      <section className="py-16 bg-primary dark:bg-primary/10 border-t border-gray-100 dark:border-gray-800/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white dark:text-white mb-4">
+            {t("cta.title")}
+          </h2>
+          <p className="text-primary-100 dark:text-teal-200/80 max-w-2xl mx-auto mb-8">
+            {t("cta.desc")}
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/auth/register"
+              className="px-8 py-3.5 bg-white text-primary font-bold rounded-xl hover:bg-gray-50 shadow-lg shadow-black/10 transition-all hover:scale-[1.02]"
+            >
+              {t("cta.btn1")}
+            </Link>
+            <Link
+              href="/public/verify"
+              className="px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 transition-all hover:scale-[1.02]"
+            >
+              {t("cta.btn2")}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FOOTER ===== */}
+      <footer className="bg-gray-900 dark:bg-black text-gray-400 py-16 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* Brand column */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
+            <div className="col-span-2 md:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
                   C
                 </div>
                 <span className="font-bold text-white text-base">CertiChain</span>
               </div>
-              <p className="text-xs leading-relaxed text-slate-500">
-                Hệ thống xác thực và cấp phát văn bằng dựa trên nền tảng Blockchain. Đề tài tốt nghiệp phân tích và thiết kế hệ thống.
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {t("footer.tagline")}
               </p>
             </div>
 
-            {/* Quick links */}
             <div>
-              <h5 className="font-bold text-slate-200 text-sm mb-4">Giải pháp</h5>
+              <h5 className="font-bold text-gray-200 text-sm mb-4">{t("footer.solutions")}</h5>
               <ul className="space-y-2 text-xs">
-                <li><a href="#" className="hover:text-white transition-colors">Cho Trường đại học</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cho Nhà tuyển dụng</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cho Sinh viên</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.for_university")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.for_employer")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.for_student")}</a></li>
               </ul>
             </div>
 
-            {/* Tech references */}
             <div>
-              <h5 className="font-bold text-slate-200 text-sm mb-4">Công nghệ Web3</h5>
+              <h5 className="font-bold text-gray-200 text-sm mb-4">{t("footer.features_title")}</h5>
               <ul className="space-y-2 text-xs">
-                <li><a href="#" className="hover:text-white transition-colors">Smart Contract Solidity</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">IPFS Storage</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">W3C Credentials</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.feat_certificates")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.feat_verify")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.feat_analytics")}</a></li>
               </ul>
             </div>
 
-            {/* Contact details */}
             <div>
-              <h5 className="font-bold text-slate-200 text-sm mb-4">Thông tin liên hệ</h5>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Email: contact@certichain.edu.vn<br />
-                Đồ án Tốt nghiệp CNTT 2026<br />
-                Đại học Bách Khoa Hà Nội
-              </p>
+              <h5 className="font-bold text-gray-200 text-sm mb-4">{t("footer.resources")}</h5>
+              <ul className="space-y-2 text-xs">
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.blog")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.api_docs")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.knowledge")}</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="font-bold text-gray-200 text-sm mb-4">{t("footer.company")}</h5>
+              <ul className="space-y-2 text-xs">
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.about")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.contact")}</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">{t("footer.security")}</a></li>
+              </ul>
             </div>
           </div>
 
-          <hr className="border-slate-800 my-8" />
+          <hr className="border-gray-800 my-8" />
 
-          {/* Sub footer */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-600">
-            <span>© 2026 CertiChain Project. All rights reserved.</span>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-600">
+            <span>© 2026 CertiChain. {t("footer.copyright")}</span>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-slate-400">Điều khoản</a>
-              <a href="#" className="hover:text-slate-400">Bảo mật</a>
-              <a href="#" className="hover:text-slate-400">Github</a>
+              <a href="#" className="hover:text-gray-400 transition-colors">{t("footer.terms")}</a>
+              <a href="#" className="hover:text-gray-400 transition-colors">{t("footer.privacy")}</a>
+              <a href="#" className="hover:text-gray-400 transition-colors">{t("footer.cookie")}</a>
             </div>
+          </div>
+
+          <div className="mt-6 flex items-center justify-center gap-4 text-[10px] text-gray-600">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-500" /> ISO 27001
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500" /> GDPR
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-teal-500" /> SOC 2
+            </span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-

@@ -1,33 +1,52 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { authApi } from '../../../features/auth/services/api';
+import React, { useState } from "react";
+import Link from "next/link";
+import { authApi } from "../../../features/auth/services/api";
+
+type RegisterForm = {
+  institutionName: string;
+  institutionCode: string;
+  email: string;
+  adminName: string;
+  password: string;
+  confirmPassword: string;
+};
+
+const initialForm: RegisterForm = {
+  institutionName: "",
+  institutionCode: "",
+  email: "",
+  adminName: "",
+  password: "",
+  confirmPassword: "",
+};
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Đăng ký thất bại";
+}
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({
-    institutionName: '',
-    institutionCode: '',
-    email: '',
-    adminName: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [form, setForm] = useState<RegisterForm>(initialForm);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setForm((previous) => ({
+      ...previous,
+      [name]: name === "institutionCode" ? value.toUpperCase() : value,
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
 
     if (form.password !== form.confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
+      setError("Mật khẩu xác nhận không khớp");
       return;
     }
 
@@ -40,87 +59,209 @@ export default function RegisterPage() {
         adminName: form.adminName,
         password: form.password,
       });
-      setSuccess(result.message || 'Đăng ký thành công! Vui lòng chờ Super Admin phê duyệt.');
-      setForm({ institutionName: '', institutionCode: '', email: '', adminName: '', password: '', confirmPassword: '' });
-    } catch (err: any) {
-      setError(err.message || 'Đăng ký thất bại');
+      setSuccess(result.message || "Đăng ký thành công. Vui lòng chờ Super Admin phê duyệt.");
+      setForm(initialForm);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-12">
-      <div className="w-full max-w-lg">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-8">
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 text-primary font-bold text-lg mb-4">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-              </svg>
-              BlockCert
+    <main className="relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(15,118,110,0.18),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(37,99,235,0.14),transparent_28%),linear-gradient(180deg,transparent,rgba(15,23,42,0.05))] dark:bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.22),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(37,99,235,0.2),transparent_28%),linear-gradient(180deg,transparent,rgba(15,23,42,0.76))]" />
+      <div className="absolute inset-0 opacity-[0.2] dark:opacity-[0.14] bg-[linear-gradient(to_right,#94a3b812_1px,transparent_1px),linear-gradient(to_bottom,#94a3b812_1px,transparent_1px)] bg-[size:28px_28px]" />
+
+      <div className="relative mx-auto grid min-h-[100dvh] max-w-7xl grid-cols-1 items-center gap-10 px-4 py-8 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8">
+        <section className="hidden lg:flex min-h-[780px] flex-col justify-between overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 p-10 text-white shadow-2xl shadow-slate-950/25">
+          <div className="absolute left-16 top-16 h-36 w-36 rounded-full bg-teal-400/20 blur-3xl motion-float" />
+          <div className="absolute bottom-24 right-14 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl motion-float-slow" />
+
+          <Link href="/" className="relative z-10 flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-500 text-lg font-black text-white shadow-lg shadow-teal-500/25">
+              C
+            </span>
+            <span className="text-lg font-bold tracking-tight">CertiChain</span>
+          </Link>
+
+          <div className="relative z-10 max-w-xl" data-reveal>
+            <p className="mb-5 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-teal-200">
+              Khởi tạo tổ chức phát hành
+            </p>
+            <h1 className="max-w-xl text-5xl font-black leading-[1.02] tracking-tight">
+              Một tài khoản cho toàn bộ quy trình cấp bằng.
+            </h1>
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
+              Gửi yêu cầu đăng ký trường học, chờ phê duyệt và nhận hợp đồng thông minh riêng cho tổ chức.
+            </p>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-3 gap-3 text-xs" data-reveal>
+            {[
+              ["01", "Xác thực trường"],
+              ["02", "Tạo ví tổ chức"],
+              ["03", "Deploy contract"],
+            ].map(([step, label]) => (
+              <div key={step} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <span className="font-mono text-teal-300">{step}</span>
+                <span className="mt-3 block font-semibold text-slate-200">{label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-2xl" data-reveal>
+          <div className="mb-8 flex items-center justify-between lg:hidden">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-base font-black text-white">
+                C
+              </span>
+              <span className="font-bold">CertiChain</span>
             </Link>
-            <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Đăng ký trường học</h1>
-            <p className="text-sm text-gray-500 mt-1">Đăng ký để được cấp hợp đồng thông minh riêng</p>
+            <Link href="/auth/login" className="text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400">
+              Đăng nhập
+            </Link>
           </div>
 
-          {error && (
-            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm mb-4">{error}</div>
-          )}
-          {success && (
-            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 p-4 rounded-xl text-sm mb-4">{success}</div>
-          )}
+          <div className="rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-8">
+            <div className="mb-7">
+              <p className="text-sm font-semibold text-primary dark:text-teal-300">
+                Đăng ký trường học
+              </p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white">
+                Tạo hồ sơ tổ chức
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+                Thông tin này giúp Super Admin xác minh trường và cấp quyền phát hành văn bằng số.
+              </p>
+            </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tên trường / Học viện</label>
-              <input type="text" name="institutionName" value={form.institutionName} onChange={handleChange} required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                placeholder="Trường Đại học Bách Khoa Hà Nội" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Mã trường (chữ in hoa, không dấu)</label>
-              <input type="text" name="institutionCode" value={form.institutionCode} onChange={handleChange} required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm uppercase"
-                placeholder="HUST" maxLength={20} />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Email quản trị (email trường)</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                placeholder="admin@hust.edu.vn" />
-              <p className="text-xs text-gray-400 mt-1">Không dùng email cá nhân (gmail, yahoo...)</p>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tên người quản trị</label>
-              <input type="text" name="adminName" value={form.adminName} onChange={handleChange} required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                placeholder="Nguyễn Văn A" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Mật khẩu</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={8}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                placeholder="Tối thiểu 8 ký tự, có chữ hoa, chữ thường và số" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Xác nhận mật khẩu</label>
-              <input type="password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                placeholder="Nhập lại mật khẩu" />
-            </div>
-            <button type="submit" disabled={isSubmitting}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all disabled:opacity-60">
-              {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu đăng ký'}
-            </button>
-          </form>
+            {error && (
+              <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300" data-reveal>
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300" data-reveal>
+                {success}
+              </div>
+            )}
 
-          <div className="mt-6 text-center text-xs text-gray-500">
-            Đã có tài khoản?{' '}
-            <Link href="/auth/login" className="font-bold text-primary hover:underline">Đăng nhập</Link>
+            <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+              <label className="block sm:col-span-2">
+                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Tên trường / Học viện
+                </span>
+                <input
+                  type="text"
+                  name="institutionName"
+                  value={form.institutionName}
+                  onChange={handleChange}
+                  required
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  placeholder="Trường Đại học Bách Khoa Hà Nội"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Mã trường
+                </span>
+                <input
+                  type="text"
+                  name="institutionCode"
+                  value={form.institutionCode}
+                  onChange={handleChange}
+                  required
+                  maxLength={20}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm uppercase text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  placeholder="HUST"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Tên quản trị
+                </span>
+                <input
+                  type="text"
+                  name="adminName"
+                  value={form.adminName}
+                  onChange={handleChange}
+                  required
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  placeholder="Nguyễn Văn A"
+                />
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Email quản trị
+                </span>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  placeholder="admin@hust.edu.vn"
+                />
+                <span className="mt-2 block text-xs text-slate-400">
+                  Không dùng email cá nhân như Gmail, Yahoo hoặc Outlook.
+                </span>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Mật khẩu
+                </span>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  minLength={8}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  placeholder="Tối thiểu 8 ký tự"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Xác nhận mật khẩu
+                </span>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  placeholder="Nhập lại mật khẩu"
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="interactive-lift mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+              >
+                {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu đăng ký"}
+              </button>
+            </form>
+
+            <div className="mt-7 text-center text-sm text-slate-500 dark:text-slate-400">
+              Đã có tài khoản?{" "}
+              <Link href="/auth/login" className="font-bold text-primary transition-colors hover:text-primary-hover dark:text-teal-300">
+                Đăng nhập
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
