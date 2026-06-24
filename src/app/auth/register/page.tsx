@@ -70,12 +70,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
+    <main className="auth-page-shell relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(15,118,110,0.18),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(37,99,235,0.14),transparent_28%),linear-gradient(180deg,transparent,rgba(15,23,42,0.05))] dark:bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.22),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(37,99,235,0.2),transparent_28%),linear-gradient(180deg,transparent,rgba(15,23,42,0.76))]" />
       <div className="absolute inset-0 opacity-[0.2] dark:opacity-[0.14] bg-[linear-gradient(to_right,#94a3b812_1px,transparent_1px),linear-gradient(to_bottom,#94a3b812_1px,transparent_1px)] bg-[size:28px_28px]" />
 
       <div className="relative mx-auto grid min-h-[100dvh] max-w-7xl grid-cols-1 items-center gap-8 px-4 py-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:px-8">
-        <section className="hidden lg:flex min-h-[660px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/25">
+        <section className="auth-visual-panel hidden lg:flex min-h-[660px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/25">
           <div className="absolute left-16 top-16 h-36 w-36 rounded-full bg-teal-400/20 blur-3xl motion-float" />
           <div className="absolute bottom-24 right-14 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl motion-float-slow" />
 
@@ -112,7 +112,7 @@ export default function RegisterPage() {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-2xl" data-reveal>
+        <section className="auth-form-panel mx-auto w-full max-w-2xl" data-reveal>
           <div className="mb-5 flex items-center justify-between lg:hidden">
             <Link href="/" className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-base font-black text-white">
@@ -120,12 +120,12 @@ export default function RegisterPage() {
               </span>
               <span className="font-bold">CertiChain</span>
             </Link>
-            <Link href="/auth/login" className="text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400">
+            <Link href="/auth/login" className="auth-switch-link text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400">
               Đăng nhập
             </Link>
           </div>
 
-          <div className="rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-6">
+          <div className="auth-card-surface rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-6">
             <div className="mb-5">
               <p className="text-sm font-semibold text-primary dark:text-teal-300">
                 Đăng ký trường học
@@ -252,7 +252,7 @@ export default function RegisterPage() {
 
             <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
               Đã có tài khoản?{" "}
-              <Button variant="ghost" href="/auth/login" className="text-primary dark:text-teal-300">
+              <Button variant="ghost" href="/auth/login" className="auth-switch-link text-primary dark:text-teal-300">
                 Đăng nhập
               </Button>
             </div>

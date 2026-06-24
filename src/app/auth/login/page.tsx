@@ -116,12 +116,12 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
+    <main className="auth-page-shell relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(20,184,166,0.18),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.16),transparent_26%),linear-gradient(180deg,transparent,rgba(15,23,42,0.04))] dark:bg-[radial-gradient(circle_at_20%_12%,rgba(20,184,166,0.22),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.18),transparent_26%),linear-gradient(180deg,transparent,rgba(15,23,42,0.78))]" />
       <div className="absolute inset-0 opacity-[0.22] dark:opacity-[0.16] bg-[linear-gradient(to_right,#94a3b810_1px,transparent_1px),linear-gradient(to_bottom,#94a3b810_1px,transparent_1px)] bg-[size:28px_28px]" />
 
       <div className="relative mx-auto grid min-h-[100dvh] max-w-7xl grid-cols-1 items-center gap-8 px-4 py-4 sm:px-6 lg:grid-cols-[1fr_440px] lg:px-8">
-        <section className="hidden lg:flex min-h-[660px] flex-col justify-between rounded-[1.5rem] border border-white/10 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/25 overflow-hidden">
+        <section className="auth-visual-panel hidden lg:flex min-h-[660px] flex-col justify-between rounded-[1.5rem] border border-white/10 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/25 overflow-hidden">
           <div className="absolute left-10 top-10 h-36 w-36 rounded-full bg-teal-400/20 blur-3xl motion-float" />
           <div className="absolute bottom-16 right-20 h-44 w-44 rounded-full bg-blue-500/20 blur-3xl motion-float-slow" />
 
@@ -154,7 +154,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-md lg:max-w-none" data-reveal>
+        <section className="auth-form-panel mx-auto w-full max-w-md lg:max-w-none" data-reveal>
           <div className="mb-5 flex items-center justify-between lg:hidden">
             <Link href="/" className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-base font-black text-white">
@@ -162,12 +162,12 @@ export default function LoginPage() {
               </span>
               <span className="font-bold">CertiChain</span>
             </Link>
-            <Link href="/" className="text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400">
+            <Link href="/" className="auth-switch-link text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400">
               Trang chủ
             </Link>
           </div>
 
-          <div className="rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-6">
+          <div className="auth-card-surface rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-6">
             <div className="mb-5">
               <p className="text-sm font-semibold text-primary dark:text-teal-300">
                 Đăng nhập tài khoản
@@ -235,10 +235,10 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-5 flex flex-col gap-1.5 text-center text-sm text-slate-500 dark:text-slate-400">
-              <Button variant="ghost" href="/auth/register" className="text-primary dark:text-teal-300">
+              <Button variant="ghost" href="/auth/register" className="auth-switch-link text-primary dark:text-teal-300">
                 Đăng ký tài khoản trường học
               </Button>
-              <Link href="/auth/forgot-password" className="text-xs font-medium hover:text-slate-900 dark:hover:text-white">
+              <Link href="/auth/forgot-password" className="auth-switch-link text-xs font-medium hover:text-slate-900 dark:hover:text-white">
                 Quên mật khẩu?
               </Link>
             </div>
