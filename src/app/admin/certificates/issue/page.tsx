@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function CreateCredentialWizard() {
+export default function CreateCertificateWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   
@@ -473,7 +473,7 @@ export default function CreateCredentialWizard() {
                 <button
                   type="button"
                   disabled={!pdfHash}
-                  onClick={blockchainStatus === "success" ? () => router.push("/admin/credentials") : runBlockchainFlow}
+                  onClick={blockchainStatus === "success" ? () => router.push("/admin/certificates") : runBlockchainFlow}
                   className={`w-full py-3.5 px-4 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/10 transition-all active:scale-[0.98] select-none ${
                     !pdfHash ? "opacity-50 cursor-not-allowed" : ""
                   }`}

@@ -31,11 +31,7 @@ export function AppMotion({ children }: { children: React.ReactNode }) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-revealed");
-          } else if (entry.boundingClientRect.top > 0) {
-            entry.target.classList.remove("is-revealed");
-          }
+          entry.target.classList.toggle("is-revealed", entry.isIntersecting);
         });
       },
       {

@@ -3,8 +3,8 @@
 import React from "react";
 import Link from "next/link";
 
-export default function AdminCredentialsPage() {
-  const credentials = [
+export default function AdminCertificatesPage() {
+  const certificatesList = [
     { id: "cert-2026-001", studentName: "Nguyễn Văn Hùng", type: "Cử nhân", major: "Khoa học máy tính", date: "22/06/2026", onChain: true, ipfs: "QmXoyp...", status: "Issued" },
     { id: "cert-2026-002", studentName: "Lê Thị Thu", type: "Cử nhân", major: "Kỹ thuật máy tính", date: "21/06/2026", onChain: true, ipfs: "QmPijW...", status: "Issued" },
     { id: "cert-2026-003", studentName: "Phạm Hoàng Minh", type: "Thạc sĩ", major: "Công nghệ thông tin", date: "20/06/2026", onChain: true, ipfs: "QmTknF...", status: "Issued" },
@@ -22,7 +22,7 @@ export default function AdminCredentialsPage() {
           <p className="text-xs text-gray-500 mt-1">Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
         </div>
         <Link
-          href="/admin/credentials/create"
+          href="/admin/certificates/issue"
           className="w-full sm:w-auto text-center px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none"
         >
           + Cấp bằng mới (Wizard)
@@ -71,7 +71,7 @@ export default function AdminCredentialsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-150 dark:divide-gray-850 text-xs text-gray-700 dark:text-gray-350">
-              {credentials.map((cred) => (
+              {certificatesList.map((cred) => (
                 <tr key={cred.id} className="hover:bg-slate-55 dark:hover:bg-gray-800/10 transition-colors">
                   <td className="p-4 sm:p-5 font-bold text-gray-900 dark:text-white">{cred.id}</td>
                   <td className="p-4 sm:p-5 font-semibold text-gray-900 dark:text-white">{cred.studentName}</td>

@@ -106,7 +106,7 @@ export default function AdminDashboardPage() {
 
         <div className="flex gap-3">
           <Link
-            href="/admin/credentials/create"
+            href="/admin/certificates/issue"
             className="px-5 py-3 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-[0.98]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

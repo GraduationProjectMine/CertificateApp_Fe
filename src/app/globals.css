@@ -80,15 +80,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 260ms;
+  animation-duration: 240ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .route-shell {
   min-height: 100%;
-  animation: route-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: route-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .motion-ready .reveal-item {
@@ -136,8 +140,8 @@ body {
 @keyframes route-enter {
   from {
     opacity: 0;
-    transform: translate3d(0, 14px, 0);
-    filter: blur(6px);
+    transform: translate3d(0, 10px, 0);
+    filter: blur(3px);
   }
   to {
     opacity: 1;
