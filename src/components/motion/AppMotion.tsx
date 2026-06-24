@@ -6,11 +6,6 @@ import { useEffect } from "react";
 const REVEAL_SELECTOR = [
   "[data-reveal]",
   ".motion-reveal",
-  "section",
-  "article",
-  "main section",
-  "main article",
-  "form > *",
 ].join(",");
 
 export function AppMotion({ children }: { children: React.ReactNode }) {
@@ -31,12 +26,17 @@ export function AppMotion({ children }: { children: React.ReactNode }) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          entry.target.classList.toggle("is-revealed", entry.isIntersecting);
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed");
+            return;
+          }
+
+          entry.target.classList.remove("is-revealed");
         });
       },
       {
-        rootMargin: "0px 0px -12% 0px",
-        threshold: 0.12,
+        rootMargin: "0px",
+        threshold: 0,
       },
     );
 

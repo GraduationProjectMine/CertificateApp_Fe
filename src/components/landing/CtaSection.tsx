@@ -9,7 +9,7 @@ export default function CtaSection() {
 
   return (
     <section className="border-t border-slate-200 bg-slate-950 py-16 dark:border-white/10 dark:bg-black">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-reveal>
         <h2 className="text-3xl sm:text-4xl font-bold text-white dark:text-white mb-4">
           {t("cta.title")}
         </h2>

@@ -11,7 +11,7 @@ export default function FaqSection() {
   return (
     <section className="border-y border-slate-200 bg-white py-20 dark:border-white/10 dark:bg-[#030712] md:py-28">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-12" data-reveal>
           <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
             {t("faq.badge")}
           </p>
@@ -24,6 +24,7 @@ export default function FaqSection() {
           {faqs.map((faq, i) => (
             <div
               key={i}
+              data-reveal
               className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.03]"
             >
               <button

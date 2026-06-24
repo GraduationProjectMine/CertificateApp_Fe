@@ -10,7 +10,7 @@ export default function FeaturesSection() {
   return (
     <section id="features" className="bg-white py-20 dark:bg-[#030712] md:py-28">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-16" data-reveal>
           <p className="text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4">
             {t("features.badge")}
           </p>
@@ -26,6 +26,7 @@ export default function FeaturesSection() {
           {(tArr("features.items") as { title: string; desc: string; tag: string }[]).map((f, idx) => (
             <div
               key={idx}
+              data-reveal
               className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-lg hover:shadow-slate-200/80 dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none dark:hover:border-emerald-400/30"
             >
               <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold transition-transform group-hover:scale-110 ${idx % 3 === 1 ? "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300" : idx % 3 === 2 ? "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300"}`}>

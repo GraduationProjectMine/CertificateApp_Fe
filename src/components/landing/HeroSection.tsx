@@ -14,7 +14,7 @@ export default function HeroSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          <div className="lg:col-span-7 text-center lg:text-left">
+          <div className="lg:col-span-7 text-center lg:text-left" data-reveal>
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold tracking-wide text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
               {t("hero.badge")}
@@ -69,7 +69,7 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 flex justify-center">
+          <div className="lg:col-span-5 flex justify-center" data-reveal>
             <div className="relative w-full max-w-sm">
               <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-slate-900/10 via-amber-400/10 to-emerald-500/10 blur-2xl dark:from-white/10 dark:via-amber-400/10 dark:to-teal-400/10" />
               <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/80 animate-float dark:border-white/10 dark:bg-slate-950 dark:shadow-black/30">
