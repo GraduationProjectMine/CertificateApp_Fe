@@ -272,7 +272,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="block text-xs font-bold text-white truncate">{user.name}</span>
-                  <span className="block text-[9px] text-slate-500 truncate">{user.orgName}</span>
+                  <span className="block text-[9px] text-slate-500 truncate">{user.institutionName || ''}</span>
                 </div>
               </div>
             </div>
