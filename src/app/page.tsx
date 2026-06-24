@@ -4,6 +4,7 @@ import React from "react";
 import NavHeader from "@/components/landing/NavHeader";
 import HeroSection from "@/components/landing/HeroSection";
 import TrustedBySection from "@/components/landing/TrustedBySection";
+import VerifyTeaserSection from "@/components/landing/VerifyTeaserSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import StatsSection from "@/components/landing/StatsSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
@@ -19,6 +20,7 @@ export default function Home() {
       <NavHeader />
       <HeroSection />
       <TrustedBySection />
+      <VerifyTeaserSection />
       <FeaturesSection />
       <StatsSection />
       <HowItWorksSection />

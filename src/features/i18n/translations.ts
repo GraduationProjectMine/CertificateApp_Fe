@@ -30,6 +30,20 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
     trusted: {
       title: "Được tin tưởng bởi các tổ chức giáo dục hàng đầu",
     },
+    verifyTeaser: {
+      badge: "Xác minh công khai",
+      title: "Ai có mã hoặc QR đều có thể kiểm chứng, không cần đăng nhập",
+      desc: "Homepage chỉ giới thiệu luồng xác minh. Thao tác nhập mã, xem trạng thái on-chain và hướng dẫn quét QR nằm ở trang xác minh riêng để tránh cảm giác đang mở kho dữ liệu văn bằng công khai.",
+      point1: "Không tìm theo tên hay email",
+      point2: "Chỉ xác minh khi có mã hoặc QR",
+      point3: "Hiển thị trạng thái cần thiết",
+      panelLabel: "Public verifier",
+      panelTitle: "Kiểm tra một văn bằng",
+      inputLabel: "Mã chứng chỉ hoặc mã băm",
+      primaryCta: "Xác minh mã này",
+      secondaryCta: "Mở trang xác minh",
+      privacyNote: "Gợi ý thiết kế: không đặt scanner camera ngay homepage. Người dùng bấm vào trang xác minh riêng để nhập mã hoặc quét QR trên văn bằng.",
+    },
     features: {
       badge: "Dành cho trường đại học và tổ chức giáo dục",
       title: "Triển khai chương trình cấp bằng số trong vài giờ",
@@ -213,6 +227,20 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
     },
     trusted: {
       title: "Trusted by leading educational institutions",
+    },
+    verifyTeaser: {
+      badge: "Public verification",
+      title: "Anyone with a code or QR can verify without logging in",
+      desc: "The homepage introduces the verification flow only. Code lookup, on-chain status, and QR guidance live on a separate verification page so the site does not feel like an open credential database.",
+      point1: "No lookup by name or email",
+      point2: "Verify only with code or QR",
+      point3: "Show only necessary status",
+      panelLabel: "Public verifier",
+      panelTitle: "Check a credential",
+      inputLabel: "Credential code or hash",
+      primaryCta: "Verify this code",
+      secondaryCta: "Open verifier",
+      privacyNote: "Design note: keep the camera scanner off the homepage. Users open the verifier page to enter a code or scan the QR printed on the credential.",
     },
     features: {
       badge: "For universities and educational organizations",
