@@ -1,0 +1,80 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply bg-gray-900 dark:bg-black text-gray-400 py-16 border-t border-gray-800;
+}
+
+._2 {
+ @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+._3 {
+ @apply grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12;
+}
+
+._4 {
+ @apply col-span-2 md:col-span-2 lg:col-span-1;
+}
+
+._5 {
+ @apply flex items-center gap-2 mb-4;
+}
+
+._6 {
+ @apply w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-sm;
+}
+
+._7 {
+ @apply font-bold text-white text-base;
+}
+
+._8 {
+ @apply text-xs text-gray-500 leading-relaxed;
+}
+
+._9 {
+ @apply font-bold text-gray-200 text-sm mb-4;
+}
+
+._10 {
+ @apply space-y-2 text-xs;
+}
+
+._11 {
+ @apply hover:text-white transition-colors;
+}
+
+._12 {
+ @apply border-gray-800 my-8;
+}
+
+._13 {
+ @apply flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-600;
+}
+
+._14 {
+ @apply flex gap-6;
+}
+
+._15 {
+ @apply hover:text-gray-400 transition-colors;
+}
+
+._16 {
+ @apply mt-6 flex items-center justify-center gap-4 text-[10px] text-gray-600;
+}
+
+._17 {
+ @apply flex items-center gap-1;
+}
+
+._18 {
+ @apply w-2 h-2 rounded-full bg-green-500;
+}
+
+._19 {
+ @apply w-2 h-2 rounded-full bg-blue-500;
+}
+
+._20 {
+ @apply w-2 h-2 rounded-full bg-teal-500;
+}

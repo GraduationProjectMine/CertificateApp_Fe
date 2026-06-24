@@ -1,5 +1,5 @@
 "use client";
-
+import styles from "./page.module.css";
 import React from "react";
 import NavHeader from "@/components/landing/NavHeader";
 import HeroSection from "@/components/landing/HeroSection";
@@ -15,7 +15,7 @@ import LandingFooter from "@/components/landing/LandingFooter";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
+    <div className={styles._1}>
       <NavHeader />
       <HeroSection />
       <TrustedBySection />

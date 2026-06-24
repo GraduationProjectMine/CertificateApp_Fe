@@ -1,0 +1,16 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply fixed inset-0 z-50 flex items-center justify-center;
+}
+
+._2 {
+ @apply absolute inset-0 bg-black/40 backdrop-blur-sm;
+}
+
+._3 {
+ @apply relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 max-w-lg w-full mx-4 z-10;
+}
+
+._4 {
+ @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
+}

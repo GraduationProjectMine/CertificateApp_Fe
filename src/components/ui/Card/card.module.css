@@ -1,0 +1,4 @@
+@reference "../../../app/globals.css";
+._0 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl shadow-sm;
+}

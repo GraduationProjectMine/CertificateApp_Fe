@@ -1,5 +1,5 @@
 "use client";
-
+import styles from "./layout.module.css";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import AdminSidebar from "./_components/AdminSidebar";
@@ -22,10 +22,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthorized) return <UnauthorizedScreen />;
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-[#030712] font-sans transition-colors duration-300">
+    <div className={styles._1}>
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          className={styles._2}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -38,14 +38,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className={styles._3}>
         <AdminTopbar
           user={user}
           onMenuToggle={() => setSidebarOpen(true)}
           onLogout={logout}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto bg-slate-50 dark:bg-slate-950/40">
+        <main className={styles._4}>
           {children}
         </main>
       </div>

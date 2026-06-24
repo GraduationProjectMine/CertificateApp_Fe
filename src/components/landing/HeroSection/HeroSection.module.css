@@ -1,0 +1,169 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply relative overflow-hidden bg-white pt-32 pb-20 dark:bg-[#030712] md:pt-44 md:pb-28;
+}
+
+._2 {
+ @apply absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,#0f172a08_1px,transparent_1px),linear-gradient(to_bottom,#0f172a08_1px,transparent_1px)] bg-[size:40px_40px] dark:bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)];
+}
+
+._3 {
+ @apply absolute inset-x-0 top-0 h-80 pointer-events-none bg-[radial-gradient(circle_at_78%_20%,rgba(245,158,11,0.15),transparent_32%),radial-gradient(circle_at_22%_18%,rgba(15,118,110,0.12),transparent_34%)] dark:bg-[radial-gradient(circle_at_78%_20%,rgba(245,158,11,0.12),transparent_30%),radial-gradient(circle_at_22%_18%,rgba(20,184,166,0.12),transparent_32%)];
+}
+
+._4 {
+ @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative;
+}
+
+._5 {
+ @apply grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center;
+}
+
+._6 {
+ @apply lg:col-span-7 text-center lg:text-left;
+}
+
+._7 {
+ @apply inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold tracking-wide text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300 mb-6;
+}
+
+._8 {
+ @apply w-1.5 h-1.5 rounded-full bg-primary animate-ping;
+}
+
+._9 {
+ @apply text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-gray-900 dark:text-white leading-[1.05] mb-6;
+}
+
+._10 {
+ @apply block mt-2;
+
+}
+
+._11 {
+ @apply max-w-xl text-lg text-gray-500 dark:text-gray-400 leading-relaxed mb-8;
+}
+
+._12 {
+ @apply flex flex-col sm:flex-row gap-3 w-full sm:w-auto;
+}
+
+._13 {
+ @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/35 transition-all hover:scale-[1.02];
+}
+
+._14 {
+ @apply w-4 h-4;
+}
+
+._15 {
+ @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all hover:scale-[1.02];
+}
+
+._16 {
+ @apply mt-4 text-xs text-gray-400 dark:text-gray-500;
+}
+
+._17 {
+ @apply mt-12 grid w-full max-w-md grid-cols-3 gap-6 border-t border-slate-200 pt-8 dark:border-white/10 sm:gap-8;
+}
+
+._18 {
+ @apply block text-2xl font-bold text-gray-900 dark:text-white;
+}
+
+._19 {
+ @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+._20 {
+ @apply lg:col-span-5 flex justify-center;
+}
+
+._21 {
+ @apply relative w-full max-w-sm;
+}
+
+._22 {
+ @apply absolute -inset-4 rounded-3xl bg-gradient-to-br from-slate-900/10 via-amber-400/10 to-emerald-500/10 blur-2xl dark:from-white/10 dark:via-amber-400/10 dark:to-teal-400/10;
+}
+
+._23 {
+ @apply relative rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/80 animate-float dark:border-white/10 dark:bg-slate-950 dark:shadow-black/30;
+}
+
+._24 {
+ @apply absolute top-0 left-0 h-1.5 w-full rounded-t-2xl bg-gradient-to-r from-slate-900 via-emerald-600 to-amber-400 dark:from-slate-100 dark:via-teal-300 dark:to-amber-300;
+}
+
+._25 {
+ @apply flex items-center justify-between mb-5 mt-1;
+}
+
+._26 {
+ @apply flex items-center gap-2.5;
+}
+
+._27 {
+ @apply w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950 flex items-center justify-center text-primary;
+}
+
+._28 {
+ @apply text-[10px] text-gray-400 font-bold uppercase tracking-wider;
+}
+
+._29 {
+ @apply text-xs font-semibold text-gray-700 dark:text-gray-300;
+}
+
+._30 {
+ @apply rounded border border-emerald-200/70 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300;
+}
+
+._31 {
+ @apply mb-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-3 text-center dark:border-white/10 dark:bg-white/[0.04];
+}
+
+._32 {
+ @apply text-[10px] text-gray-400 uppercase tracking-widest font-semibold;
+}
+
+._33 {
+ @apply text-base font-bold text-gray-800 dark:text-white mt-1;
+}
+
+._34 {
+ @apply grid grid-cols-2 gap-3 mb-4;
+}
+
+._35 {
+ @apply text-[10px] text-gray-400 uppercase font-medium;
+}
+
+._36 {
+ @apply text-sm font-semibold text-gray-800 dark:text-gray-200;
+}
+
+._37 {
+ @apply flex items-center justify-between border-t border-slate-200 pt-3 dark:border-white/10;
+}
+
+._38 {
+ @apply text-[9px] text-gray-400 uppercase font-bold tracking-wider;
+}
+
+._39 {
+ @apply text-[10px] font-mono text-primary dark:text-teal-400 truncate w-32;
+}
+
+._40 {
+ @apply flex gap-1;
+}
+
+._41 {
+ @apply w-7 h-7 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center;
+}
+
+._42 {
+ @apply w-3.5 h-3.5 text-gray-500;
+}

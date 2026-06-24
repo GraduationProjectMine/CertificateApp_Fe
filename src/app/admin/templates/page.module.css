@@ -1,0 +1,60 @@
+@reference "../../globals.css";
+._1 {
+ @apply space-y-6 animate-fadeIn font-sans;
+}
+
+._2 {
+ @apply flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4;
+}
+
+._3 {
+ @apply text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight;
+}
+
+._4 {
+ @apply text-xs text-gray-500 mt-1;
+}
+
+._5 {
+ @apply w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none;
+}
+
+._6 {
+ @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+._7 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between;
+}
+
+._8 {
+ @apply p-6 space-y-4;
+}
+
+._9 {
+ @apply h-32 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center border border-dashed border-gray-200/60 dark:border-gray-800;
+}
+
+._10 {
+ @apply text-[10px] text-gray-400 font-bold uppercase tracking-wider;
+}
+
+._11 {
+ @apply text-sm font-bold text-gray-900 dark:text-white leading-tight;
+}
+
+._12 {
+ @apply text-[10px] dark:text-gray-500 block mt-1;
+}
+
+._13 {
+ @apply px-6 py-4 bg-slate-50 dark:bg-slate-900 border-t flex items-center justify-between text-[10px];
+}
+
+._14 {
+ @apply block text-gray-400;
+}
+
+._0 {
+ @apply px-2 py-0.5 rounded font-bold border;
+}

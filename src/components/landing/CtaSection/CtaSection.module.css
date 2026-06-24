@@ -1,0 +1,28 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply border-t border-slate-200 bg-slate-950 py-16 dark:border-white/10 dark:bg-black;
+}
+
+._2 {
+ @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center;
+}
+
+._3 {
+ @apply text-3xl sm:text-4xl font-bold text-white dark:text-white mb-4;
+}
+
+._4 {
+ @apply mx-auto mb-8 max-w-2xl text-slate-300;
+}
+
+._5 {
+ @apply flex flex-col sm:flex-row items-center justify-center gap-4;
+}
+
+._6 {
+ @apply rounded-xl bg-white px-8 py-3.5 font-bold text-slate-950 shadow-lg shadow-black/10 transition-all hover:scale-[1.02] hover:bg-slate-100;
+}
+
+._7 {
+ @apply rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 font-semibold text-white transition-all hover:scale-[1.02] hover:bg-white/20;
+}

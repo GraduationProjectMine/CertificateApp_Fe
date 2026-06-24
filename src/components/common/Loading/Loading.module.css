@@ -1,0 +1,20 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply flex flex-col items-center justify-center py-12 gap-4;
+}
+
+._2 {
+ @apply animate-spin h-8 w-8 text-primary;
+}
+
+._3 {
+ @apply opacity-25;
+}
+
+._4 {
+ @apply opacity-75;
+}
+
+._5 {
+ @apply text-sm text-gray-500;
+}

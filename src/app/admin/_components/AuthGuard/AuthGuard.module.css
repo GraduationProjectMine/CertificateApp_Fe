@@ -1,0 +1,52 @@
+@reference "../../../globals.css";
+._1 {
+ @apply min-h-screen bg-slate-50 dark:bg-gray-950 flex flex-col items-center justify-center;
+}
+
+._2 {
+ @apply animate-spin h-10 w-10 text-primary;
+}
+
+._3 {
+ @apply opacity-25;
+}
+
+._4 {
+ @apply opacity-75;
+}
+
+._5 {
+ @apply text-xs font-semibold text-gray-500 mt-4 select-none;
+}
+
+._6 {
+ @apply min-h-screen bg-slate-50 dark:bg-gray-950 flex flex-col items-center justify-center p-6 text-center font-sans;
+}
+
+._7 {
+ @apply w-16 h-16 bg-red-100 dark:bg-red-950/30 text-danger rounded-full flex items-center justify-center mb-6;
+}
+
+._8 {
+ @apply w-8 h-8;
+}
+
+._9 {
+ @apply text-2xl font-black text-gray-900 dark:text-white;
+}
+
+._10 {
+ @apply max-w-md text-sm text-gray-500 dark:text-gray-400 mt-3 leading-relaxed;
+}
+
+._11 {
+ @apply flex gap-4 mt-8;
+}
+
+._12 {
+ @apply px-6 py-3 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md transition-all select-none;
+}
+
+._13 {
+ @apply px-6 py-3 text-xs font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-all select-none;
+}

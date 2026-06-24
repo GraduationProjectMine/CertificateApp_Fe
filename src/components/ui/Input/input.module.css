@@ -1,0 +1,16 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply space-y-1.5;
+}
+
+._2 {
+ @apply block text-xs font-semibold text-gray-700 dark:text-gray-300;
+}
+
+._3 {
+ @apply text-xs text-danger;
+}
+
+._0 {
+ @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all;
+}

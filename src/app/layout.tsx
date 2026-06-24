@@ -1,5 +1,6 @@
 import "./globals.css";
 import { geistSans, geistMono } from "./fonts";
+import styles from "./layout.module.css";
 export { metadata } from "./metadata";
 import { AuthProvider } from "@/features/auth/components/AuthContext";
 import { ThemeProvider } from "@/features/theme/ThemeContext";
@@ -15,9 +16,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${styles._0}`}
     >
-      <body className="min-h-full flex flex-col bg-[#f8fafc] text-[#0f172a] dark:bg-[#030712] dark:text-[#f9fafb]">
+      <body className={styles._1}>
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>

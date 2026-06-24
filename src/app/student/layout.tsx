@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import styles from "./layout.module.css";
 
 import React from "react";
 import Link from "next/link";
@@ -17,35 +18,35 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const getClassName = (href: string) => {
     const isActive = pathname.startsWith(href);
-    return `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${isActive ? "bg-primary text-white shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"}`;
+    return `${styles._13} ${isActive ? styles._14 : styles._15}`;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg text-gray-900 dark:text-white">
+    <div className={styles._1}>
+      <header className={styles._2}>
+        <div className={styles._3}>
+          <Link href="/" className={styles._4}>
             CertiChain
           </Link>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-500">{user?.name}</span>
-            <Link href="/" className="text-primary hover:underline">Trang ch\u1ee7</Link>
+          <div className={styles._5}>
+            <span className={styles._6}>{user?.name}</span>
+            <Link href="/" className={styles._7}>Trang ch\u1ee7</Link>
           </div>
         </div>
       </header>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          <nav className="w-56 flex-shrink-0 space-y-1">
+      <div className={styles._8}>
+        <div className={styles._9}>
+          <nav className={styles._10}>
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} className={getClassName(item.href)}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={styles._11} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
                 </svg>
                 {item.label}
               </Link>
             ))}
           </nav>
-          <main className="flex-1 min-w-0">{children}</main>
+          <main className={styles._12}>{children}</main>
         </div>
       </div>
     </div>

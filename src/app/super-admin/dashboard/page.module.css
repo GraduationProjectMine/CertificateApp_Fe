@@ -1,0 +1,40 @@
+@reference "../../globals.css";
+._1 {
+ @apply max-w-5xl mx-auto px-4 py-8;
+}
+
+._2 {
+ @apply text-2xl font-extrabold text-gray-900 dark:text-white mb-6;
+}
+
+._3 {
+ @apply grid grid-cols-3 gap-4 mb-8;
+}
+
+._4 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6;
+}
+
+._5 {
+ @apply text-3xl font-bold text-primary;
+}
+
+._6 {
+ @apply text-sm text-gray-500;
+}
+
+._7 {
+ @apply text-3xl font-bold text-green-600;
+}
+
+._8 {
+ @apply text-3xl font-bold text-blue-600;
+}
+
+._9 {
+ @apply flex gap-4;
+}
+
+._10 {
+ @apply px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-hover;
+}

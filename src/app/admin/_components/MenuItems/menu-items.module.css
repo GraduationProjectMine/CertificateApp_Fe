@@ -1,0 +1,4 @@
+@reference "../../../globals.css";
+._1 {
+ @apply w-5 h-5;
+}

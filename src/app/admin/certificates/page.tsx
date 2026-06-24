@@ -1,5 +1,5 @@
 "use client";
-
+import styles from "./page.module.css";
 import React from "react";
 import Link from "next/link";
 
@@ -14,37 +14,37 @@ export default function AdminCertificatesPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className={styles._1}>
       {/* Title & Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className={styles._2}>
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Quản lý Văn bằng</h1>
-          <p className="text-xs text-gray-500 mt-1">Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
+          <h1 className={styles._3}>Quản lý Văn bằng</h1>
+          <p className={styles._4}>Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
         </div>
         <Link
           href="/admin/certificates/issue"
-          className="w-full sm:w-auto text-center px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none"
+          className={styles._5}
         >
           + Cấp bằng mới (Wizard)
         </Link>
       </div>
 
       {/* Filter panel */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 flex flex-col md:flex-row gap-4">
+      <div className={styles._6}>
         <input
           type="text"
           placeholder="Tìm kiếm theo mã văn bằng, tên sinh viên, số hiệu..."
-          className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+          className={styles._7}
         />
-        <div className="flex gap-2.5">
-          <select className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300 focus:outline-none">
+        <div className={styles._8}>
+          <select className={styles._9}>
             <option>Tất cả trạng thái</option>
             <option>Issued</option>
             <option>Pending Blockchain</option>
             <option>Revoked</option>
             <option>Draft</option>
           </select>
-          <select className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300 focus:outline-none">
+          <select className={styles._9}>
             <option>Loại: Tất cả</option>
             <option>Cử nhân</option>
             <option>Thạc sĩ</option>
@@ -54,46 +54,46 @@ export default function AdminCertificatesPage() {
       </div>
 
       {/* Table Cards */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <div className={styles._10}>
+        <div className={styles._11}>
+          <table className={styles._12}>
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-400">
-                <th className="p-4 sm:p-5">Mã văn bằng</th>
-                <th className="p-4 sm:p-5">Sinh viên</th>
-                <th className="p-4 sm:p-5">Hệ đào tạo</th>
-                <th className="p-4 sm:p-5">Chuyên ngành</th>
-                <th className="p-4 sm:p-5">Ngày cấp</th>
-                <th className="p-4 sm:p-5 text-center">IPFS Gateway</th>
-                <th className="p-4 sm:p-5 text-center">Blockchain status</th>
-                <th className="p-4 sm:p-5">Trạng thái</th>
-                <th className="p-4 sm:p-5 text-right">Thao tác</th>
+              <tr className={styles._13}>
+                <th className={styles._14}>Mã văn bằng</th>
+                <th className={styles._14}>Sinh viên</th>
+                <th className={styles._14}>Hệ đào tạo</th>
+                <th className={styles._14}>Chuyên ngành</th>
+                <th className={styles._14}>Ngày cấp</th>
+                <th className={styles._15}>IPFS Gateway</th>
+                <th className={styles._15}>Blockchain status</th>
+                <th className={styles._14}>Trạng thái</th>
+                <th className={styles._16}>Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-150 dark:divide-gray-850 text-xs text-gray-700 dark:text-gray-350">
+            <tbody className={styles._17}>
               {certificatesList.map((cred) => (
-                <tr key={cred.id} className="hover:bg-slate-55 dark:hover:bg-gray-800/10 transition-colors">
-                  <td className="p-4 sm:p-5 font-bold text-gray-900 dark:text-white">{cred.id}</td>
-                  <td className="p-4 sm:p-5 font-semibold text-gray-900 dark:text-white">{cred.studentName}</td>
-                  <td className="p-4 sm:p-5 font-medium">{cred.type}</td>
-                  <td className="p-4 sm:p-5 text-gray-500 dark:text-gray-400">{cred.major}</td>
-                  <td className="p-4 sm:p-5">{cred.date}</td>
-                  <td className="p-4 sm:p-5 text-center">
+                <tr key={cred.id} className={`hover:bg-slate-55 ${styles._18}`}>
+                  <td className={styles._19}>{cred.id}</td>
+                  <td className={styles._20}>{cred.studentName}</td>
+                  <td className={styles._21}>{cred.type}</td>
+                  <td className={styles._22}>{cred.major}</td>
+                  <td className={styles._14}>{cred.date}</td>
+                  <td className={styles._15}>
                     {cred.ipfs ? (
-                      <span className="font-mono text-[10px] text-primary dark:text-teal-400 underline cursor-pointer">{cred.ipfs}</span>
+                      <span className={styles._23}>{cred.ipfs}</span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className={styles._24}>-</span>
                     )}
                   </td>
-                  <td className="p-4 sm:p-5 text-center">
+                  <td className={styles._15}>
                     {cred.onChain ? (
-                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-50 dark:bg-blue-950/20 text-secondary dark:text-blue-400 border border-blue-200/50">ON-CHAIN</span>
+                      <span className={styles._25}>ON-CHAIN</span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-50 dark:bg-slate-800/20 text-gray-450 dark:text-gray-400 border border-gray-200/50">OFF-CHAIN</span>
+                      <span className={styles._26}>OFF-CHAIN</span>
                     )}
                   </td>
-                  <td className="p-4 sm:p-5">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                  <td className={styles._14}>
+                    <span className={`${styles._0} ${
                       cred.status === "Issued"
                         ? "bg-green-55/10 text-green-600 dark:text-green-400 border-green-200/50"
                         : cred.status === "Pending Blockchain"
@@ -105,10 +105,10 @@ export default function AdminCertificatesPage() {
                       {cred.status}
                     </span>
                   </td>
-                  <td className="p-4 sm:p-5 text-right space-x-2">
-                    <button className="text-xs font-semibold text-primary hover:underline">Chi tiết</button>
+                  <td className={styles._27}>
+                    <button className={styles._28}>Chi tiết</button>
                     {cred.status !== "Revoked" && cred.status !== "Draft" && (
-                      <button className="text-xs font-semibold text-danger hover:underline">Thu hồi</button>
+                      <button className={styles._29}>Thu hồi</button>
                     )}
                   </td>
                 </tr>

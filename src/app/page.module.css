@@ -1,0 +1,4 @@
+@reference "./globals.css";
+._1 {
+ @apply min-h-screen flex flex-col font-sans bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white;
+}

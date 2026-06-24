@@ -67,12 +67,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithMetaMask = useCallback(async () => {
     setIsLoading(true);
     try {
-      if (typeof window === 'undefined' || !window.ethereum) {
+      const eth = typeof window !== 'undefined' ? (window as any).ethereum : null;
+      if (!eth) {
         setIsLoading(false);
         return { success: false, error: 'Vui lòng cài đặt MetaMask' };
       }
 
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(eth);
       await provider.send('eth_requestAccounts', []);
       const signer = await provider.getSigner();
       const walletAddress = await signer.getAddress();

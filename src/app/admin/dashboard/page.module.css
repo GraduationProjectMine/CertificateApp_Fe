@@ -1,0 +1,204 @@
+@reference "../../globals.css";
+._1 {
+ @apply w-5 h-5;
+}
+
+._2 {
+ @apply space-y-8 animate-fadeIn;
+}
+
+._3 {
+ @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4;
+}
+
+._4 {
+ @apply text-2xl font-black text-gray-900 dark:text-white tracking-tight;
+}
+
+._5 {
+ @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+}
+
+._6 {
+ @apply flex gap-3;
+}
+
+._7 {
+ @apply px-5 py-3 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-[0.98];
+}
+
+._8 {
+ @apply w-4 h-4;
+}
+
+._9 {
+ @apply px-5 py-3 text-xs font-bold text-primary dark:text-teal-400 bg-white dark:bg-gray-800 hover:bg-slate-50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm flex items-center gap-1.5 transition-all;
+}
+
+._10 {
+ @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+._11 {
+ @apply space-y-1.5;
+}
+
+._12 {
+ @apply text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider;
+}
+
+._13 {
+ @apply block text-2xl font-black text-gray-900 dark:text-white leading-none;
+}
+
+._14 {
+ @apply block text-[11px] font-semibold dark:text-gray-500;
+}
+
+._15 {
+ @apply p-3 dark:bg-gray-800/40 rounded-xl;
+
+}
+
+._16 {
+ @apply grid grid-cols-1 lg:grid-cols-3 gap-6;
+}
+
+._17 {
+ @apply lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 shadow-sm;
+}
+
+._18 {
+ @apply flex justify-between items-center mb-6;
+}
+
+._19 {
+ @apply text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest;
+}
+
+._20 {
+ @apply text-xs font-bold text-primary hover:text-primary-hover dark:text-teal-400 transition-colors;
+}
+
+._21 {
+ @apply overflow-x-auto;
+}
+
+._22 {
+ @apply w-full text-left border-collapse;
+}
+
+._23 {
+ @apply border-b border-gray-100 pb-3 text-xs text-gray-500;
+}
+
+._24 {
+ @apply py-3 font-semibold;
+}
+
+._25 {
+ @apply py-3 font-semibold text-right;
+}
+
+._26 {
+ @apply divide-y divide-gray-100 text-xs;
+}
+
+._27 {
+ @apply hover:bg-slate-50 dark:hover:bg-gray-800/20 transition-colors;
+}
+
+._28 {
+ @apply py-4 font-mono font-bold text-primary dark:text-teal-400;
+}
+
+._29 {
+ @apply py-4 font-semibold text-gray-800 dark:text-gray-200;
+}
+
+._30 {
+ @apply py-4 text-gray-500 dark:text-gray-400;
+}
+
+._31 {
+ @apply py-4 dark:text-gray-500;
+}
+
+._32 {
+ @apply py-4 text-right;
+}
+
+._33 {
+ @apply px-2 py-0.5 rounded-md bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 font-bold border border-green-200/50;
+}
+
+._34 {
+ @apply space-y-6;
+}
+
+._35 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 shadow-sm;
+}
+
+._36 {
+ @apply text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4;
+}
+
+._37 {
+ @apply space-y-3;
+}
+
+._38 {
+ @apply w-full flex items-center justify-between p-3.5 rounded-xl border bg-slate-50/50 hover:bg-primary/5 dark:bg-slate-900/50 dark:hover:bg-teal-950/20 hover:border-primary/30 transition-all text-xs font-semibold;
+
+}
+
+._39 {
+ @apply w-4 h-4 group-hover:translate-x-0.5 transition-transform;
+}
+
+._40 {
+ @apply w-full flex items-center justify-between p-3.5 rounded-xl border bg-slate-50/50 hover:bg-danger/5 dark:bg-slate-900/50 dark:hover:bg-red-950/10 hover:border-danger/30 transition-all text-xs font-semibold;
+
+}
+
+._41 {
+ @apply text-danger;
+}
+
+._42 {
+ @apply w-4 h-4 text-danger/70 group-hover:translate-x-0.5 transition-transform;
+}
+
+._43 {
+ @apply bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-lg;
+}
+
+._44 {
+ @apply text-xs font-bold uppercase tracking-widest text-teal-400 mb-3;
+}
+
+._45 {
+ @apply space-y-3.5 text-xs;
+}
+
+._46 {
+ @apply flex justify-between items-center;
+}
+
+._47 {
+ @apply text-slate-400;
+}
+
+._48 {
+ @apply font-semibold text-green-400;
+}
+
+._49 {
+ @apply font-mono bg-slate-800 px-2 py-0.5 rounded;
+
+}
+
+._0 {
+ @apply border-l-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 p-6 flex items-center justify-between shadow-sm transition-all hover:-translate-y-0.5;
+}

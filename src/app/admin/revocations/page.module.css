@@ -1,0 +1,109 @@
+@reference "../../globals.css";
+._1 {
+ @apply space-y-6 animate-fadeIn font-sans;
+}
+
+._2 {
+ @apply flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4;
+}
+
+._3 {
+ @apply text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight;
+}
+
+._4 {
+ @apply text-xs text-gray-500 mt-1;
+}
+
+._5 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 sm:p-8 space-y-6;
+}
+
+._6 {
+ @apply text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest;
+}
+
+._7 {
+ @apply grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs;
+}
+
+._8 {
+ @apply block font-bold text-gray-700 dark:text-gray-300 mb-1.5;
+}
+
+._9 {
+ @apply flex gap-2;
+}
+
+._10 {
+ @apply flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900;
+}
+
+._11 {
+ @apply px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none;
+}
+
+._12 {
+ @apply w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900;
+}
+
+._13 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-sm;
+}
+
+._14 {
+ @apply p-6 border-b;
+}
+
+._15 {
+ @apply overflow-x-auto;
+}
+
+._16 {
+ @apply w-full text-left border-collapse text-xs;
+}
+
+._17 {
+ @apply bg-slate-50 dark:bg-slate-900 border-b border-gray-200 font-bold text-gray-600 dark:text-gray-400;
+}
+
+._18 {
+ @apply p-4 sm:p-5;
+}
+
+._19 {
+ @apply p-4 sm:p-5 text-right;
+}
+
+._20 {
+ @apply divide-y text-gray-700;
+}
+
+._21 {
+ @apply dark:hover:bg-gray-800/10 transition-colors;
+
+}
+
+._22 {
+ @apply p-4 sm:p-5 font-bold text-gray-900 dark:text-white;
+}
+
+._23 {
+ @apply p-4 sm:p-5 font-semibold text-gray-900 dark:text-white;
+}
+
+._24 {
+ @apply p-4 sm:p-5 text-gray-500 dark:text-gray-400 max-w-xs truncate;
+}
+
+._25 {
+ @apply p-4 sm:p-5 font-medium;
+}
+
+._26 {
+ @apply p-4 sm:p-5 font-mono text-danger;
+}
+
+._27 {
+ @apply px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 dark:bg-red-950/20 text-danger border border-red-200/50;
+}

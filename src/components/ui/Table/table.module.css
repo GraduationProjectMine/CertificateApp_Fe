@@ -1,0 +1,28 @@
+@reference "../../../app/globals.css";
+._1 {
+ @apply overflow-x-auto;
+}
+
+._2 {
+ @apply w-full text-left border-collapse;
+}
+
+._3 {
+ @apply border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 dark:text-gray-400;
+}
+
+._4 {
+ @apply p-4;
+}
+
+._5 {
+ @apply divide-y divide-gray-100 dark:divide-gray-800 text-sm;
+}
+
+._6 {
+ @apply hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors;
+}
+
+._7 {
+ @apply p-4 text-gray-700 dark:text-gray-300;
+}

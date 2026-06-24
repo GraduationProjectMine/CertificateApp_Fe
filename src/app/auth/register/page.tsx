@@ -1,9 +1,9 @@
 "use client";
-
+import styles from "./page.module.css";
 import React, { useState } from "react";
 import Link from "next/link";
 import { authApi } from "../../../features/auth/services/api";
-import Button from "@/components/ui/button";
+import Button from "@/components/ui/Button";
 
 type RegisterForm = {
   institutionName: string;
@@ -70,88 +70,88 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="auth-page-shell relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(15,118,110,0.18),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(37,99,235,0.14),transparent_28%),linear-gradient(180deg,transparent,rgba(15,23,42,0.05))] dark:bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.22),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(37,99,235,0.2),transparent_28%),linear-gradient(180deg,transparent,rgba(15,23,42,0.76))]" />
-      <div className="absolute inset-0 opacity-[0.2] dark:opacity-[0.14] bg-[linear-gradient(to_right,#94a3b812_1px,transparent_1px),linear-gradient(to_bottom,#94a3b812_1px,transparent_1px)] bg-[size:28px_28px]" />
+    <main className={`auth-page-shell ${styles._1}`}>
+      <div className={styles._2} />
+      <div className={styles._3} />
 
-      <div className="relative mx-auto grid min-h-[100dvh] max-w-7xl grid-cols-1 items-center gap-8 px-4 py-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:px-8">
-        <section className="auth-visual-panel hidden lg:flex min-h-[660px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/25">
-          <div className="absolute left-16 top-16 h-36 w-36 rounded-full bg-teal-400/20 blur-3xl motion-float" />
-          <div className="absolute bottom-24 right-14 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl motion-float-slow" />
+      <div className={styles._4}>
+        <section className={`auth-visual-panel ${styles._5}`}>
+          <div className={`motion-float ${styles._6}`} />
+          <div className={`motion-float-slow ${styles._7}`} />
 
-          <Link href="/" className="relative z-10 flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-500 text-lg font-black text-white shadow-lg shadow-teal-500/25">
+          <Link href="/" className={styles._8}>
+            <span className={styles._9}>
               C
             </span>
-            <span className="text-lg font-bold tracking-tight">CertiChain</span>
+            <span className={styles._10}>CertiChain</span>
           </Link>
 
-          <div className="relative z-10 max-w-xl" data-reveal>
-            <p className="mb-5 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-teal-200">
+          <div className={styles._11} data-reveal>
+            <p className={styles._12}>
               Khởi tạo tổ chức phát hành
             </p>
-            <h1 className="max-w-xl text-4xl font-black leading-[1.04] tracking-tight">
+            <h1 className={styles._13}>
               Một tài khoản cho toàn bộ quy trình cấp bằng.
             </h1>
-            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
+            <p className={styles._14}>
               Gửi yêu cầu đăng ký trường học, chờ phê duyệt và nhận hợp đồng thông minh riêng cho tổ chức.
             </p>
           </div>
 
-          <div className="relative z-10 grid grid-cols-3 gap-3 text-xs" data-reveal>
+          <div className={styles._15} data-reveal>
             {[
               ["01", "Xác thực trường"],
               ["02", "Tạo ví tổ chức"],
               ["03", "Deploy contract"],
             ].map(([step, label]) => (
-              <div key={step} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <span className="font-mono text-teal-300">{step}</span>
-                <span className="mt-3 block font-semibold text-slate-200">{label}</span>
+              <div key={step} className={styles._16}>
+                <span className={styles._17}>{step}</span>
+                <span className={styles._18}>{label}</span>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="auth-form-panel mx-auto w-full max-w-2xl" data-reveal>
-          <div className="mb-5 flex items-center justify-between lg:hidden">
-            <Link href="/" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-base font-black text-white">
+        <section className={`auth-form-panel ${styles._19}`} data-reveal>
+          <div className={styles._20}>
+            <Link href="/" className={styles._21}>
+              <span className={styles._22}>
                 C
               </span>
-              <span className="font-bold">CertiChain</span>
+              <span className={styles._23}>CertiChain</span>
             </Link>
-            <Link href="/auth/login" className="auth-switch-link text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400">
+            <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
               Đăng nhập
             </Link>
           </div>
 
-          <div className="auth-card-surface rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-6">
-            <div className="mb-5">
-              <p className="text-sm font-semibold text-primary dark:text-teal-300">
+          <div className={`auth-card-surface ${styles._25}`}>
+            <div className={styles._26}>
+              <p className={styles._27}>
                 Đăng ký trường học
               </p>
-              <h2 className="mt-1.5 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+              <h2 className={styles._28}>
                 Tạo hồ sơ tổ chức
               </h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+              <p className={styles._29}>
                 Thông tin này giúp Super Admin xác minh trường và cấp quyền phát hành văn bằng số.
               </p>
             </div>
 
             {error && (
-              <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300" data-reveal>
+              <div className={styles._30} data-reveal>
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300" data-reveal>
+              <div className={styles._31} data-reveal>
                 {success}
               </div>
             )}
 
-            <form className="grid grid-cols-1 gap-3.5 sm:grid-cols-2" onSubmit={handleSubmit}>
-              <label className="block sm:col-span-2">
-                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+            <form className={styles._32} onSubmit={handleSubmit}>
+              <label className={styles._33}>
+                <span className={styles._34}>
                   Tên trường / Học viện
                 </span>
                 <input
@@ -160,13 +160,13 @@ export default function RegisterPage() {
                   value={form.institutionName}
                   onChange={handleChange}
                   required
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  className={styles._35}
                   placeholder="Trường Đại học Bách Khoa Hà Nội"
                 />
               </label>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className={styles._36}>
+                <span className={styles._34}>
                   Mã trường
                 </span>
                 <input
@@ -176,13 +176,13 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   required
                   maxLength={20}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm uppercase text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  className={styles._37}
                   placeholder="HUST"
                 />
               </label>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className={styles._36}>
+                <span className={styles._34}>
                   Tên quản trị
                 </span>
                 <input
@@ -191,13 +191,13 @@ export default function RegisterPage() {
                   value={form.adminName}
                   onChange={handleChange}
                   required
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  className={styles._35}
                   placeholder="Nguyễn Văn A"
                 />
               </label>
 
-              <label className="block sm:col-span-2">
-                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className={styles._33}>
+                <span className={styles._34}>
                   Email quản trị
                 </span>
                 <input
@@ -206,16 +206,16 @@ export default function RegisterPage() {
                   value={form.email}
                   onChange={handleChange}
                   required
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  className={styles._35}
                   placeholder="admin@hust.edu.vn"
                 />
-                <span className="mt-1.5 block text-xs text-slate-400">
+                <span className={styles._38}>
                   Không dùng email cá nhân như Gmail, Yahoo hoặc Outlook.
                 </span>
               </label>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className={styles._36}>
+                <span className={styles._34}>
                   Mật khẩu
                 </span>
                 <input
@@ -225,13 +225,13 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   required
                   minLength={8}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  className={styles._35}
                   placeholder="Tối thiểu 8 ký tự"
                 />
               </label>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className={styles._36}>
+                <span className={styles._34}>
                   Xác nhận mật khẩu
                 </span>
                 <input
@@ -240,19 +240,19 @@ export default function RegisterPage() {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300"
+                  className={styles._35}
                   placeholder="Nhập lại mật khẩu"
                 />
               </label>
 
-              <Button type="submit" disabled={isSubmitting} className="w-full h-11 sm:col-span-2">
+              <Button type="submit" disabled={isSubmitting} className={styles._39}>
                 {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu đăng ký"}
               </Button>
             </form>
 
-            <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+            <div className={styles._40}>
               Đã có tài khoản?{" "}
-              <Button variant="ghost" href="/auth/login" className="auth-switch-link text-primary dark:text-teal-300">
+              <Button variant="ghost" href="/auth/login" className={`auth-switch-link ${styles._41}`}>
                 Đăng nhập
               </Button>
             </div>

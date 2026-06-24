@@ -1,0 +1,8 @@
+@reference "../../../../app/globals.css";
+._1 {
+ @apply space-y-4;
+}
+
+._2 {
+ @apply text-sm text-gray-500;
+}

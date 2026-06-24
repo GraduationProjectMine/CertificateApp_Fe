@@ -1,5 +1,5 @@
 "use client";
-
+import styles from "./page.module.css";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../features/auth/components/AuthContext';
@@ -77,53 +77,53 @@ export default function PendingApprovalsPage() {
     }
   };
 
-  if (authLoading || loading) return <div className="p-8 text-center">Đang tải...</div>;
+  if (authLoading || loading) return <div className={styles._1}>Đang tải...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-2">Phê duyệt trường học</h1>
-      <p className="text-sm text-gray-500 mb-8">Duyệt đơn đăng ký của các trường. Hệ thống sẽ tự động deploy smart contract và tạo tài khoản quản trị.</p>
+    <div className={styles._2}>
+      <h1 className={styles._3}>Phê duyệt trường học</h1>
+      <p className={styles._4}>Duyệt đơn đăng ký của các trường. Hệ thống sẽ tự động deploy smart contract và tạo tài khoản quản trị.</p>
 
       {message && (
-        <div className={`p-4 rounded-xl text-sm mb-6 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+        <div className={`${styles._0} ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
           {message.text}
         </div>
       )}
 
       {showResult && (
-        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 rounded-xl p-6 mb-6 space-y-3">
-          <h3 className="font-bold text-blue-800 dark:text-blue-300">Kết quả phê duyệt</h3>
-          <div className="text-sm space-y-1 text-blue-700 dark:text-blue-400">
-            <p><span className="font-semibold">Contract:</span> <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded text-xs">{showResult.contractAddress}</code></p>
-            <p><span className="font-semibold">Email admin:</span> {showResult.adminEmail}</p>
-            <p><span className="font-semibold">Mật khẩu tạm thời:</span> <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded text-xs font-bold">{showResult.tempPassword}</code></p>
+        <div className={styles._5}>
+          <h3 className={styles._6}>Kết quả phê duyệt</h3>
+          <div className={styles._7}>
+            <p><span className={styles._8}>Contract:</span> <code className={styles._9}>{showResult.contractAddress}</code></p>
+            <p><span className={styles._8}>Email admin:</span> {showResult.adminEmail}</p>
+            <p><span className={styles._8}>Mật khẩu tạm thời:</span> <code className={styles._10}>{showResult.tempPassword}</code></p>
           </div>
-          <p className="text-xs text-blue-500">Đã gửi email chứa thông tin trên đến admin trường.</p>
+          <p className={styles._11}>Đã gửi email chứa thông tin trên đến admin trường.</p>
         </div>
       )}
 
       {institutions.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <p className="text-lg font-semibold">Không có yêu cầu đăng ký nào</p>
-          <p className="text-sm mt-1">Các trường đăng ký sẽ xuất hiện ở đây.</p>
+        <div className={styles._12}>
+          <p className={styles._13}>Không có yêu cầu đăng ký nào</p>
+          <p className={styles._14}>Các trường đăng ký sẽ xuất hiện ở đây.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className={styles._15}>
           {institutions.map((inst) => (
-            <div key={inst.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 flex items-center justify-between">
+            <div key={inst.id} className={styles._16}>
               <div>
-                <h3 className="font-bold text-gray-900 dark:text-white">{inst.name}</h3>
-                <p className="text-sm text-gray-500">Mã: <span className="font-mono font-bold">{inst.code}</span></p>
-                <p className="text-sm text-gray-500">Email: {inst.email}</p>
-                <p className="text-xs text-gray-400">Đăng ký: {new Date(inst.createdAt).toLocaleDateString('vi-VN')}</p>
+                <h3 className={styles._17}>{inst.name}</h3>
+                <p className={styles._18}>Mã: <span className={styles._19}>{inst.code}</span></p>
+                <p className={styles._18}>Email: {inst.email}</p>
+                <p className={styles._20}>Đăng ký: {new Date(inst.createdAt).toLocaleDateString('vi-VN')}</p>
               </div>
-              <div className="flex gap-3">
+              <div className={styles._21}>
                 <button onClick={() => handleReject(inst.id)} disabled={actionLoading === inst.id}
-                  className="px-4 py-2 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 disabled:opacity-50">
+                  className={styles._22}>
                   Từ chối
                 </button>
                 <button onClick={() => handleApprove(inst.id)} disabled={actionLoading === inst.id}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-hover disabled:opacity-60">
+                  className={styles._23}>
                   {actionLoading === inst.id ? 'Đang xử lý...' : 'Phê duyệt'}
                 </button>
               </div>
