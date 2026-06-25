@@ -1,159 +1,104 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { BrowserProvider } from "ethers";
-
-export type UserRole = "issuer" | "student" | "employer" | "sysadmin";
-
-export interface User {
-  email: string;
-  name: string;
-  role: UserRole;
-  orgName?: string;
-  walletAddress?: string;
-  loginType?: "credentials" | "metamask";
-}
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { BrowserProvider } from 'ethers';
+import { authApi } from '../services/api';
+import type { User } from '../types';
+export type { UserRole } from '../types';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => Promise<boolean>;
-  loginWithMetaMask: (preferredRole?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithMetaMask: () => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const mockUsers: Record<UserRole, User> = {
-  issuer: {
-    email: "admin@hust.edu.vn",
-    name: "Nguyễn Văn A (HUST Admin)",
-    role: "issuer",
-    orgName: "Đại học Bách Khoa Hà Nội",
-  },
-  student: {
-    email: "student@student.edu.vn",
-    name: "Trần Thị B (Sinh viên)",
-    role: "student",
-    orgName: "Đại học Bách Khoa Hà Nội",
-  },
-  employer: {
-    email: "hr@company.com",
-    name: "Phạm Minh C (HR Manager)",
-    role: "employer",
-    orgName: "Vingroup",
-  },
-  sysadmin: {
-    email: "sysadmin@blockchain.org",
-    name: "Lê Hoàng D (System Admin)",
-    role: "sysadmin",
-    orgName: "Blockchain Certification Network",
-  },
-};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load user session from localStorage
-    const savedUser = localStorage.getItem("auth_user");
-    if (savedUser) {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('auth_user');
+    if (token && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error("Failed to parse saved user", e);
-      }
+      } catch { }
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, role: UserRole): Promise<boolean> => {
-    setIsLoading(true);
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    const selectedUser = mockUsers[role];
-    if (selectedUser) {
-      const loggedUser: User = { 
-        ...selectedUser, 
-        email, 
-        loginType: "credentials" 
-      };
-      setUser(loggedUser);
-      localStorage.setItem("auth_user", JSON.stringify(loggedUser));
-      setIsLoading(false);
-      return true;
-    }
-    setIsLoading(false);
-    return false;
+  const saveSession = (token: string, user: User) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    setUser(user);
   };
 
-  const loginWithMetaMask = async (preferredRole?: UserRole): Promise<{ success: boolean; error?: string }> => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      if (typeof window === "undefined" || !window.ethereum) {
-        setIsLoading(false);
-        return { success: false, error: "MetaMask chưa được cài đặt. Vui lòng cài đặt MetaMask Extension để tiếp tục." };
-      }
-
-      // Request account access
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (!accounts || accounts.length === 0) {
-        setIsLoading(false);
-        return { success: false, error: "Không tìm thấy tài khoản ví nào được kết nối." };
-      }
-
-      const walletAddress = accounts[0];
-      
-      // Auto-assign roles or fallback to preferredRole (default is employer)
-      let role: UserRole = preferredRole || "employer";
-      
-      // Dev friendly check for Hardhat Account #0
-      const isDevAdmin = walletAddress.toLowerCase() === "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266".toLowerCase();
-      if (isDevAdmin) {
-        role = "issuer";
-      }
-
-      const mockData = mockUsers[role];
-      const displayName = isDevAdmin 
-        ? `HUST Admin (${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)})`
-        : mockData.role === "employer"
-        ? `Nhà tuyển dụng (${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)})`
-        : `Sinh viên (${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)})`;
-
-      const loggedUser: User = {
-        email: isDevAdmin ? "admin@hust.edu.vn" : mockData.email,
-        name: displayName,
-        role: role,
-        orgName: mockData.orgName,
-        walletAddress: walletAddress,
-        loginType: "metamask"
-      };
-
-      setUser(loggedUser);
-      localStorage.setItem("auth_user", JSON.stringify(loggedUser));
+      const data = await authApi.login(email, password);
+      saveSession(data.token, data.user);
       setIsLoading(false);
       return { success: true };
     } catch (err: any) {
-      console.error("MetaMask login error", err);
       setIsLoading(false);
-      return { 
-        success: false, 
-        error: err.code === 4001 
-          ? "Bạn đã từ chối kết nối ví trong MetaMask." 
-          : err.message || "Lỗi khi kết nối ví MetaMask." 
-      };
+      return { success: false, error: err.message || 'Đăng nhập thất bại' };
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    setIsLoading(true);
+    try {
+      const data = await authApi.loginGoogle(credential);
+      saveSession(data.token, { ...data.user, loginType: 'google' });
+      setIsLoading(false);
+      return { success: true };
+    } catch (err: any) {
+      setIsLoading(false);
+      return { success: false, error: err.message || 'Đăng nhập Google thất bại' };
+    }
+  }, []);
+
+  const loginWithMetaMask = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      if (typeof window === 'undefined' || !window.ethereum) {
+        setIsLoading(false);
+        return { success: false, error: 'Vui lòng cài đặt MetaMask' };
+      }
+
+      const provider = new BrowserProvider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      const signer = await provider.getSigner();
+      const walletAddress = await signer.getAddress();
+
+      const nonceRes = await authApi.getMetamaskLoginNonce(walletAddress);
+      const signature = await signer.signMessage(nonceRes.message);
+      const data = await authApi.loginMetamask(walletAddress, signature);
+
+      saveSession(data.token, { ...data.user, loginType: 'metamask' });
+      setIsLoading(false);
+      return { success: true };
+    } catch (err: any) {
+      setIsLoading(false);
+      if (err.code === 4001) return { success: false, error: 'Bạn đã từ chối ký' };
+      return { success: false, error: err.message || 'Lỗi MetaMask' };
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_user');
     setUser(null);
-    localStorage.removeItem("auth_user");
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithMetaMask, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithMetaMask, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -161,9 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 }
-

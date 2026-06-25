@@ -6,7 +6,8 @@ export interface User {
   name: string;
   role: UserRole;
   orgName?: string;
+  institutionName?: string;
   walletAddress?: string;
-  loginType?: "credentials" | "metamask";
+  loginType?: "credentials" | "metamask" | "google";
   createdAt?: string;
 }
