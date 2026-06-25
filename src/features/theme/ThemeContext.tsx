@@ -14,10 +14,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const STORAGE_KEY = "certichain_theme";
 
 function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+
   try {
-    if (typeof window === "undefined") return "light";
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "dark" || stored === "light") return stored;
+    if (document.documentElement.classList.contains("dark")) return "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   } catch {
     return "light";
@@ -25,19 +27,17 @@ function getInitialTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
 
   useEffect(() => {
-    const t = getInitialTheme();
-    setTheme(t);
-    document.documentElement.classList.toggle("dark", t === "dark");
-  }, []);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem(STORAGE_KEY, theme);
+  }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme(prev => {
+    setTheme((prev) => {
       const next = prev === "dark" ? "light" : "dark";
       document.documentElement.classList.toggle("dark", next === "dark");
-      localStorage.setItem(STORAGE_KEY, next);
       return next;
     });
   }, []);

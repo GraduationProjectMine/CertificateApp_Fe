@@ -53,14 +53,14 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await authApi.registerInstitution({
+      await authApi.registerInstitution({
         institutionName: form.institutionName,
         institutionCode: form.institutionCode.toUpperCase(),
         email: form.email,
         adminName: form.adminName,
         password: form.password,
       });
-      setSuccess(result.message || "Đăng ký thành công. Vui lòng chờ Super Admin phê duyệt.");
+      setSuccess("Đăng ký thành công! Vui lòng kiểm tra email để đăng nhập.");
       setForm(initialForm);
     } catch (err: unknown) {
       setError(getErrorMessage(err));
@@ -73,7 +73,6 @@ export default function RegisterPage() {
     <main className={`auth-page-shell ${styles._1}`}>
       <div className={styles._2} />
       <div className={styles._3} />
-
       <div className={styles._4}>
         <section className={`auth-visual-panel ${styles._5}`}>
           <div className={`motion-float ${styles._6}`} />
@@ -246,7 +245,7 @@ export default function RegisterPage() {
               </label>
 
               <Button type="submit" disabled={isSubmitting} className={styles._39}>
-                {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu đăng ký"}
+                {isSubmitting ? "Đang tạo tài khoản..." : "Đăng ký tạo tài khoản"}
               </Button>
             </form>
 

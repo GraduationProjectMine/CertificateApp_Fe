@@ -1,4 +1,5 @@
 @reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
  @apply fixed inset-0 z-50 flex items-center justify-center;
 }

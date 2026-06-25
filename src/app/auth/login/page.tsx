@@ -89,7 +89,7 @@ export default function LoginPage() {
         text: "signin_with",
       });
     } catch {
-      setError("Không thể khởi tạo đăng nhập Google");
+      window.setTimeout(() => setError("Không thể khởi tạo đăng nhập Google"), 0);
     }
   }, [handleGoogleResponse]);
 
@@ -119,7 +119,6 @@ export default function LoginPage() {
     <main className={`auth-page-shell ${styles._1}`}>
       <div className={styles._2} />
       <div className={styles._3} />
-
       <div className={styles._4}>
         <section className={`auth-visual-panel ${styles._5}`}>
           <div className={`motion-float ${styles._6}`} />

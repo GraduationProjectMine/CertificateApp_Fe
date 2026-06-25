@@ -7,6 +7,10 @@ import { ThemeProvider } from "@/features/theme/ThemeContext";
 import { I18nProvider } from "@/features/i18n/I18nContext";
 import { AppMotion } from "@/components/motion/AppMotion";
 
+const themeScript = `
+(function(){try{var t=localStorage.getItem("certichain_theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,6 +22,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${styles._0}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={styles._1}>
         <ThemeProvider>
           <I18nProvider>

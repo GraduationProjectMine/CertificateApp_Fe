@@ -1,4 +1,5 @@
 @reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
  @apply flex flex-col items-center justify-center py-16 text-center;
 }

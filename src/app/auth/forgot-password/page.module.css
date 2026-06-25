@@ -1,4 +1,5 @@
 @reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
  @apply relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white;
 

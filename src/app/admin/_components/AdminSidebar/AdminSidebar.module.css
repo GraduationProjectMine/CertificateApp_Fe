@@ -1,4 +1,5 @@
 @reference "../../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
  @apply h-16 flex items-center justify-between px-5 border-b border-slate-800/50;
 }

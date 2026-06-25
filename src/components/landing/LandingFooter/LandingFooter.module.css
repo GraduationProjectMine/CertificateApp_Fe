@@ -1,4 +1,5 @@
 @reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
  @apply bg-gray-900 dark:bg-black text-gray-400 py-16 border-t border-gray-800;
 }
