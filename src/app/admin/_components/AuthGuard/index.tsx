@@ -25,7 +25,7 @@ export function UnauthorizedScreen() {
       </div>
       <h1 className={styles._9}>Truy Cập Bị Chặn</h1>
       <p className={styles._10}>
-        Tài khoản đăng nhập hiện tại không thuộc nhóm quản lý nhà trường. Bạn cần đăng nhập bằng tài khoản HUST Admin hoặc ví MetaMask có thẩm quyền.
+        Tài khoản đăng nhập hiện tại không thuộc nhóm quản lý nhà trường.
       </p>
       <div className={styles._11}>
         <Link
