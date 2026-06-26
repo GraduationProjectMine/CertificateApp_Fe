@@ -1,0 +1,58 @@
+@reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply space-y-6 animate-fadeIn font-sans;
+}
+
+._2 {
+ @apply text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight;
+}
+
+._3 {
+ @apply text-xs text-gray-500 mt-1;
+}
+
+._4 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-sm;
+}
+
+._5 {
+ @apply overflow-x-auto;
+}
+
+._6 {
+ @apply w-full text-left border-collapse text-xs;
+}
+
+._7 {
+ @apply bg-slate-50 dark:bg-slate-900 border-b border-gray-200 font-bold text-gray-600 dark:text-gray-400;
+}
+
+._8 {
+ @apply p-4 sm:p-5;
+}
+
+._9 {
+ @apply divide-y text-gray-700;
+}
+
+._10 {
+ @apply dark:hover:bg-gray-800/10 transition-colors;
+
+}
+
+._11 {
+ @apply p-4 sm:p-5 font-semibold;
+}
+
+._12 {
+ @apply p-4 sm:p-5 font-bold text-gray-900 dark:text-white;
+}
+
+._13 {
+ @apply p-4 sm:p-5 font-semibold text-primary dark:text-teal-400;
+}
+
+._14 {
+ @apply p-4 sm:p-5 text-gray-500 dark:text-gray-400;
+}

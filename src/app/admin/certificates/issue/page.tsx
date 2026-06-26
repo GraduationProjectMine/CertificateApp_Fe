@@ -1,10 +1,10 @@
 "use client";
-
+import styles from "./page.module.css";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function CreateCredentialWizard() {
+export default function CreateCertificateWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   
@@ -77,19 +77,19 @@ export default function CreateCredentialWizard() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+    <div className={styles._1}>
       {/* Title */}
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Cấp phát văn bằng mới</h1>
-        <p className="text-xs text-gray-500 mt-1">Quy trình cấp bằng động vĩnh viễn lưu trữ trên IPFS và định danh mật mã hóa trên blockchain.</p>
+        <h1 className={styles._2}>Cấp phát văn bằng mới</h1>
+        <p className={styles._3}>Quy trình cấp bằng động vĩnh viễn lưu trữ trên IPFS và định danh mật mã hóa trên blockchain.</p>
       </div>
 
       {/* Progress Wizard Bar */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-5 shadow-sm">
-        <div className="flex justify-between items-center relative">
-          <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gray-100 dark:bg-gray-800 -translate-y-1/2 -z-10"></div>
+      <div className={styles._4}>
+        <div className={styles._5}>
+          <div className={styles._6}></div>
           <div 
-            className="absolute top-1/2 left-4 h-0.5 bg-primary -translate-y-1/2 -z-10 transition-all duration-500" 
+            className={styles._7} 
             style={{ width: `${((currentStep - 1) / (stepsList.length - 1)) * 100}%` }}
           ></div>
 
@@ -98,10 +98,10 @@ export default function CreateCredentialWizard() {
               key={s.step}
               disabled={s.step > currentStep && !selectedStudent}
               onClick={() => setCurrentStep(s.step)}
-              className="flex flex-col items-center gap-2 group focus:outline-none"
+              className={`group ${styles._8}`}
             >
               <div 
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${
+                className={`${styles._0} ${
                   s.step < currentStep
                     ? "bg-primary border-primary text-white"
                     : s.step === currentStep
@@ -112,7 +112,7 @@ export default function CreateCredentialWizard() {
                 {s.step < currentStep ? "✓" : s.step}
               </div>
               <span 
-                className={`hidden md:block text-[10px] font-bold uppercase tracking-wider ${
+                className={`${styles._79} ${
                   s.step === currentStep ? "text-primary" : "text-gray-400"
                 }`}
               >
@@ -124,76 +124,76 @@ export default function CreateCredentialWizard() {
       </div>
 
       {/* Dynamic Content Panel */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 sm:p-8 shadow-sm min-h-[380px] flex flex-col justify-between">
+      <div className={styles._9}>
         
         {/* STEP 1 CONTENT: SELECT STUDENT */}
         {currentStep === 1 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className={styles._10}>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-1">Bước 1: Chọn sinh viên nhận bằng</h2>
-              <p className="text-xs text-gray-500">Tìm kiếm và chọn một sinh viên trong danh sách hồ sơ học tập để tiến hành cấp bằng.</p>
+              <h2 className={styles._11}>Bước 1: Chọn sinh viên nhận bằng</h2>
+              <p className={styles._12}>Tìm kiếm và chọn một sinh viên trong danh sách hồ sơ học tập để tiến hành cấp bằng.</p>
             </div>
 
-            <div className="space-y-4">
+            <div className={styles._13}>
               <input
                 type="text"
                 placeholder="Tìm kiếm sinh viên bằng họ tên hoặc mã số..."
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                className={styles._14}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
 
-              <div className="border border-gray-150 dark:border-gray-850 rounded-2xl overflow-hidden divide-y divide-gray-150 dark:divide-gray-850 max-h-48 overflow-y-auto">
+              <div className={styles._15}>
                 {filteredStudents.length > 0 ? (
                   filteredStudents.map((s) => (
                     <div
                       key={s.id}
                       onClick={() => setSelectedStudent(s)}
-                      className={`p-3 text-xs flex justify-between items-center cursor-pointer transition-colors ${
+                      className={`${styles._80} ${
                         selectedStudent?.id === s.id
                           ? "bg-primary/5 dark:bg-teal-950/20"
                           : "hover:bg-slate-50 dark:hover:bg-gray-800/20"
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-gray-900 dark:text-white">{s.name} ({s.code})</span>
-                        <span className="block text-[10px] text-gray-400 mt-0.5">{s.email}</span>
+                        <span className={styles._16}>{s.name} ({s.code})</span>
+                        <span className={styles._17}>{s.email}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-500 font-medium">{s.major}</span>
+                      <div className={styles._18}>
+                        <span className={styles._19}>{s.major}</span>
                         <input
                           type="radio"
                           checked={selectedStudent?.id === s.id}
                           onChange={() => {}}
-                          className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+                          className={styles._20}
                         />
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-xs text-gray-400">Không tìm thấy sinh viên nào khớp kết quả tìm kiếm.</div>
+                  <div className={styles._21}>Không tìm thấy sinh viên nào khớp kết quả tìm kiếm.</div>
                 )}
               </div>
 
               {selectedStudent && (
-                <div className="bg-slate-50 dark:bg-gray-850 border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-4 text-xs space-y-2">
-                  <div className="font-bold text-primary mb-1 uppercase tracking-wider">Thông tin sinh viên đã chọn:</div>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className={styles._22}>
+                  <div className={styles._23}>Thông tin sinh viên đã chọn:</div>
+                  <div className={styles._24}>
                     <div>
-                      <span className="block text-gray-400">Họ và tên:</span>
-                      <span className="block font-bold text-gray-800 dark:text-gray-200">{selectedStudent.name}</span>
+                      <span className={styles._25}>Họ và tên:</span>
+                      <span className={styles._26}>{selectedStudent.name}</span>
                     </div>
                     <div>
-                      <span className="block text-gray-400">Mã sinh viên:</span>
-                      <span className="block font-bold text-gray-800 dark:text-gray-200">{selectedStudent.code}</span>
+                      <span className={styles._25}>Mã sinh viên:</span>
+                      <span className={styles._26}>{selectedStudent.code}</span>
                     </div>
                     <div>
-                      <span className="block text-gray-400">Ngành học:</span>
-                      <span className="block font-bold text-gray-800 dark:text-gray-200">{selectedStudent.major}</span>
+                      <span className={styles._25}>Ngành học:</span>
+                      <span className={styles._26}>{selectedStudent.major}</span>
                     </div>
                     <div>
-                      <span className="block text-gray-400">Hòm thư:</span>
-                      <span className="block font-semibold text-gray-800 dark:text-gray-200">{selectedStudent.email}</span>
+                      <span className={styles._25}>Hòm thư:</span>
+                      <span className={styles._27}>{selectedStudent.email}</span>
                     </div>
                   </div>
                 </div>
@@ -204,35 +204,35 @@ export default function CreateCredentialWizard() {
 
         {/* STEP 2 CONTENT: ENTER CREDENTIAL DETAILS */}
         {currentStep === 2 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className={styles._10}>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-1">Bước 2: Khai báo thông tin văn bằng</h2>
-              <p className="text-xs text-gray-500">Nhập các thuộc tính nghiệp vụ chính của chứng chỉ số tốt nghiệp.</p>
+              <h2 className={styles._11}>Bước 2: Khai báo thông tin văn bằng</h2>
+              <p className={styles._12}>Nhập các thuộc tính nghiệp vụ chính của chứng chỉ số tốt nghiệp.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div className={styles._28}>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Tên văn bằng</label>
+                <label className={styles._29}>Tên văn bằng</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.certName}
                   onChange={(e) => setFormData({ ...formData, certName: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Ngành học</label>
+                <label className={styles._29}>Ngành học</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.major}
                   onChange={(e) => setFormData({ ...formData, major: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Xếp loại tốt nghiệp</label>
+                <label className={styles._29}>Xếp loại tốt nghiệp</label>
                 <select
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.classification}
                   onChange={(e) => setFormData({ ...formData, classification: e.target.value })}
                 >
@@ -243,46 +243,46 @@ export default function CreateCredentialWizard() {
                 </select>
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Điểm học tập (GPA)</label>
+                <label className={styles._29}>Điểm học tập (GPA)</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.gpa}
                   onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Số hiệu văn bằng</label>
+                <label className={styles._29}>Số hiệu văn bằng</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.serialNumber}
                   onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Số vào sổ quyết định</label>
+                <label className={styles._29}>Số vào sổ quyết định</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.registryNumber}
                   onChange={(e) => setFormData({ ...formData, registryNumber: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Ngày cấp bằng</label>
+                <label className={styles._29}>Ngày cấp bằng</label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.issueDate}
                   onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1.5">Người ký quyết định</label>
+                <label className={styles._29}>Người ký quyết định</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+                  className={styles._30}
                   value={formData.signer}
                   onChange={(e) => setFormData({ ...formData, signer: e.target.value })}
                 />
@@ -293,21 +293,21 @@ export default function CreateCredentialWizard() {
 
         {/* STEP 3 CONTENT: TEMPLATE SELECTOR AND DIGITAL PREVIEW */}
         {currentStep === 3 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className={styles._10}>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-1">Bước 3: Chọn mẫu văn bằng & Preview</h2>
-              <p className="text-xs text-gray-500">Xem trước văn bằng thực tế hiển thị động để đảm bảo hình thức thẩm mỹ.</p>
+              <h2 className={styles._11}>Bước 3: Chọn mẫu văn bằng & Preview</h2>
+              <p className={styles._12}>Xem trước văn bằng thực tế hiển thị động để đảm bảo hình thức thẩm mỹ.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className={styles._31}>
               {/* Left templates list */}
-              <div className="md:col-span-4 space-y-3">
-                <span className="block text-xs font-bold text-gray-500 dark:text-gray-450 uppercase tracking-wide">Mẫu giao diện</span>
+              <div className={styles._32}>
+                <span className={styles._33}>Mẫu giao diện</span>
                 {templates.map((temp) => (
                   <button
                     key={temp.id}
                     onClick={() => setSelectedTemplate(temp.id)}
-                    className={`w-full p-4 rounded-xl text-left border text-xs font-semibold transition-all ${
+                    className={`${styles._81} ${
                       selectedTemplate === temp.id
                         ? "bg-primary/5 border-primary ring-2 ring-primary/10"
                         : "bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-850 hover:bg-slate-50 dark:hover:bg-slate-800/40"
@@ -319,49 +319,49 @@ export default function CreateCredentialWizard() {
               </div>
 
               {/* Right Certificate Preview Card */}
-              <div className="md:col-span-8 bg-slate-50 dark:bg-gray-850 p-4 border border-gray-200/50 dark:border-gray-800/50 rounded-3xl flex justify-center">
-                <div className="w-full max-w-[420px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg rounded-2xl p-6 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-secondary"></div>
+              <div className={styles._34}>
+                <div className={styles._35}>
+                  <div className={styles._36}></div>
                   
-                  <div className="text-center space-y-1 mb-5">
-                    <span className="block text-[8px] text-gray-400 font-bold uppercase tracking-widest">ĐẠI HỌC BÁCH KHOA HÀ NỘI</span>
-                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase leading-none">BẰNG CỬ NHÂN</h3>
+                  <div className={styles._37}>
+                    <span className={styles._38}>ĐẠI HỌC BÁCH KHOA HÀ NỘI</span>
+                    <h3 className={styles._39}>BẰNG CỬ NHÂN</h3>
                   </div>
 
-                  <div className="space-y-4 text-xs text-center">
-                    <div className="py-2.5 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-gray-150 dark:border-gray-800 rounded-xl">
-                      <span className="block text-[8px] text-gray-450 uppercase tracking-wider font-semibold">Cấp cho sinh viên</span>
-                      <span className="block text-sm font-extrabold text-gray-800 dark:text-white mt-0.5">{selectedStudent?.name || "Nguyễn Văn Hùng"}</span>
+                  <div className={styles._40}>
+                    <div className={styles._41}>
+                      <span className={styles._42}>Cấp cho sinh viên</span>
+                      <span className={styles._43}>{selectedStudent?.name || "Nguyễn Văn Hùng"}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-left px-2">
+                    <div className={styles._44}>
                       <div>
-                        <span className="block text-[8px] text-gray-450 uppercase">Chuyên ngành</span>
-                        <span className="block font-bold text-[11px] text-gray-700 dark:text-gray-300">{formData.major}</span>
+                        <span className={styles._45}>Chuyên ngành</span>
+                        <span className={styles._46}>{formData.major}</span>
                       </div>
                       <div>
-                        <span className="block text-[8px] text-gray-450 uppercase">Xếp loại</span>
-                        <span className="block font-bold text-[11px] text-gray-700 dark:text-gray-300">{formData.classification} (GPA {formData.gpa})</span>
+                        <span className={styles._45}>Xếp loại</span>
+                        <span className={styles._46}>{formData.classification} (GPA {formData.gpa})</span>
                       </div>
                       <div>
-                        <span className="block text-[8px] text-gray-450 uppercase">Số hiệu</span>
-                        <span className="block font-mono text-[10px] text-gray-700 dark:text-gray-350">{formData.serialNumber}</span>
+                        <span className={styles._45}>Số hiệu</span>
+                        <span className={styles._47}>{formData.serialNumber}</span>
                       </div>
                       <div>
-                        <span className="block text-[8px] text-gray-450 uppercase">Người ký</span>
-                        <span className="block font-bold text-[10px] text-gray-700 dark:text-gray-300 truncate" title={formData.signer}>{formData.signer}</span>
+                        <span className={styles._45}>Người ký</span>
+                        <span className={styles._48} title={formData.signer}>{formData.signer}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-[9px] text-gray-400">
+                  <div className={styles._49}>
                     <div>
                       <span>Số vào sổ: </span>
-                      <span className="font-mono text-gray-600 dark:text-gray-400">{formData.registryNumber}</span>
+                      <span className={styles._50}>{formData.registryNumber}</span>
                     </div>
-                    <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 p-0.5 rounded border border-gray-200/50">
+                    <div className={styles._51}>
                       {/* Fake QR representation */}
-                      <div className="w-full h-full border border-dashed border-gray-300 flex items-center justify-center font-bold text-[7px] text-gray-400 uppercase select-none">QR Code</div>
+                      <div className={styles._52}>QR Code</div>
                     </div>
                   </div>
                 </div>
@@ -372,23 +372,23 @@ export default function CreateCredentialWizard() {
 
         {/* STEP 4 CONTENT: SIGNING & UPLOAD TO IPFS */}
         {currentStep === 4 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className={styles._10}>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-1">Bước 4: Ký số & Upload tệp lên IPFS</h2>
-              <p className="text-xs text-gray-500">Tạo tệp PDF văn bằng, mã hóa hash SHA-256 của văn bằng và ký số số hóa trước khi lưu phi tập trung.</p>
+              <h2 className={styles._11}>Bước 4: Ký số & Upload tệp lên IPFS</h2>
+              <p className={styles._12}>Tạo tệp PDF văn bằng, mã hóa hash SHA-256 của văn bằng và ký số số hóa trước khi lưu phi tập trung.</p>
             </div>
 
-            <div className="max-w-md mx-auto bg-slate-50 dark:bg-gray-850 border border-gray-200/50 dark:border-gray-800/50 rounded-3xl p-6 text-xs space-y-5">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center font-semibold">
+            <div className={styles._53}>
+              <div className={styles._54}>
+                <div className={styles._55}>
                   <span>Trạng thái tệp:</span>
-                  {ipfsStatus === "idle" && <span className="text-gray-450 font-bold">Chưa xử lý</span>}
-                  {ipfsStatus === "processing" && <span className="text-primary font-bold animate-pulse">Đang tải lên IPFS...</span>}
-                  {ipfsStatus === "success" && <span className="text-green-500 font-bold">✓ Hoàn tất</span>}
+                  {ipfsStatus === "idle" && <span className={styles._56}>Chưa xử lý</span>}
+                  {ipfsStatus === "processing" && <span className={styles._57}>Đang tải lên IPFS...</span>}
+                  {ipfsStatus === "success" && <span className={styles._58}>✓ Hoàn tất</span>}
                 </div>
-                <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div className={styles._59}>
                   <div 
-                    className={`h-full bg-primary transition-all duration-1000 ${
+                    className={`${styles._82} ${
                       ipfsStatus === "idle" ? "w-0" : ipfsStatus === "processing" ? "w-1/2" : "w-full"
                     }`}
                   ></div>
@@ -396,14 +396,14 @@ export default function CreateCredentialWizard() {
               </div>
 
               {ipfsStatus === "success" && (
-                <div className="space-y-3.5 border-t border-gray-200/60 dark:border-gray-800/60 pt-4">
+                <div className={styles._60}>
                   <div>
-                    <span className="block text-gray-400 uppercase text-[9px] font-bold">Mã định danh IPFS CID:</span>
-                    <span className="block font-mono text-xs text-primary dark:text-teal-400 break-all select-all">{ipfsCid}</span>
+                    <span className={styles._61}>Mã định danh IPFS CID:</span>
+                    <span className={styles._62}>{ipfsCid}</span>
                   </div>
                   <div>
-                    <span className="block text-gray-400 uppercase text-[9px] font-bold">Mã băm SHA-256 PDF:</span>
-                    <span className="block font-mono text-xs text-gray-700 dark:text-gray-300 break-all select-all">{pdfHash}</span>
+                    <span className={styles._61}>Mã băm SHA-256 PDF:</span>
+                    <span className={styles._63}>{pdfHash}</span>
                   </div>
                 </div>
               )}
@@ -412,7 +412,7 @@ export default function CreateCredentialWizard() {
                 <button
                   type="button"
                   onClick={runIpfsFlow}
-                  className="w-full py-3 px-4 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-md transition-all active:scale-[0.98] select-none"
+                  className={styles._64}
                 >
                   {ipfsStatus === "success" ? "Tạo & Ký số lại" : "Tiến hành Ký số & Upload IPFS"}
                 </button>
@@ -423,48 +423,48 @@ export default function CreateCredentialWizard() {
 
         {/* STEP 5 CONTENT: WRITE TO BLOCKCHAIN */}
         {currentStep === 5 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className={styles._10}>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-1">Bước 5: Ghi nhận giao dịch Blockchain</h2>
-              <p className="text-xs text-gray-500">Khóa thông tin mã hash/IPFS CID vĩnh viễn lên mạng lưới blockchain thông qua Smart Contract.</p>
+              <h2 className={styles._11}>Bước 5: Ghi nhận giao dịch Blockchain</h2>
+              <p className={styles._12}>Khóa thông tin mã hash/IPFS CID vĩnh viễn lên mạng lưới blockchain thông qua Smart Contract.</p>
             </div>
 
-            <div className="max-w-md mx-auto bg-slate-50 dark:bg-gray-850 border border-gray-200/50 dark:border-gray-800/50 rounded-3xl p-6 text-xs space-y-5">
-              <div className="space-y-3 text-slate-700 dark:text-slate-350">
-                <div className="flex justify-between">
+            <div className={styles._53}>
+              <div className={`dark:text-slate-350 ${styles._65}`}>
+                <div className={styles._66}>
                   <span>Mạng blockchain:</span>
-                  <span className="font-bold text-gray-900 dark:text-white">Sepolia Ethereum Testnet</span>
+                  <span className={styles._67}>Sepolia Ethereum Testnet</span>
                 </div>
-                <div className="flex justify-between">
+                <div className={styles._66}>
                   <span>Đơn vị phát hành:</span>
-                  <span className="font-bold text-gray-900 dark:text-white">{formData.signer}</span>
+                  <span className={styles._67}>{formData.signer}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className={styles._66}>
                   <span>Mã băm ghi nhận:</span>
-                  <span className="font-mono text-primary dark:text-teal-400 truncate w-40" title={pdfHash || "Chưa có"}>
+                  <span className={styles._68} title={pdfHash || "Chưa có"}>
                     {pdfHash || "Hãy hoàn thành Bước 4"}
                   </span>
                 </div>
               </div>
 
               {blockchainStatus === "processing" && (
-                <div className="text-center py-4 space-y-3">
-                  <svg className="animate-spin h-8 w-8 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <div className={styles._69}>
+                  <svg className={styles._70} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className={styles._71} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className={styles._72} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span className="block text-[11px] text-gray-500 animate-pulse">Đang gửi giao dịch Smart Contract, vui lòng ký xác nhận ví MetaMask...</span>
+                  <span className={styles._73}>Đang gửi giao dịch Smart Contract, vui lòng ký xác nhận ví MetaMask...</span>
                 </div>
               )}
 
               {blockchainStatus === "success" && (
-                <div className="space-y-3.5 border-t border-gray-200/60 dark:border-gray-800/60 pt-4 bg-green-500/5 p-3 rounded-2xl border border-green-500/10">
-                  <div className="text-green-500 font-bold flex items-center gap-1.5 text-xs">
+                <div className={styles._74}>
+                  <div className={styles._75}>
                     <span>✓ Cấp phát văn bằng On-chain thành công!</span>
                   </div>
                   <div>
-                    <span className="block text-gray-400 uppercase text-[9px] font-bold">Transaction Hash:</span>
-                    <span className="block font-mono text-[10.5px] text-secondary dark:text-blue-400 break-all select-all">{txHash}</span>
+                    <span className={styles._61}>Transaction Hash:</span>
+                    <span className={styles._76}>{txHash}</span>
                   </div>
                 </div>
               )}
@@ -473,8 +473,8 @@ export default function CreateCredentialWizard() {
                 <button
                   type="button"
                   disabled={!pdfHash}
-                  onClick={blockchainStatus === "success" ? () => router.push("/admin/credentials") : runBlockchainFlow}
-                  className={`w-full py-3.5 px-4 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/10 transition-all active:scale-[0.98] select-none ${
+                  onClick={blockchainStatus === "success" ? () => router.push("/admin/certificates") : runBlockchainFlow}
+                  className={`${styles._83} ${
                     !pdfHash ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
@@ -486,12 +486,12 @@ export default function CreateCredentialWizard() {
         )}
 
         {/* Wizard Actions Footer */}
-        <div className="flex justify-between items-center border-t border-gray-100 dark:border-gray-800 pt-6 mt-6">
+        <div className={styles._77}>
           <button
             type="button"
             disabled={currentStep === 1 || blockchainStatus === "processing"}
             onClick={() => setCurrentStep(prev => prev - 1)}
-            className={`px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 select-none ${
+            className={`${styles._84} ${
               currentStep === 1 ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
@@ -506,7 +506,7 @@ export default function CreateCredentialWizard() {
                 (currentStep === 4 && ipfsStatus !== "success")
               }
               onClick={() => setCurrentStep(prev => prev + 1)}
-              className={`px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none ${
+              className={`${styles._85} ${
                 ((currentStep === 1 && !selectedStudent) || (currentStep === 4 && ipfsStatus !== "success"))
                   ? "opacity-50 cursor-not-allowed"
                   : "active:scale-[0.98]"
@@ -515,7 +515,7 @@ export default function CreateCredentialWizard() {
               Tiếp tục
             </button>
           ) : (
-            <div className="w-1"></div>
+            <div className={styles._78}></div>
           )}
         </div>
       </div>

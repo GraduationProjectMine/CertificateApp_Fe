@@ -1,0 +1,2 @@
+@reference "./globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));

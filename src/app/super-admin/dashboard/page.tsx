@@ -1,5 +1,5 @@
 "use client";
-
+import styles from "./page.module.css";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../../features/auth/components/AuthContext';
@@ -14,26 +14,26 @@ export default function SuperAdminDashboard() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-6">Quản trị hệ thống</h1>
+    <div className={styles._1}>
+      <h1 className={styles._2}>Quản trị hệ thống</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-          <p className="text-3xl font-bold text-primary">{stats.pendingInstitutions}</p>
-          <p className="text-sm text-gray-500">Chờ duyệt</p>
+      <div className={styles._3}>
+        <div className={styles._4}>
+          <p className={styles._5}>{stats.pendingInstitutions}</p>
+          <p className={styles._6}>Chờ duyệt</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-          <p className="text-3xl font-bold text-green-600">{stats.activeInstitutions}</p>
-          <p className="text-sm text-gray-500">Đã kích hoạt</p>
+        <div className={styles._4}>
+          <p className={styles._7}>{stats.activeInstitutions}</p>
+          <p className={styles._6}>Đã kích hoạt</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-          <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
-          <p className="text-sm text-gray-500">Người dùng</p>
+        <div className={styles._4}>
+          <p className={styles._8}>{stats.totalUsers}</p>
+          <p className={styles._6}>Người dùng</p>
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <Link href="/super-admin/pending" className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-hover">
+      <div className={styles._9}>
+        <Link href="/super-admin/pending" className={styles._10}>
           Xem yêu cầu đăng ký
         </Link>
       </div>

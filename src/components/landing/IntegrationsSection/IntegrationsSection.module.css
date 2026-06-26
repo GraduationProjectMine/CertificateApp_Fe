@@ -1,0 +1,33 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply bg-slate-100 py-16 dark:bg-slate-950;
+}
+
+._2 {
+ @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center;
+}
+
+._3 {
+ @apply text-xs font-bold text-primary dark:text-teal-400 uppercase tracking-widest mb-4;
+}
+
+._4 {
+ @apply text-3xl font-bold text-gray-900 dark:text-white mb-4;
+}
+
+._5 {
+ @apply text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10;
+}
+
+._6 {
+ @apply flex flex-wrap justify-center items-center gap-4;
+}
+
+._7 {
+ @apply rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400;
+}
+
+._8 {
+ @apply mt-6 text-sm font-medium text-emerald-700 dark:text-emerald-300;
+}

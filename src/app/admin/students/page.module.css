@@ -1,0 +1,114 @@
+@reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply space-y-6 animate-fadeIn;
+}
+
+._2 {
+ @apply flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4;
+}
+
+._3 {
+ @apply text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight;
+}
+
+._4 {
+ @apply text-xs text-gray-500 mt-1;
+}
+
+._5 {
+ @apply flex gap-2 w-full sm:w-auto;
+}
+
+._6 {
+ @apply flex-1 sm:flex-initial px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none;
+}
+
+._7 {
+ @apply flex-1 sm:flex-initial px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-all;
+}
+
+._8 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 flex flex-col md:flex-row gap-4;
+}
+
+._9 {
+ @apply flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all;
+}
+
+._10 {
+ @apply flex gap-2.5;
+}
+
+._11 {
+ @apply px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300 focus:outline-none;
+}
+
+._12 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-sm;
+}
+
+._13 {
+ @apply overflow-x-auto;
+}
+
+._14 {
+ @apply w-full text-left border-collapse;
+}
+
+._15 {
+ @apply bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-400;
+}
+
+._16 {
+ @apply p-4 sm:p-5;
+}
+
+._17 {
+ @apply p-4 sm:p-5 text-right;
+}
+
+._18 {
+ @apply divide-y text-xs text-gray-700;
+}
+
+._19 {
+ @apply dark:hover:bg-gray-800/10 transition-colors;
+
+}
+
+._20 {
+ @apply p-4 sm:p-5 font-bold text-gray-900 dark:text-white;
+}
+
+._21 {
+ @apply p-4 sm:p-5 font-semibold text-gray-900 dark:text-white;
+}
+
+._22 {
+ @apply p-4 sm:p-5 font-medium;
+}
+
+._23 {
+ @apply p-4 sm:p-5 text-gray-500 dark:text-gray-400;
+}
+
+._24 {
+ @apply p-4 sm:p-5 font-bold text-center;
+}
+
+._25 {
+ @apply p-4 sm:p-5 text-right space-x-2;
+}
+
+._26 {
+ @apply text-xs font-semibold text-primary hover:underline;
+}
+
+._27 {
+ @apply text-xs font-semibold text-danger hover:underline;
+}
+
+._0 {
+ @apply px-2 py-0.5 rounded-md text-[10px] font-bold border;
+}

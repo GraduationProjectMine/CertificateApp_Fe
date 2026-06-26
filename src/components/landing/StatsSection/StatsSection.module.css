@@ -1,0 +1,25 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply border-y border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#eef2f7_52%,#fff7ed_100%)] py-16 dark:border-white/10 dark:bg-[linear-gradient(135deg,#030712_0%,#0f172a_55%,#1c1917_100%)];
+}
+
+._2 {
+ @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+._3 {
+ @apply grid grid-cols-1 gap-4 text-center md:grid-cols-3;
+}
+
+._4 {
+ @apply rounded-xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04];
+}
+
+._5 {
+ @apply text-4xl font-bold text-gray-900 dark:text-white;
+}
+
+._6 {
+ @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+}

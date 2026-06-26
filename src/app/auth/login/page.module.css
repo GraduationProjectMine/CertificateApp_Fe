@@ -1,0 +1,191 @@
+@reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply relative min-h-[100dvh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#030712] dark:text-white;
+
+}
+
+._2 {
+ @apply absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(20,184,166,0.18),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.16),transparent_26%),linear-gradient(180deg,transparent,rgba(15,23,42,0.04))] dark:bg-[radial-gradient(circle_at_20%_12%,rgba(20,184,166,0.22),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.18),transparent_26%),linear-gradient(180deg,transparent,rgba(15,23,42,0.78))];
+}
+
+._3 {
+ @apply absolute inset-0 opacity-[0.22] dark:opacity-[0.16] bg-[linear-gradient(to_right,#94a3b810_1px,transparent_1px),linear-gradient(to_bottom,#94a3b810_1px,transparent_1px)] bg-[size:28px_28px];
+}
+
+._4 {
+ @apply relative mx-auto grid min-h-[100dvh] max-w-7xl grid-cols-1 items-center gap-8 px-4 py-4 sm:px-6 lg:grid-cols-[1fr_440px] lg:px-8;
+}
+
+._5 {
+ @apply hidden lg:flex min-h-[660px] flex-col justify-between rounded-[1.5rem] border border-white/10 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/25 overflow-hidden;
+
+}
+
+._6 {
+ @apply absolute left-10 top-10 h-36 w-36 rounded-full bg-teal-400/20 blur-3xl;
+
+}
+
+._7 {
+ @apply absolute bottom-16 right-20 h-44 w-44 rounded-full bg-blue-500/20 blur-3xl;
+
+}
+
+._8 {
+ @apply relative z-10 flex items-center gap-3;
+}
+
+._9 {
+ @apply flex h-11 w-11 items-center justify-center rounded-xl bg-teal-500 text-lg font-black text-white shadow-lg shadow-teal-500/25;
+}
+
+._10 {
+ @apply text-lg font-bold tracking-tight;
+}
+
+._11 {
+ @apply relative z-10 max-w-xl;
+}
+
+._12 {
+ @apply mb-5 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-teal-200;
+}
+
+._13 {
+ @apply max-w-lg text-4xl font-black leading-[1.04] tracking-tight;
+}
+
+._14 {
+ @apply mt-5 max-w-md text-sm leading-7 text-slate-400;
+}
+
+._15 {
+ @apply relative z-10 grid grid-cols-3 gap-3 text-xs text-slate-400;
+}
+
+._16 {
+ @apply rounded-2xl border border-white/10 bg-white/[0.04] p-4;
+}
+
+._17 {
+ @apply block h-1.5 w-8 rounded-full bg-teal-400;
+}
+
+._18 {
+ @apply mt-3 block font-semibold text-slate-200;
+}
+
+._19 {
+ @apply mx-auto w-full max-w-md lg:max-w-none;
+
+}
+
+._20 {
+ @apply mb-5 flex items-center justify-between lg:hidden;
+}
+
+._21 {
+ @apply flex items-center gap-3;
+}
+
+._22 {
+ @apply flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-base font-black text-white;
+}
+
+._23 {
+ @apply font-bold;
+}
+
+._24 {
+ @apply text-sm font-semibold text-slate-500 hover:text-primary dark:text-slate-400;
+
+}
+
+._25 {
+ @apply rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30 sm:p-6;
+
+}
+
+._26 {
+ @apply mb-5;
+}
+
+._27 {
+ @apply text-sm font-semibold text-primary dark:text-teal-300;
+}
+
+._28 {
+ @apply mt-1.5 text-2xl font-black tracking-tight text-slate-950 dark:text-white;
+}
+
+._29 {
+ @apply mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400;
+}
+
+._30 {
+ @apply mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300;
+}
+
+._31 {
+ @apply space-y-3.5;
+}
+
+._32 {
+ @apply block;
+}
+
+._33 {
+ @apply mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300;
+}
+
+._34 {
+ @apply h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:border-teal-300;
+}
+
+._35 {
+ @apply w-full h-11;
+}
+
+._36 {
+ @apply my-4 flex items-center gap-3;
+}
+
+._37 {
+ @apply h-px flex-1 bg-slate-200 dark:bg-white/10;
+}
+
+._38 {
+ @apply text-xs font-bold uppercase text-slate-400;
+}
+
+._39 {
+ @apply space-y-3;
+}
+
+._40 {
+ @apply flex min-h-10 justify-center;
+}
+
+._41 {
+ @apply h-11 w-full gap-3 border-orange-300/50 bg-orange-50 text-orange-700 hover:border-orange-400 hover:bg-orange-100 dark:border-orange-400/20 dark:bg-orange-400/10 dark:text-orange-300 dark:hover:bg-orange-400/15;
+}
+
+._42 {
+ @apply h-2.5 w-2.5 rounded-full bg-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.65)];
+}
+
+._43 {
+ @apply mt-5 flex flex-col gap-1.5 text-center text-sm text-slate-500 dark:text-slate-400;
+}
+
+._44 {
+ @apply text-primary dark:text-teal-300;
+
+}
+
+._45 {
+ @apply text-xs font-medium hover:text-slate-900 dark:hover:text-white;
+
+}
+

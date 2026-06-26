@@ -17,6 +17,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function beUserToAppUser(data: {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  accessToken: string;
+}): { token: string; user: User } {
+  const roleMap: Record<string, User['role']> = {
+    issuer: 'institution_admin',
+    student: 'student',
+  };
+  return {
+    token: data.accessToken,
+    user: {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: roleMap[data.role] || 'institution_admin',
+      studentId: null,
+      institutionId: data.role === 'issuer' ? data.id : null,
+      walletAddress: null,
+    },
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const data = await authApi.login(email, password);
-      saveSession(data.token, data.user);
+      const { token, user: appUser } = beUserToAppUser(data);
+      saveSession(token, appUser);
       setIsLoading(false);
       return { success: true };
     } catch (err: any) {
@@ -67,12 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithMetaMask = useCallback(async () => {
     setIsLoading(true);
     try {
-      if (typeof window === 'undefined' || !window.ethereum) {
+      const eth = typeof window !== 'undefined' ? (window as any).ethereum : null;
+      if (!eth) {
         setIsLoading(false);
         return { success: false, error: 'Vui lòng cài đặt MetaMask' };
       }
 
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(eth);
       await provider.send('eth_requestAccounts', []);
       const signer = await provider.getSigner();
       const walletAddress = await signer.getAddress();

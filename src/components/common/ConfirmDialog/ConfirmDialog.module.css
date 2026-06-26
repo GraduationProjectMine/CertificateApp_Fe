@@ -1,0 +1,33 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply fixed inset-0 z-50 flex items-center justify-center;
+}
+
+._2 {
+ @apply absolute inset-0 bg-black/40 backdrop-blur-sm;
+}
+
+._3 {
+ @apply relative bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full mx-4 z-10 border border-gray-200 dark:border-gray-800 shadow-xl;
+}
+
+._4 {
+ @apply text-lg font-bold text-gray-900 dark:text-white mb-2;
+}
+
+._5 {
+ @apply text-sm text-gray-600 dark:text-gray-400 mb-6;
+}
+
+._6 {
+ @apply flex justify-end gap-3;
+}
+
+._7 {
+ @apply px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50;
+}
+
+._0 {
+ @apply px-4 py-2 text-sm font-semibold text-white rounded-xl shadow-sm;
+}

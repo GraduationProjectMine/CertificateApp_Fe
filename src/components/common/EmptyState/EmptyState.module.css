@@ -1,0 +1,17 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply flex flex-col items-center justify-center py-16 text-center;
+}
+
+._2 {
+ @apply w-12 h-12 text-gray-300 dark:text-gray-600 mb-4;
+}
+
+._3 {
+ @apply text-base font-semibold text-gray-600 dark:text-gray-400;
+}
+
+._4 {
+ @apply text-sm text-gray-400 mt-1;
+}

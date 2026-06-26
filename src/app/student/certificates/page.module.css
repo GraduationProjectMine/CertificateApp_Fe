@@ -1,0 +1,13 @@
+@reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply p-8;
+}
+
+._2 {
+ @apply text-2xl font-bold;
+}
+
+._3 {
+ @apply text-gray-600 mt-2;
+}

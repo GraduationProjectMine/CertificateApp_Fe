@@ -1,0 +1,9 @@
+@reference "./globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply min-h-full flex flex-col bg-[#f8fafc] text-[#0f172a] dark:bg-[#030712] dark:text-[#f9fafb];
+}
+
+._0 {
+ @apply h-full antialiased;
+}

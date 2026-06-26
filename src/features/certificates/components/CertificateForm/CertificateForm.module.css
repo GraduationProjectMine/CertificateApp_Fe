@@ -1,0 +1,9 @@
+@reference "../../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply space-y-4;
+}
+
+._2 {
+ @apply text-sm text-gray-500;
+}

@@ -10,19 +10,28 @@ async function request<T = any>(path: string, options: RequestInit = {}): Promis
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+  if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
   return data;
 }
 
 export const authApi = {
   login: (email: string, password: string) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    request<{ id: string; email: string; name: string; role: string; accessToken: string }>(
+      '/auth/login',
+      { method: 'POST', body: JSON.stringify({ email, password }) },
+    ),
 
-  register: (data: { email: string; password: string; name: string; role?: string; studentId?: string }) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  register: (data: { email: string; password: string; name: string }) =>
+    request<{ id: string; email: string; name: string; role: string; accessToken: string }>(
+      '/auth/register',
+      { method: 'POST', body: JSON.stringify(data) },
+    ),
 
   registerInstitution: (data: { institutionName: string; institutionCode: string; email: string; adminName: string; password: string }) =>
-    request('/auth/register-institution', { method: 'POST', body: JSON.stringify(data) }),
+    request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email: data.email, name: data.institutionName, adminName: data.adminName, password: data.password }),
+    }),
 
   loginGoogle: (credential: string) =>
     request('/auth/google', { method: 'POST', body: JSON.stringify({ credential }) }),

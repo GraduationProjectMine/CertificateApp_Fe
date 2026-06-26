@@ -1,0 +1,17 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-danger p-4 rounded-xl text-sm flex items-start gap-3;
+}
+
+._2 {
+ @apply w-5 h-5 flex-shrink-0 mt-0.5;
+}
+
+._3 {
+ @apply flex-1;
+}
+
+._4 {
+ @apply mt-2 text-xs font-bold underline hover:no-underline;
+}

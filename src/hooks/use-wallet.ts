@@ -7,8 +7,9 @@ export function useWallet() {
   const connect = useCallback(async () => {
     setIsConnecting(true);
     try {
-      if (typeof window !== "undefined" && window.ethereum) {
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
+      if (eth) {
+        const accounts = await eth.request({ method: "eth_requestAccounts" });
         setAddress(accounts[0]);
       }
     } catch (err) {

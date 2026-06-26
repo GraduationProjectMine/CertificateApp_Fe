@@ -1,0 +1,57 @@
+@reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply space-y-6 animate-fadeIn font-sans;
+}
+
+._2 {
+ @apply text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight;
+}
+
+._3 {
+ @apply text-xs text-gray-500 mt-1;
+}
+
+._4 {
+ @apply grid grid-cols-1 md:grid-cols-3 gap-6 text-xs;
+}
+
+._5 {
+ @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 shadow-sm space-y-4;
+}
+
+._6 {
+ @apply font-bold text-gray-900 dark:text-white uppercase tracking-wider text-[11px] border-b border-gray-100 dark:border-gray-800 pb-2;
+}
+
+._7 {
+ @apply space-y-3;
+}
+
+._8 {
+ @apply flex justify-between;
+}
+
+._9 {
+ @apply text-gray-400;
+}
+
+._10 {
+ @apply font-bold;
+}
+
+._11 {
+ @apply text-green-500 font-bold;
+}
+
+._12 {
+ @apply font-semibold text-gray-800 dark:text-gray-200;
+}
+
+._13 {
+ @apply font-mono text-primary dark:text-teal-400;
+}
+
+._14 {
+ @apply font-semibold text-primary dark:text-teal-400;
+}

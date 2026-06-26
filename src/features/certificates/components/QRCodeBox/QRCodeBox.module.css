@@ -1,0 +1,9 @@
+@reference "../../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+ @apply inline-flex items-center justify-center bg-white p-1 border border-gray-200 rounded-lg;
+}
+
+._2 {
+ @apply w-full h-full border border-dashed border-gray-300 flex items-center justify-center text-[8px] text-gray-400 uppercase font-bold select-none;
+}
