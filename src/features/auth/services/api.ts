@@ -30,7 +30,7 @@ export const authApi = {
   registerInstitution: (data: { institutionName: string; institutionCode: string; email: string; adminName: string; password: string }) =>
     request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email: data.email, name: data.institutionName, password: data.password }),
+      body: JSON.stringify({ email: data.email, name: data.institutionName, adminName: data.adminName, password: data.password }),
     }),
 
   loginGoogle: (credential: string) =>
