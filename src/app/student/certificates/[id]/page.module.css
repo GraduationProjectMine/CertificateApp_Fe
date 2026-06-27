@@ -1,13 +1,119 @@
 @reference "../../../globals.css";
 @custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
- @apply p-8;
+  @apply p-6 sm:p-8;
 }
-
 ._2 {
- @apply text-2xl font-bold;
+  @apply mb-4;
 }
-
 ._3 {
- @apply text-gray-600 mt-2;
+  @apply flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-primary transition-colors;
+}
+._4 {
+  @apply w-4 h-4;
+}
+._5 {
+  @apply space-y-5;
+}
+._6 {
+  @apply flex items-start gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200/60 dark:border-red-900/50;
+}
+._7 {
+  @apply w-5 h-5 text-red-500 shrink-0 mt-0.5;
+}
+._8 {
+  @apply font-bold text-sm text-red-700 dark:text-red-400;
+}
+._9 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl overflow-hidden;
+}
+._10 {
+  @apply p-6 border-b border-gray-100 dark:border-gray-800;
+}
+._11 {
+  @apply w-12 h-12 rounded-xl bg-red-100 dark:bg-red-950/30 flex items-center justify-center text-red-500;
+}
+._12 {
+  @apply w-6 h-6;
+}
+._13 {
+  @apply w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-500;
+}
+._14 {
+  @apply text-xl font-bold text-gray-900 dark:text-white mt-3;
+}
+._15 {
+  @apply text-sm text-gray-500 mt-0.5;
+}
+._16 {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200/50;
+}
+._17 {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50;
+}
+._0 {
+  @apply mt-3;
+}
+._18 {
+  @apply p-6 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-6;
+}
+._19 {
+  @apply flex-1 space-y-4;
+}
+._20 {
+  @apply flex items-center gap-3;
+}
+._21 {
+  @apply w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary;
+}
+._22 {
+  @apply w-5 h-5;
+}
+._23 {
+  @apply font-bold text-gray-900 dark:text-white;
+}
+._24 {
+  @apply space-y-1 text-sm text-gray-500;
+}
+._25 {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+._26 {
+  @apply shrink-0 flex items-center;
+}
+._27 {
+  @apply p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4;
+}
+._28 {
+  @apply flex flex-col gap-0.5;
+}
+._29 {
+  @apply text-xs font-bold text-gray-400 uppercase tracking-wider;
+}
+._30 {
+  @apply text-sm font-semibold text-gray-900 dark:text-white;
+}
+._31 {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+._32 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-6;
+}
+._33 {
+  @apply text-sm font-bold text-gray-900 dark:text-white mb-4;
+}
+._34 {
+  @apply flex flex-wrap gap-3;
+}
+._35 {
+  @apply flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all;
+}
+._36 {
+  @apply w-4 h-4;
+}
+._37 {
+  @apply text-center py-4;
+}
+._38 {
+  @apply text-xs text-gray-400 leading-relaxed max-w-lg mx-auto;
 }

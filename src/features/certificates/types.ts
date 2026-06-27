@@ -16,3 +16,27 @@ export interface Certificate {
   status: CertificateStatus;
   onChain: boolean;
 }
+
+export interface StudentCertificate {
+  id: string;
+  credentialCode: string;
+  serialNumber: string;
+  studentName: string;
+  studentCode: string;
+  credentialTitle: string;
+  type: string;
+  major: string;
+  classification: string;
+  gpa: string;
+  issueDate: string;
+  issuerName: string;
+  issuerLogo: string;
+  status: "VALID" | "REVOKED";
+  onChain: boolean;
+  ipfsCid: string;
+  metadataHash: string;
+  transactionHash: string;
+  contractAddress: string;
+  network: string;
+  credentialHash: string;
+}

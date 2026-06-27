@@ -1,0 +1,56 @@
+@reference "../../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+._1 {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4;
+}
+._2 {
+  @apply relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full p-6 animate-fadeIn;
+}
+._3 {
+  @apply mb-4;
+}
+._4 {
+  @apply text-lg font-bold text-gray-900 dark:text-white;
+}
+._5 {
+  @apply text-sm text-gray-500 mt-0.5;
+}
+._6 {
+  @apply absolute top-4 right-4 p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all;
+}
+._7 {
+  @apply w-5 h-5;
+}
+._8 {
+  @apply flex flex-col sm:flex-row gap-6 mt-2;
+}
+._9 {
+  @apply flex flex-col items-center gap-3 shrink-0;
+}
+._10 {
+  @apply text-xs font-bold text-gray-500 uppercase tracking-wider;
+}
+._11 {
+  @apply flex-1 space-y-4;
+}
+._12 {
+  @apply space-y-1.5;
+}
+._13 {
+  @apply text-xs font-bold text-gray-500 uppercase tracking-wider;
+}
+._14 {
+  @apply flex gap-2;
+}
+._15 {
+  @apply flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-mono text-gray-600 dark:text-gray-400 outline-none;
+}
+._16 {
+  @apply shrink-0 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/20 transition-all;
+}
+._17 {
+  @apply w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all;
+}
+._18 {
+  @apply w-4 h-4;
+}
