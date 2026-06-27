@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
+import Link from "next/link";
 import styles from "./page.module.css";
 import VerificationResult from "@/components/credential/VerificationResult";
 import type { VerificationData } from "@/components/credential/VerificationResult";
@@ -140,6 +141,22 @@ export default function VerifyPublicPage() {
   if (result) {
     return (
       <div className={styles._1}>
+        <div className={styles._41}>
+        <Link href="/" className={`group ${styles._42}`}>
+            <span className={styles._43}>C</span>
+            <span className={styles._44}>CertiChain</span>
+          </Link>
+          <span className={styles._45}>
+            <svg className={styles._46} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          </span>
+          <span className={styles._47}>Kết quả xác minh</span>
+          <div className={styles._48}>
+            <span className={styles._49} />
+            <span className={styles._50}>Sepolia</span>
+          </div>
+        </div>
         <div className={styles._2}>
           <VerificationResult result={result} onReset={handleReset} />
         </div>
@@ -155,6 +172,22 @@ export default function VerifyPublicPage() {
 
   return (
     <div className={styles._1}>
+      <div className={styles._41}>
+        <Link href="/" className={`group ${styles._42}`}>
+          <span className={styles._43}>C</span>
+          <span className={styles._44}>CertiChain</span>
+        </Link>
+        <span className={styles._45}>
+          <svg className={styles._46} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+        </span>
+        <span className={styles._47}>Xác minh văn bằng</span>
+        <div className={styles._48}>
+          <span className={styles._49} />
+          <span className={styles._50}>Sepolia</span>
+        </div>
+      </div>
       <div className={styles._3}>
         <h1 className={styles._4}>Xác minh văn bằng</h1>
         <p className={styles._5}>
@@ -239,15 +272,15 @@ export default function VerifyPublicPage() {
               )}
               <div className={styles._27}>
                 <p className={styles._28}>Hoặc nhập mã thủ công</p>
-                <div className="flex gap-3">
+                <div className={styles._51}>
                   <input
                     type="text"
                     value={credentialCode}
                     onChange={(e) => setCredentialCode(e.target.value)}
                     placeholder="Nhập mã văn bằng..."
-                    className={`${styles._15} flex-1`}
+                    className={styles._52}
                   />
-                  <button onClick={handleVerifyByCode} disabled={isVerifying} className={styles._17}>
+                  <button onClick={handleVerifyByCode} disabled={isVerifying} className={styles._53}>
                     {isVerifying ? "..." : "Xác minh"}
                   </button>
                 </div>
