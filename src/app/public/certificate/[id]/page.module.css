@@ -1,13 +1,125 @@
 @reference "../../../globals.css";
 @custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
- @apply p-8;
+  @apply min-h-screen bg-gray-50 dark:bg-gray-950;
 }
-
 ._2 {
- @apply text-2xl font-bold;
+  @apply max-w-3xl mx-auto px-4 py-12 space-y-6;
 }
-
 ._3 {
- @apply text-gray-600 mt-2;
+  @apply flex items-start gap-4 p-4 rounded-2xl bg-red-50 dark:bg-red-950/10 border border-red-200/50;
+}
+._4 {
+  @apply w-6 h-6 text-danger flex-shrink-0 mt-0.5;
+}
+._5 {
+  @apply text-sm font-bold text-red-700 dark:text-red-400;
+}
+._6 {
+  @apply text-xs text-red-600 dark:text-red-400 mt-0.5;
+}
+._7 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-sm;
+}
+._8 {
+  @apply p-6 border-b border-gray-100 dark:border-gray-800 flex items-start gap-4;
+}
+._0 {
+  @apply px-3 py-1 text-xs font-bold rounded-full border ml-auto flex-shrink-0;
+}
+._9 {
+  @apply w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-danger flex-shrink-0;
+}
+._10 {
+  @apply w-5 h-5;
+}
+._11 {
+  @apply w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 flex-shrink-0;
+}
+._12 {
+  @apply text-xl font-black text-gray-900 dark:text-white;
+}
+._13 {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-0.5;
+}
+._14 {
+  @apply bg-red-50 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800;
+}
+._15 {
+  @apply bg-green-50 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800;
+}
+._16 {
+  @apply p-6;
+}
+._17 {
+  @apply flex flex-col sm:flex-row gap-6 items-start;
+}
+._18 {
+  @apply flex-1 space-y-4;
+}
+._19 {
+  @apply flex items-center gap-3;
+}
+._20 {
+  @apply w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary;
+}
+._21 {
+  @apply w-6 h-6;
+}
+._22 {
+  @apply text-lg font-bold text-gray-900 dark:text-white;
+}
+._23 {
+  @apply space-y-1;
+}
+._24 {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+._25 {
+  @apply flex-shrink-0;
+}
+._26 {
+  @apply mt-6 divide-y divide-gray-100 dark:divide-gray-800;
+}
+._27 {
+  @apply flex justify-between py-3 gap-4;
+}
+._28 {
+  @apply text-sm text-gray-500 dark:text-gray-400;
+}
+._29 {
+  @apply text-sm font-semibold text-gray-900 dark:text-white text-right;
+}
+._30 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-6;
+}
+._31 {
+  @apply text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4;
+}
+._32 {
+  @apply divide-y divide-gray-100 dark:divide-gray-800;
+}
+._33 {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+._34 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-6;
+}
+._35 {
+  @apply text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4;
+}
+._36 {
+  @apply flex flex-wrap gap-3;
+}
+._37 {
+  @apply inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-primary hover:text-primary-hover dark:text-teal-400 bg-primary/5 hover:bg-primary/10 rounded-xl transition-all;
+}
+._38 {
+  @apply w-4 h-4;
+}
+._39 {
+  @apply text-center pb-8;
+}
+._40 {
+  @apply text-xs text-gray-400 dark:text-gray-500 max-w-md mx-auto;
 }
