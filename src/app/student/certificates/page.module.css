@@ -1,13 +1,86 @@
 @reference "../../globals.css";
 @custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
- @apply p-8;
+  @apply p-6 sm:p-8;
 }
-
 ._2 {
- @apply text-2xl font-bold;
+  @apply flex items-center justify-between mb-6;
 }
-
 ._3 {
- @apply text-gray-600 mt-2;
+  @apply text-2xl font-bold text-gray-900 dark:text-white;
+}
+._4 {
+  @apply text-sm text-gray-500 mt-1;
+}
+._5 {
+  @apply flex gap-4 mb-6;
+}
+._6 {
+  @apply flex items-center gap-2;
+}
+._7 {
+  @apply text-xs font-bold text-gray-500 uppercase tracking-wider;
+}
+._8 {
+  @apply px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
+}
+._9 {
+  @apply text-center py-16;
+}
+._10 {
+  @apply mx-auto w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-4;
+}
+._11 {
+  @apply w-8 h-8;
+}
+._12 {
+  @apply text-sm text-gray-500 font-semibold;
+}
+._13 {
+  @apply space-y-3;
+}
+._14 {
+  @apply block bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5;
+}
+._15 {
+  @apply flex items-start justify-between gap-4;
+}
+._16 {
+  @apply flex items-start gap-4;
+}
+._17 {
+  @apply w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0;
+}
+._18 {
+  @apply w-5 h-5;
+}
+._19 {
+  @apply space-y-0.5;
+}
+._20 {
+  @apply text-xs font-bold text-gray-400 uppercase tracking-wider;
+}
+._21 {
+  @apply text-base font-bold text-gray-900 dark:text-white;
+}
+._22 {
+  @apply text-sm text-gray-500;
+}
+._23 {
+  @apply flex items-center gap-2 shrink-0;
+}
+._24 {
+  @apply flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-200/50 text-[11px] font-semibold;
+}
+._25 {
+  @apply w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse;
+}
+._26 {
+  @apply px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50;
+}
+._27 {
+  @apply px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200/50;
+}
+._0 {
+  @apply shrink-0;
 }

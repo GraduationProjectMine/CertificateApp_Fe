@@ -1,13 +1,86 @@
 @reference "../../globals.css";
 @custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
- @apply p-8;
+  @apply min-h-screen bg-gray-50 dark:bg-gray-950 pb-16;
 }
-
 ._2 {
- @apply text-2xl font-bold;
+  @apply text-center pt-16 pb-10 px-4;
 }
-
 ._3 {
- @apply text-gray-600 mt-2;
+  @apply text-3xl sm:text-4xl font-black text-gray-900 dark:text-white;
+}
+._4 {
+  @apply text-gray-500 dark:text-gray-400 mt-3 max-w-lg mx-auto text-sm;
+}
+._5 {
+  @apply max-w-4xl mx-auto px-4 space-y-10;
+}
+._6 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-8;
+}
+._7 {
+  @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
+}
+._8 {
+  @apply text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3;
+}
+._9 {
+  @apply overflow-hidden;
+}
+._10 {
+  @apply text-lg font-bold text-gray-900 dark:text-white mb-6;
+}
+._11 {
+  @apply overflow-x-auto;
+}
+._12 {
+  @apply w-full border-collapse;
+}
+._13 {
+  @apply text-left p-4 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700;
+}
+._14 {
+  @apply text-left p-4 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-700;
+}
+._15 {
+  @apply text-left p-4 text-xs font-bold uppercase tracking-widest text-primary dark:text-teal-400 bg-primary/5 dark:bg-teal-950/10 border-b border-gray-200 dark:border-gray-700;
+}
+._16 {
+  @apply divide-y divide-gray-100 dark:divide-gray-800;
+}
+._17 {
+  @apply hover:bg-gray-50 dark:hover:bg-gray-800/10 transition-colors;
+}
+._18 {
+  @apply p-4 text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap;
+}
+._19 {
+  @apply p-4 text-sm text-gray-500 dark:text-gray-400;
+}
+._20 {
+  @apply p-4 text-sm font-semibold text-primary dark:text-teal-400;
+}
+._21 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-8;
+}
+._22 {
+  @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
+}
+._23 {
+  @apply space-y-4;
+}
+._24 {
+  @apply flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400;
+}
+._25 {
+  @apply w-5 h-5 text-green-500 flex-shrink-0 mt-0.5;
+}
+._26 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-8;
+}
+._27 {
+  @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
+}
+._28 {
+  @apply w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5;
 }
