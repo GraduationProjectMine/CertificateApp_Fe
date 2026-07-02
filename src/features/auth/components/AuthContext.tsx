@@ -24,18 +24,22 @@ function beUserToAppUser(data: {
   name: string;
   role: string;
   accessToken: string;
+  staffRole?: string;
 }): { token: string; user: User } {
-  const roleMap: Record<string, User['role']> = {
-    issuer: 'institution_admin',
-    student: 'student',
-  };
+  let appRole: User['role'] = 'student';
+  if (data.role === 'issuer') {
+    appRole = data.staffRole === 'Staff' ? 'issuer_staff' : 'institution_admin';
+  } else if (data.role === 'sysadmin') {
+    appRole = 'sysadmin';
+  }
+
   return {
     token: data.accessToken,
     user: {
       id: data.id,
       email: data.email,
       name: data.name,
-      role: roleMap[data.role] || 'institution_admin',
+      role: appRole,
       studentId: null,
       institutionId: data.role === 'issuer' ? data.id : null,
       walletAddress: null,

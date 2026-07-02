@@ -53,7 +53,15 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
       </div>
 
       <nav className={styles._8}>
-        {menuItems.map((item) => {
+        {menuItems
+          .filter(item => {
+            if (user.role === 'issuer_staff') {
+              const restrictedPaths = ['/admin/settings', '/admin/audit-logs', '/admin/blockchain', '/admin/revocations'];
+              return !restrictedPaths.includes(item.path);
+            }
+            return true;
+          })
+          .map((item) => {
           const activeItemPath = menuItems.reduce((acc, curr) => {
             if (pathname.startsWith(curr.path) && curr.path.length > acc.length) {
               return curr.path;

@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ocrApi } from "@/features/ocr/services/api";
 import type { DiplomaData } from "@/features/ocr/types";
+import { useAuth } from "@/features/auth/components/AuthContext";
 
 export default function CreateCertificateWizard() {
   const router = useRouter();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   
   // Step 1 State: Student Selection
@@ -611,11 +613,12 @@ export default function CreateCertificateWizard() {
               {blockchainStatus !== "processing" && (
                 <button
                   type="button"
-                  disabled={!pdfHash}
+                  disabled={!pdfHash || user?.role === 'issuer_staff'}
                   onClick={blockchainStatus === "success" ? () => router.push("/admin/certificates") : runBlockchainFlow}
                   className={`${styles._83} ${
-                    !pdfHash ? "opacity-50 cursor-not-allowed" : ""
+                    !pdfHash || user?.role === 'issuer_staff' ? "opacity-50 cursor-not-allowed" : ""
                   }`}
+                  title={user?.role === 'issuer_staff' ? "Nhân viên chỉ có thể lưu nháp" : ""}
                 >
                   {blockchainStatus === "success" ? "Quay về danh sách" : "Ghi Blockchain"}
                 </button>
