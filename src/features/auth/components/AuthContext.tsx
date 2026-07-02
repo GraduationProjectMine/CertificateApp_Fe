@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { BrowserProvider } from 'ethers';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { authApi } from '../services/api';
 import type { User } from '../types';
 export type { UserRole } from '../types';
@@ -10,6 +10,7 @@ export type { UserRole } from '../types';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string }>;
   loginWithMetaMask: () => Promise<{ success: boolean; error?: string }>;
@@ -50,7 +51,15 @@ function beUserToAppUser(data: {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (isLoggingOut) {
+      setIsLoggingOut(false);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -125,14 +134,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    setIsLoggingOut(true);
     localStorage.removeItem('token');
     localStorage.removeItem('auth_user');
     setUser(null);
-    router.push('/');
+    router.replace('/');
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithMetaMask, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithGoogle, loginWithMetaMask, logout }}>
       {children}
     </AuthContext.Provider>
   );

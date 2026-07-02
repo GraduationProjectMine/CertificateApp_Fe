@@ -84,11 +84,13 @@ export default function NavHeader() {
               </span>
               <Link
                 href={
-                  user.role === "issuer" || user.role === "sysadmin"
-                    ? "/admin/dashboard"
-                    : user.role === "student"
-                      ? "/student/dashboard"
-                      : "/public/verify"
+                  user.role === "super_admin" || user.role === "sysadmin"
+                    ? "/super-admin/dashboard"
+                    : user.role === "institution_admin" || user.role === "issuer_staff" || user.role === "issuer"
+                      ? "/admin/dashboard"
+                      : user.role === "student"
+                        ? "/student/dashboard"
+                        : "/public/verify"
                 }
                 className={styles._16}
               >

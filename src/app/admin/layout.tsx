@@ -7,7 +7,7 @@ import AdminTopbar from "./_components/AdminTopbar";
 import { LoadingScreen, UnauthorizedScreen } from "./_components/AuthGuard";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, isLoggingOut, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setMounted(true);
   }, []);
 
-  if (!mounted || isLoading) return <LoadingScreen />;
+  if (!mounted || isLoading || isLoggingOut) return <LoadingScreen />;
 
   const isAuthorized = user && (user.role === "issuer" || user.role === "institution_admin" || user.role === "issuer_staff" || user.role === "sysadmin");
   if (!isAuthorized) return <UnauthorizedScreen />;
