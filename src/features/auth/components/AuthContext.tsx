@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { BrowserProvider } from 'ethers';
+import { useRouter } from 'next/navigation';
 import { authApi } from '../services/api';
 import type { User } from '../types';
 export type { UserRole } from '../types';
@@ -45,6 +46,7 @@ function beUserToAppUser(data: {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -122,7 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('token');
     localStorage.removeItem('auth_user');
     setUser(null);
-  }, []);
+    router.push('/');
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithMetaMask, logout }}>
