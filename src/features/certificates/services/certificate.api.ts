@@ -87,3 +87,37 @@ export const certificateApi = {
       method: 'DELETE',
     }),
 };
+
+export function mapCertificateDtoToStudentCert(
+  dto: CertificateDto,
+): import("@/features/certificates/types").StudentCertificate {
+  const statusMap: Record<string, "VALID" | "REVOKED"> = {
+    Issued: "VALID",
+    Revoked: "REVOKED",
+    "Pending Blockchain": "VALID",
+    Draft: "VALID",
+  };
+  return {
+    id: dto.certificate_id,
+    credentialCode: dto.serialNumber || dto.certificate_id,
+    serialNumber: dto.serialNumber || "",
+    studentName: dto.student_fullName,
+    studentCode: "",
+    credentialTitle: dto.certificate_title,
+    type: "BACHELOR_DEGREE",
+    major: "",
+    classification: "",
+    gpa: "",
+    issueDate: dto.issueDate || dto.issuedAt?.split("T")[0] || "",
+    issuerName: dto.organization_name,
+    issuerLogo: "",
+    status: statusMap[dto.status] || "VALID",
+    onChain: !!dto.tx_hash,
+    ipfsCid: dto.ipfs_cid || "",
+    metadataHash: "",
+    transactionHash: dto.tx_hash || "",
+    contractAddress: "",
+    network: "",
+    credentialHash: "",
+  };
+}

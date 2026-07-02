@@ -1,9 +1,8 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ocrApi } from "@/features/ocr/services/api";
-import type { DiplomaData } from "@/features/ocr/types";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 
 type FormData = {
@@ -40,6 +39,21 @@ const initialForm: FormData = {
   registryNumber: "",
 };
 
+interface CachedStudent {
+  student_id: string;
+  student_fullName: string;
+  email: string;
+}
+
+function loadStudents(): CachedStudent[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem("students") || "[]");
+  } catch {
+    return [];
+  }
+}
+
 export default function IssueCertificatePage() {
   const router = useRouter();
   const [step, setStep] = useState<"info" | "confirm" | "result">("info");
@@ -47,6 +61,11 @@ export default function IssueCertificatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; status: string } | null>(null);
   const [error, setError] = useState("");
+  const [cachedStudents, setCachedStudents] = useState<CachedStudent[]>([]);
+
+  useEffect(() => {
+    setCachedStudents(loadStudents());
+  }, []);
 
   // OCR
   const [inputMode, setInputMode] = useState<"manual" | "ocr">("manual");
@@ -89,7 +108,15 @@ export default function IssueCertificatePage() {
       const res = await ocrApi.extractDiploma(ocrFile, ocrLang);
       const d = res.data;
       if (d.full_name) updateField("student_fullName", d.full_name);
-      if (d.dob) updateField("dob", d.dob);
+      if (d.dob) {
+        // Expected format: DD/MM/YYYY
+        const parts = d.dob.split("/");
+        if (parts.length === 3) {
+           updateField("dob", `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+        } else {
+           updateField("dob", d.dob);
+        }
+      }
       if (d.place_of_birth) updateField("placeOfBirth", d.place_of_birth);
       if (d.gender) updateField("gender", d.gender);
       if (d.ethnicity) updateField("ethnicity", d.ethnicity);
@@ -179,21 +206,19 @@ export default function IssueCertificatePage() {
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
         <button
           onClick={() => setInputMode("manual")}
-          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-            inputMode === "manual"
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${inputMode === "manual"
               ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          }`}
+            }`}
         >
           Nhập tay
         </button>
         <button
           onClick={() => setInputMode("ocr")}
-          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-            inputMode === "ocr"
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${inputMode === "ocr"
               ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          }`}
+            }`}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
@@ -259,14 +284,30 @@ export default function IssueCertificatePage() {
       {/* Form */}
       <div className={styles._28}>
         <div>
-          <label className={styles._29}>ID sinh viên *</label>
-          <input
-            type="text"
-            className={styles._30}
-            placeholder="Nhập UUID của sinh viên"
-            value={formData.student_id}
-            onChange={(e) => updateField("student_id", e.target.value)}
-          />
+          <label className={styles._29}>Sinh viên *</label>
+          {cachedStudents.length > 0 ? (
+            <select
+              className={styles._30}
+              value={formData.student_id}
+              onChange={(e) => {
+                const s = cachedStudents.find((s) => s.student_id === e.target.value);
+                updateField("student_id", e.target.value);
+                if (s) updateField("student_fullName", s.student_fullName);
+              }}
+            >
+              <option value="">-- Chọn sinh viên --</option>
+              {cachedStudents.map((s) => (
+                <option key={s.student_id} value={s.student_id}>
+                  {s.student_fullName} ({s.email})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 rounded-lg">
+              Chưa có sinh viên nào.{' '}
+              <a href="/admin/students/create" className="underline">Tạo sinh viên</a> trước khi cấp bằng.
+            </div>
+          )}
         </div>
         <div>
           <label className={styles._29}>Tên sinh viên</label>
@@ -289,7 +330,7 @@ export default function IssueCertificatePage() {
         </div>
         <div>
           <label className={styles._29}>Ngày sinh</label>
-          <input type="text" className={styles._30} value={formData.dob} onChange={(e) => updateField("dob", e.target.value)} />
+          <input type="date" className={styles._30} value={formData.dob} onChange={(e) => updateField("dob", e.target.value)} />
         </div>
         <div>
           <label className={styles._29}>Nơi sinh</label>
