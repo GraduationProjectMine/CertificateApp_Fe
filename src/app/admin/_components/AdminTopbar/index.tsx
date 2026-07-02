@@ -23,7 +23,7 @@ function getBreadcrumbs(pathname: string) {
         : segment === "certificates"
         ? "Văn bằng"
         : segment === "issue"
-        ? "Cấp mới (Wizard)"
+        ? "Cấp mới "
         : item.title;
 
     return {

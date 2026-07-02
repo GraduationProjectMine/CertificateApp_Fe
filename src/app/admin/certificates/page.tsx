@@ -25,7 +25,7 @@ export default function AdminCertificatesPage() {
           href="/admin/certificates/issue"
           className={styles._5}
         >
-          + Cấp bằng mới (Wizard)
+          + Cấp bằng mới
         </Link>
       </div>
 

@@ -54,7 +54,13 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
 
       <nav className={styles._8}>
         {menuItems.map((item) => {
-          const isActive = pathname.startsWith(item.path);
+          const activeItemPath = menuItems.reduce((acc, curr) => {
+            if (pathname.startsWith(curr.path) && curr.path.length > acc.length) {
+              return curr.path;
+            }
+            return acc;
+          }, '');
+          const isActive = item.path === activeItemPath;
           return (
             <Link
               key={item.path}
