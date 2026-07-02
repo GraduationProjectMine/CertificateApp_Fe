@@ -1,8 +1,10 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ocrApi } from "@/features/ocr/services/api";
+import type { DiplomaData } from "@/features/ocr/types";
 
 export default function CreateCertificateWizard() {
   const router = useRouter();
@@ -33,6 +35,56 @@ export default function CreateCertificateWizard() {
     issueDate: "2026-06-22",
     signer: "GS. TS. Huỳnh Quyết Thắng"
   });
+
+  // OCR state
+  const [inputMode, setInputMode] = useState<"manual" | "ocr">("manual");
+  const [ocrFile, setOcrFile] = useState<File | null>(null);
+  const [ocrPreview, setOcrPreview] = useState<string | null>(null);
+  const [ocrScanning, setOcrScanning] = useState(false);
+  const [ocrLang, setOcrLang] = useState("vie");
+  const [ocrError, setOcrError] = useState("");
+
+  const handleOcrFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
+    if (!allowed.includes(f.type)) { setOcrError("Chỉ hỗ trợ JPEG, PNG, WebP, TIFF"); return; }
+    setOcrFile(f);
+    setOcrError("");
+    setOcrPreview(URL.createObjectURL(f));
+  }, []);
+
+  const handleOcrDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
+    if (!allowed.includes(f.type)) { setOcrError("Chỉ hỗ trợ JPEG, PNG, WebP, TIFF"); return; }
+    setOcrFile(f);
+    setOcrError("");
+    setOcrPreview(URL.createObjectURL(f));
+  }, []);
+
+  const handleOcrScan = async () => {
+    if (!ocrFile) return;
+    setOcrScanning(true);
+    setOcrError("");
+    try {
+      const res = await ocrApi.extractDiploma(ocrFile, ocrLang);
+      const d = res.data;
+      setFormData(prev => ({
+        ...prev,
+        certName: d.document_title?.trim() || prev.certName,
+        serialNumber: d.serial_number?.trim() || prev.serialNumber,
+        registryNumber: d.registry_number?.trim() || prev.registryNumber,
+        issueDate: d.issue_date ? d.issue_date.split("/").reverse().join("-") : prev.issueDate,
+      }));
+    } catch (err: any) {
+      setOcrError(err.message || "OCR thất bại");
+    } finally {
+      setOcrScanning(false);
+    }
+  };
 
   // Step 3 State: Template selection
   const [selectedTemplate, setSelectedTemplate] = useState("temp-1");
@@ -207,8 +259,89 @@ export default function CreateCertificateWizard() {
           <div className={styles._10}>
             <div>
               <h2 className={styles._11}>Bước 2: Khai báo thông tin văn bằng</h2>
-              <p className={styles._12}>Nhập các thuộc tính nghiệp vụ chính của chứng chỉ số tốt nghiệp.</p>
+              <p className={styles._12}>Nhập tay hoặc quét ảnh bằng để tự động điền thông tin.</p>
             </div>
+
+            {/* Input mode tabs */}
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
+              <button
+                onClick={() => setInputMode("manual")}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  inputMode === "manual"
+                    ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                Nhập tay
+              </button>
+              <button
+                onClick={() => setInputMode("ocr")}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                  inputMode === "ocr"
+                    ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                </svg>
+                Quét OCR
+              </button>
+            </div>
+
+            {/* OCR upload panel */}
+            {inputMode === "ocr" && (
+              <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-bold text-gray-900 dark:text-white">Chọn ảnh bằng</div>
+                  <select
+                    value={ocrLang}
+                    onChange={(e) => setOcrLang(e.target.value)}
+                    className="flex-1 max-w-[160px] px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="vie">Tiếng Việt</option>
+                    <option value="eng">English</option>
+                  </select>
+                </div>
+
+                {ocrPreview ? (
+                  <div className="space-y-3">
+                    <img src={ocrPreview} alt="Preview" className="w-full max-h-48 object-contain rounded-lg border border-gray-200 dark:border-gray-800" />
+                    {ocrError && <div className="text-[11px] text-red-500 bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{ocrError}</div>}
+                    <div className="flex gap-3">
+                      <button onClick={handleOcrScan} disabled={ocrScanning} className="px-6 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all">
+                        {ocrScanning ? (
+                          <span className="flex items-center gap-2">
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Đang xử lý...
+                          </span>
+                        ) : "Quét văn bằng"}
+                      </button>
+                      <button onClick={() => { setOcrFile(null); setOcrPreview(null); setOcrError(""); }} className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
+                        Làm lại
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label
+                    className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors flex flex-col items-center gap-3"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleOcrDrop}
+                  >
+                    <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả ảnh vào đây</div>
+                    <div className="text-[10px] text-gray-400">hoặc nhấp để chọn file (JPEG, PNG, WebP, TIFF)</div>
+                    {ocrError && <div className="text-[11px] text-red-500">{ocrError}</div>}
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" onChange={handleOcrFileSelect} className="hidden" />
+                  </label>
+                )}
+              </div>
+            )}
 
             <div className={styles._28}>
               <div>
@@ -288,6 +421,12 @@ export default function CreateCertificateWizard() {
                 />
               </div>
             </div>
+
+            {inputMode === "ocr" && (
+              <div className="text-[10px] text-gray-400 italic">
+                Dữ liệu OCR sẽ tự động điền vào các trường phía trên. Kiểm tra lại trước khi tiếp tục.
+              </div>
+            )}
           </div>
         )}
 
