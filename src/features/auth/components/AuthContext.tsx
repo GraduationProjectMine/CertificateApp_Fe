@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { BrowserProvider } from 'ethers';
+import { useRouter, usePathname } from 'next/navigation';
 import { authApi } from '../services/api';
 import type { User } from '../types';
 export type { UserRole } from '../types';
@@ -9,6 +10,7 @@ export type { UserRole } from '../types';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string }>;
   loginWithMetaMask: () => Promise<{ success: boolean; error?: string }>;
@@ -23,18 +25,22 @@ function beUserToAppUser(data: {
   name: string;
   role: string;
   accessToken: string;
+  staffRole?: string;
 }): { token: string; user: User } {
-  const roleMap: Record<string, User['role']> = {
-    issuer: 'institution_admin',
-    student: 'student',
-  };
+  let appRole: User['role'] = 'student';
+  if (data.role === 'issuer') {
+    appRole = data.staffRole === 'Staff' ? 'issuer_staff' : 'institution_admin';
+  } else if (data.role === 'sysadmin') {
+    appRole = 'sysadmin';
+  }
+
   return {
     token: data.accessToken,
     user: {
       id: data.id,
       email: data.email,
       name: data.name,
-      role: roleMap[data.role] || 'institution_admin',
+      role: appRole,
       studentId: null,
       institutionId: data.role === 'issuer' ? data.id : null,
       walletAddress: null,
@@ -45,6 +51,15 @@ function beUserToAppUser(data: {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (isLoggingOut) {
+      setIsLoggingOut(false);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -119,13 +134,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    setIsLoggingOut(true);
     localStorage.removeItem('token');
     localStorage.removeItem('auth_user');
     setUser(null);
-  }, []);
+    router.replace('/');
+  }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithMetaMask, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithGoogle, loginWithMetaMask, logout }}>
       {children}
     </AuthContext.Provider>
   );
