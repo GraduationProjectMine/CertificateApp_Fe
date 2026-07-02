@@ -1,10 +1,9 @@
-﻿"use client";
-import styles from "./page.module.css";
+"use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { studentApi } from "@/features/students/services/student.api";
+import { staffApi } from "@/features/staff/services/staff.api";
 
-export default function CreateStudentPage() {
+export default function CreateStaffPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -19,13 +18,13 @@ export default function CreateStudentPage() {
     setSubmitting(true);
     setError("");
     try {
-      const res = await studentApi.create(form);
-      const cached = JSON.parse(localStorage.getItem("students") || "[]");
-      cached.push(res.student);
-      localStorage.setItem("students", JSON.stringify(cached));
-      router.push("/admin/students");
+      const res = await staffApi.create(form);
+      const cached = JSON.parse(localStorage.getItem("staff") || "[]");
+      cached.push(res.staff);
+      localStorage.setItem("staff", JSON.stringify(cached));
+      router.push("/admin/staff");
     } catch (err: any) {
-      setError(err.message || "Tạo sinh viên thất bại");
+      setError(err.message || "Tạo nhân viên thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -34,8 +33,8 @@ export default function CreateStudentPage() {
   return (
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Thêm sinh viên</h1>
-        <p className="text-xs text-gray-500 mt-1">Tạo tài khoản sinh viên mới để cấp văn bằng.</p>
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Thêm nhân viên</h1>
+        <p className="text-xs text-gray-500 mt-1">Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-4">
@@ -46,7 +45,7 @@ export default function CreateStudentPage() {
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="Nguyễn Văn A"
+            placeholder="Nguyễn Văn B"
           />
         </div>
         <div>
@@ -56,7 +55,7 @@ export default function CreateStudentPage() {
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="student@school.edu.vn"
+            placeholder="staff@school.edu.vn"
           />
         </div>
         <div>
@@ -78,11 +77,11 @@ export default function CreateStudentPage() {
             disabled={submitting}
             className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
           >
-            {submitting ? "Đang tạo..." : "Tạo sinh viên"}
+            {submitting ? "Đang tạo..." : "Tạo nhân viên"}
           </button>
           <button
             type="button"
-            onClick={() => router.push("/admin/students")}
+            onClick={() => router.push("/admin/staff")}
             className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
           >
             Hủy

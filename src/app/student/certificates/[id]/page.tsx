@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.css";
+import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
 import BlockchainInfo from "@/components/credential/BlockchainInfo";
 import IPFSInfo from "@/components/credential/IPFSInfo";
@@ -9,78 +10,6 @@ import QRCodeBox from "@/components/credential/QRCodeBox";
 import ShareDialog from "@/features/certificates/components/ShareDialog";
 import Loading from "@/components/common/Loading";
 import ErrorMessage from "@/components/common/ErrorMessage";
-
-const MOCK_DETAIL: Record<string, StudentCertificate> = {
-  cred_001: {
-    id: "cred_001",
-    credentialCode: "VD-2026-000001",
-    serialNumber: "B2026/001",
-    studentName: "Nguyễn Văn Hùng",
-    studentCode: "SV2024001",
-    credentialTitle: "Bằng cử nhân Công nghệ thông tin",
-    type: "BACHELOR_DEGREE",
-    major: "Kỹ thuật phần mềm",
-    classification: "Giỏi",
-    gpa: "3.45/4.0",
-    issueDate: "20/06/2026",
-    issuerName: "Đại học Bách khoa Hà Nội",
-    issuerLogo: "",
-    status: "VALID",
-    onChain: true,
-    ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-    metadataHash: "0xmetadata1234567890abcdef1234567890abcdef12",
-    transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-    contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-    network: "Sepolia",
-    credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-  cred_002: {
-    id: "cred_002",
-    credentialCode: "VD-2026-000002",
-    serialNumber: "B2026/002",
-    studentName: "Nguyễn Văn Hùng",
-    studentCode: "SV2024001",
-    credentialTitle: "Chứng chỉ Tiếng Anh B2",
-    type: "CERTIFICATE",
-    major: "Ngoại ngữ",
-    classification: "Khá",
-    gpa: "",
-    issueDate: "15/05/2026",
-    issuerName: "Đại học Bách khoa Hà Nội",
-    issuerLogo: "",
-    status: "VALID",
-    onChain: true,
-    ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-    metadataHash: "0xmetadata567890abcdef1234567890abcdef12345678",
-    transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-    contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-    network: "Sepolia",
-    credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-  cred_003: {
-    id: "cred_003",
-    credentialCode: "VD-2026-000003",
-    serialNumber: "C2026/015",
-    studentName: "Nguyễn Văn Hùng",
-    studentCode: "SV2024001",
-    credentialTitle: "Bằng cử nhân Khoa học máy tính",
-    type: "BACHELOR_DEGREE",
-    major: "Khoa học máy tính",
-    classification: "Xuất sắc",
-    gpa: "3.78/4.0",
-    issueDate: "15/08/2026",
-    issuerName: "Đại học Công nghệ - ĐHQG HN",
-    issuerLogo: "",
-    status: "REVOKED",
-    onChain: true,
-    ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-    metadataHash: "0xmetadata901234567890abcdef1234567890abcdef34",
-    transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-    contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-    network: "Sepolia",
-    credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-};
 
 export default function StudentCertificateDetailPage() {
   const params = useParams();
@@ -93,13 +22,11 @@ export default function StudentCertificateDetailPage() {
   useEffect(() => {
     const fetchDetail = async () => {
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 600));
-      const id = params.id as string;
-      const found = MOCK_DETAIL[id];
-      if (found) {
-        setCert(found);
-      } else {
-        setError("Không tìm thấy văn bằng.");
+      try {
+        const dto = await certificateApi.get(params.id as string);
+        setCert(mapCertificateDtoToStudentCert(dto));
+      } catch (err: any) {
+        setError(err.message || "Không tìm thấy văn bằng.");
       }
       setLoading(false);
     };
