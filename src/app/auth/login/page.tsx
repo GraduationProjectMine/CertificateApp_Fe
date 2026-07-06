@@ -40,7 +40,7 @@ function getDashboardRedirect(role: string) {
   if (normalizedRole === "super_admin" || normalizedRole === "sysadmin") {
     return "/super-admin/dashboard";
   }
-  if (normalizedRole === "institution_admin" || normalizedRole === "issuer" || normalizedRole === "issuer_staff") {
+  if (normalizedRole === "issuer" || normalizedRole === "staff") {
     return "/admin/dashboard";
   }
   if (normalizedRole === "student") return "/student/dashboard";

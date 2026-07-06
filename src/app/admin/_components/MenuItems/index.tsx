@@ -98,6 +98,7 @@ export const menuItems: MenuItem[] = [
       </svg>
     )
   },
+
   {
     title: "Cài đặt",
     path: "/admin/settings",

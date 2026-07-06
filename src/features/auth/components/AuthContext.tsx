@@ -25,12 +25,15 @@ function beUserToAppUser(data: {
   name: string;
   role: string;
   accessToken: string;
-  staffRole?: string;
 }): { token: string; user: User } {
   let appRole: User['role'] = 'student';
-  if (data.role === 'issuer') {
-    appRole = data.staffRole === 'Staff' ? 'issuer_staff' : 'institution_admin';
-  } else if (data.role === 'sysadmin') {
+  const roleLower = data.role?.toLowerCase();
+  
+  if (roleLower === 'issuer') {
+    appRole = 'issuer';
+  } else if (roleLower === 'staff') {
+    appRole = 'staff';
+  } else if (roleLower === 'sysadmin') {
     appRole = 'sysadmin';
   }
 
@@ -42,7 +45,7 @@ function beUserToAppUser(data: {
       name: data.name,
       role: appRole,
       studentId: null,
-      institutionId: data.role === 'issuer' ? data.id : null,
+      institutionId: (appRole === 'issuer' || appRole === 'staff') ? data.id : null,
       walletAddress: null,
     },
   };
@@ -133,12 +136,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setIsLoggingOut(true);
-    localStorage.removeItem('token');
-    localStorage.removeItem('auth_user');
-    setUser(null);
-    router.replace('/');
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.error("Failed to call backend logout api", err);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth_user');
+      setUser(null);
+      setIsLoggingOut(false);
+      router.replace('/');
+    }
   }, [router]);
 
   return (

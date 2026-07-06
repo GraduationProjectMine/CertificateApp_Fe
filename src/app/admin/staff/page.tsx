@@ -13,8 +13,14 @@ export default function StaffListPage() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
 
   useEffect(() => {
-    const cached = JSON.parse(localStorage.getItem("staff") || "[]");
-    setStaff(cached);
+    try {
+      const cached = JSON.parse(localStorage.getItem("staff") || "[]");
+      const valid = Array.isArray(cached) ? cached.filter((s) => s && s.name) : [];
+      setStaff(valid);
+    } catch (err) {
+      console.error("Failed to load staff list", err);
+      setStaff([]);
+    }
   }, []);
 
   const handleDelete = (idx: number) => {
@@ -58,8 +64,8 @@ export default function StaffListPage() {
             <tbody>
               {staff.map((s, i) => (
                 <tr key={i} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{s.email}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s?.name}</td>
+                  <td className="px-4 py-3 text-gray-500">{s?.email}</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDelete(i)}
