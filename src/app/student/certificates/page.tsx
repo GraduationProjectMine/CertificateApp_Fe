@@ -1,80 +1,10 @@
 ﻿"use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
+import { useAuth } from "@/features/auth/components/AuthContext";
+import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
-
-const MOCK_CERTIFICATES: StudentCertificate[] = [
-  {
-    id: "cred_001",
-    credentialCode: "VD-2026-000001",
-    serialNumber: "B2026/001",
-    studentName: "Nguyễn Văn Hùng",
-    studentCode: "SV2024001",
-    credentialTitle: "Bằng cử nhân Công nghệ thông tin",
-    type: "BACHELOR_DEGREE",
-    major: "Kỹ thuật phần mềm",
-    classification: "Giỏi",
-    gpa: "3.45/4.0",
-    issueDate: "20/06/2026",
-    issuerName: "Đại học Bách khoa Hà Nội",
-    issuerLogo: "",
-    status: "VALID",
-    onChain: true,
-    ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-    metadataHash: "0xmetadata1234567890abcdef1234567890abcdef12",
-    transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-    contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-    network: "Sepolia",
-    credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-  {
-    id: "cred_002",
-    credentialCode: "VD-2026-000002",
-    serialNumber: "B2026/002",
-    studentName: "Nguyễn Văn Hùng",
-    studentCode: "SV2024001",
-    credentialTitle: "Chứng chỉ Tiếng Anh B2",
-    type: "CERTIFICATE",
-    major: "Ngoại ngữ",
-    classification: "Khá",
-    gpa: "",
-    issueDate: "15/05/2026",
-    issuerName: "Đại học Bách khoa Hà Nội",
-    issuerLogo: "",
-    status: "VALID",
-    onChain: true,
-    ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-    metadataHash: "0xmetadata567890abcdef1234567890abcdef12345678",
-    transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-    contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-    network: "Sepolia",
-    credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-  {
-    id: "cred_003",
-    credentialCode: "VD-2026-000003",
-    serialNumber: "C2026/015",
-    studentName: "Nguyễn Văn Hùng",
-    studentCode: "SV2024001",
-    credentialTitle: "Bằng cử nhân Khoa học máy tính",
-    type: "BACHELOR_DEGREE",
-    major: "Khoa học máy tính",
-    classification: "Xuất sắc",
-    gpa: "3.78/4.0",
-    issueDate: "15/08/2026",
-    issuerName: "Đại học Công nghệ - ĐHQG HN",
-    issuerLogo: "",
-    status: "REVOKED",
-    onChain: true,
-    ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-    metadataHash: "0xmetadata901234567890abcdef1234567890abcdef34",
-    transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-    contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-    network: "Sepolia",
-    credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-  },
-];
 
 const TYPE_OPTIONS = [
   { value: "all", label: "Tất cả" },
@@ -83,24 +13,41 @@ const TYPE_OPTIONS = [
 ];
 
 export default function StudentCertificatesPage() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [certs, setCerts] = useState<StudentCertificate[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  useEffect(() => {
+    if (!user?.id) return;
+    setLoading(true);
+    certificateApi.list({ student_id: user.id })
+      .then((list) => {
+        setCerts(list.map(mapCertificateDtoToStudentCert));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [user?.id]);
+
   const filtered = useMemo(() => {
-    return MOCK_CERTIFICATES.filter((c) => {
+    return certs.filter((c) => {
       if (filterType !== "all" && c.type !== filterType) return false;
       if (filterStatus === "valid" && c.status !== "VALID") return false;
       if (filterStatus === "revoked" && c.status !== "REVOKED") return false;
       return true;
     });
-  }, [filterType, filterStatus]);
+  }, [certs, filterType, filterStatus]);
 
   return (
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>Văn bằng của tôi</h1>
-          <p className={styles._4}>{MOCK_CERTIFICATES.length} văn bằng đã được cấp</p>
+          <p className={styles._4}>
+            {loading ? "..." : `${certs.length} văn bằng đã được cấp`}
+          </p>
         </div>
       </div>
 
@@ -131,7 +78,30 @@ export default function StudentCertificatesPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className={styles._13}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className={`${styles._14} animate-pulse`}>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className={styles._9}>
+          <div className={styles._10}>
+            <svg className={styles._11} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className={styles._12}>{error}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className={styles._9}>
           <div className={styles._10}>
             <svg className={styles._11} fill="none" stroke="currentColor" viewBox="0 0 24 24">
