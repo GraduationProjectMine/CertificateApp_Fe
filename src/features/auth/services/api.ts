@@ -43,15 +43,12 @@ export const authApi = {
   getProfile: () =>
     request('/auth/profile'),
 
-  getPendingInstitutions: () =>
-    request('/super-admin/pending-institutions'),
+  getOrganizationProfile: () =>
+    request<{ organization_id: string; organization_name: string; contact_email: string; logo_url?: string; wallet_address?: string; is_verified: boolean }>('/issuer'),
 
-  approveInstitution: (id: string) =>
-    request(`/super-admin/approve/${id}`, { method: 'POST' }),
-
-  rejectInstitution: (id: string) =>
-    request(`/super-admin/reject/${id}`, { method: 'POST' }),
-
-  superAdminStats: () =>
-    request('/super-admin/stats'),
+  updateOrganizationProfile: (data: { organization_name?: string; contact_email?: string; logo_url?: string; wallet_address?: string }) =>
+    request<{ message: string; organization: any }>('/issuer', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 };

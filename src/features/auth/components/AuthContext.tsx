@@ -33,8 +33,6 @@ function beUserToAppUser(data: {
     appRole = 'issuer';
   } else if (roleLower === 'staff') {
     appRole = 'staff';
-  } else if (roleLower === 'sysadmin') {
-    appRole = 'sysadmin';
   }
 
   return {

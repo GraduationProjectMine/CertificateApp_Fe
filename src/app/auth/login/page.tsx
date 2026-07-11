@@ -37,9 +37,6 @@ declare global {
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
-  if (normalizedRole === "super_admin" || normalizedRole === "sysadmin") {
-    return "/super-admin/dashboard";
-  }
   if (normalizedRole === "issuer" || normalizedRole === "staff") {
     return "/admin/dashboard";
   }

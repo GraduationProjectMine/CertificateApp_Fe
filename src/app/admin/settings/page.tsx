@@ -1,6 +1,6 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserProvider } from 'ethers';
 import { useAuth } from '../../../features/auth/components/AuthContext';
 import { authApi } from '../../../features/auth/services/api';
@@ -9,6 +9,27 @@ import toast from 'react-hot-toast';
 export default function AdminSettingsPage() {
   const { user } = useAuth();
   const [isLinking, setIsLinking] = useState(false);
+  const [orgName, setOrgName] = useState("");
+  const [orgEmail, setOrgEmail] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchOrg = async () => {
+      try {
+        const data = await authApi.getOrganizationProfile();
+        setOrgName(data.organization_name || "");
+        setOrgEmail(data.contact_email || "");
+        setLogoUrl(data.logo_url || "");
+      } catch (err: any) {
+        toast.error(err.message || "Không thể tải thông tin tổ chức");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrg();
+  }, []);
 
   const handleLinkWallet = async () => {
     const eth = (window as any).ethereum;
@@ -48,6 +69,26 @@ export default function AdminSettingsPage() {
       window.location.reload();
     } catch (err: any) {
       toast.error(err.message || 'Lỗi hủy liên kết');
+    }
+  };
+
+  const handleSaveOrg = async () => {
+    if (!orgName.trim() || !orgEmail.trim()) {
+      toast.error("Vui lòng nhập đầy đủ tên và email tổ chức");
+      return;
+    }
+    setSaving(true);
+    try {
+      await authApi.updateOrganizationProfile({
+        organization_name: orgName,
+        contact_email: orgEmail,
+        logo_url: logoUrl,
+      });
+      toast.success("Cập nhật thông tin tổ chức thành công!");
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi cập nhật thông tin tổ chức");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -100,21 +141,49 @@ export default function AdminSettingsPage() {
         <h2 className={styles._5}>
           Thông tin tổ chức
         </h2>
-        <div className={styles._17}>
-          <div>
-            <label className={styles._18}>Tên trường</label>
-            <input type="text" defaultValue="Đại học Bách Khoa Hà Nội"
-              className={styles._19} />
-          </div>
-          <div>
-            <label className={styles._18}>Mã trường</label>
-            <input type="text" defaultValue="HUST"
-              className={styles._19} />
-          </div>
-        </div>
-        <button className={styles._20}>
-          Lưu cấu hình
-        </button>
+        {loading ? (
+          <p className="text-xs text-gray-400 py-4">Đang tải thông tin tổ chức...</p>
+        ) : (
+          <>
+            <div className={styles._17}>
+              <div>
+                <label className={styles._18}>Tên trường *</label>
+                <input
+                  type="text"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  className={styles._19}
+                />
+              </div>
+              <div>
+                <label className={styles._18}>Email liên hệ *</label>
+                <input
+                  type="email"
+                  value={orgEmail}
+                  onChange={(e) => setOrgEmail(e.target.value)}
+                  className={styles._19}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className={styles._18}>Đường dẫn ảnh Logo (URL)</label>
+                <input
+                  type="text"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  className={styles._19}
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleSaveOrg}
+              disabled={saving}
+              className={`${styles._20} disabled:opacity-50`}
+            >
+              {saving ? "Đang lưu..." : "Lưu cấu hình"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

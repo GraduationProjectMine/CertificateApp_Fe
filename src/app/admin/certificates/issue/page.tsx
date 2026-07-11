@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
+import { studentApi } from "@/features/students/services/student.api";
 
 type FormData = {
   student_id: string;
@@ -45,15 +46,6 @@ interface CachedStudent {
   email: string;
 }
 
-function loadStudents(): CachedStudent[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("students") || "[]");
-  } catch {
-    return [];
-  }
-}
-
 export default function IssueCertificatePage() {
   const router = useRouter();
   const [step, setStep] = useState<"info" | "confirm" | "result">("info");
@@ -64,7 +56,15 @@ export default function IssueCertificatePage() {
   const [cachedStudents, setCachedStudents] = useState<CachedStudent[]>([]);
 
   useEffect(() => {
-    setCachedStudents(loadStudents());
+    studentApi.list()
+      .then((data) => {
+        // filter out null/undefined students
+        const valid = (data || []).filter((s) => s && s.student_id && s.student_fullName);
+        setCachedStudents(valid);
+      })
+      .catch((err) => {
+        console.error("Failed to load students:", err);
+      });
   }, []);
 
   // OCR

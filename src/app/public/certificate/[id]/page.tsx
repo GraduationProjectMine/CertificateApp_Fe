@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import styles from "./page.module.css";
@@ -7,6 +7,8 @@ import BlockchainInfo from "@/components/credential/BlockchainInfo";
 import IPFSInfo from "@/components/credential/IPFSInfo";
 import Loading from "@/components/common/Loading";
 import ErrorMessage from "@/components/common/ErrorMessage";
+
+import { certificateApi } from "@/features/certificates/services/certificate.api";
 
 interface CredentialDetail {
   id: string;
@@ -45,66 +47,41 @@ export default function PublicCredentialPage() {
   useEffect(() => {
     const fetchCredential = async () => {
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 800));
       const id = params.id as string;
-      if (id === "VD-2026-000001" || id === "cred_001") {
+      try {
+        const data = await certificateApi.getPublicDetails(id);
         setCredential({
-          id: "cred_001",
-          credentialCode: "VD-2026-000001",
-          studentName: "Nguyễn Văn Hùng",
-          studentCode: "SV2024001",
-          credentialTitle: "Bằng cử nhân Công nghệ thông tin",
+          id: data.certificateDetails?.certificateId || "",
+          credentialCode: data.certificateDetails?.certificateId || "",
+          studentName: data.certificateDetails?.studentFullName || "",
+          studentCode: "",
+          credentialTitle: data.certificateDetails?.certificateTitle || "",
           type: "BACHELOR_DEGREE",
-          major: "Kỹ thuật phần mềm",
-          classification: "Giỏi",
-          gpa: "3.45/4.0",
-          issueDate: "20/06/2026",
-          serialNumber: "B2026/001",
-          registryNumber: "2026/001",
-          issuerName: "Đại học Bách khoa Hà Nội",
-          issuerLogo: "",
-          status: "VALID",
-          ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-          metadataHash: "0xmetadata1234567890abcdef1234567890abcdef12",
-          transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-          contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-          network: "Sepolia",
-          credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-          signature: "0xsignature1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-          issuerWallet: "0x1234567890abcdef1234567890abcdef12345678",
-        });
-      } else if (id === "REVOKED-001") {
-        setCredential({
-          id: "cred_002",
-          credentialCode: "REVOKED-001",
-          studentName: "Trần Văn B",
-          studentCode: "SV2024002",
-          credentialTitle: "Chứng chỉ Tiếng Anh B2",
-          type: "CERTIFICATE",
-          major: "Ngoại ngữ",
-          classification: "Khá",
+          major: "",
+          classification: "",
           gpa: "",
-          issueDate: "15/05/2026",
-          serialNumber: "C2026/015",
-          registryNumber: "2026/015",
-          issuerName: "Đại học Bách khoa Hà Nội",
+          issueDate: data.certificateDetails?.issueDate || "",
+          serialNumber: data.certificateDetails?.serialNumber || "",
+          registryNumber: data.certificateDetails?.registryNumber || "",
+          issuerName: data.certificateDetails?.organizationName || "",
           issuerLogo: "",
-          status: "REVOKED",
-          revokedAt: "10/06/2026",
-          revokeReason: "Phát hiện sai lệch thông tin điểm số sau khi đối chiếu hồ sơ gốc.",
-          ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-          metadataHash: "0xmetadata567890abcdef1234567890abcdef12345678",
-          transactionHash: "0xrevoketx1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-          contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-          network: "Sepolia",
-          credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-          signature: "0xsignature1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-          issuerWallet: "0x1234567890abcdef1234567890abcdef12345678",
+          status: data.status === "REVOKED" ? "REVOKED" : "VALID",
+          revokedAt: data.status === "REVOKED" ? new Date(data.certificateDetails?.issuedAt).toLocaleDateString() : undefined,
+          revokeReason: data.status === "REVOKED" ? "Bị thu hồi bởi tổ chức cấp" : undefined,
+          ipfsCid: data.blockchain?.cid || data.certificateDetails?.ipfsCid || "",
+          metadataHash: data.blockchain?.sha3Hash || "",
+          transactionHash: data.certificateDetails?.txHash || "",
+          contractAddress: data.blockchain?.issuer || "",
+          network: "Sepolia Blockchain",
+          credentialHash: data.blockchain?.sha3Hash || "",
+          signature: data.blockchain?.signature || "",
+          issuerWallet: data.blockchain?.issuer || "",
         });
-      } else {
-        setError("Không tìm thấy văn bằng.");
+      } catch (err: any) {
+        setError(err.message || "Không tìm thấy thông tin văn bằng.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchCredential();
   }, [params.id]);

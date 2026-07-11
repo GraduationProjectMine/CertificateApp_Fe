@@ -2,37 +2,45 @@
 import styles from "./page.module.css";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { StudentDto } from "@/features/students/services/student.api";
-
-const STORAGE_KEY = "students";
-
-function loadStudents(): StudentDto[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
+import { studentApi, StudentDto } from "@/features/students/services/student.api";
+import toast from "react-hot-toast";
 
 export default function AdminStudentsPage() {
   const router = useRouter();
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      const data = await studentApi.list();
+      setStudents(data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Không thể tải danh sách sinh viên");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setStudents(loadStudents());
+    fetchStudents();
   }, []);
 
   const refresh = () => {
-    setStudents(loadStudents());
+    fetchStudents();
   };
 
-  const handleDelete = (studentId: string) => {
-    const updated = students.filter((s) => s.student_id !== studentId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    setStudents(updated);
+  const handleDelete = async (studentId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa sinh viên này?")) return;
+    try {
+      await studentApi.delete(studentId);
+      toast.success("Xóa sinh viên thành công");
+      setStudents(students.filter((s) => s.student_id !== studentId));
+    } catch (err: any) {
+      toast.error(err.message || "Xóa sinh viên thất bại");
+    }
   };
 
   const handleCopyId = (id: string) => {
@@ -42,12 +50,13 @@ export default function AdminStudentsPage() {
   };
 
   const filtered = students.filter((s) => {
+    if (!s) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      s.student_fullName.toLowerCase().includes(q) ||
-      s.email.toLowerCase().includes(q) ||
-      s.student_id.toLowerCase().includes(q)
+      (s.student_fullName || "").toLowerCase().includes(q) ||
+      (s.email || "").toLowerCase().includes(q) ||
+      (s.student_id || "").toLowerCase().includes(q)
     );
   });
 
@@ -56,7 +65,7 @@ export default function AdminStudentsPage() {
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>Quản lý Sinh viên</h1>
-          <p className={styles._4}>Quản lý danh sách sinh viên đã tạo để cấp văn bằng.</p>
+          <p className={styles._4}>Quản lý danh sách sinh viên từ hệ thống để cấp văn bằng.</p>
         </div>
         <div className={styles._5}>
           <button onClick={() => router.push("/admin/students/create")} className={styles._6}>
@@ -77,7 +86,9 @@ export default function AdminStudentsPage() {
 
       <div className={styles._12}>
         <div className={styles._13}>
-          {students.length === 0 ? (
+          {loading ? (
+            <div className="p-8 text-center text-gray-400 text-xs">Đang tải danh sách sinh viên...</div>
+          ) : students.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-xs">
               Chưa có sinh viên nào.{' '}
               <button onClick={() => router.push("/admin/students/create")} className="text-primary underline">Tạo sinh viên đầu tiên</button>

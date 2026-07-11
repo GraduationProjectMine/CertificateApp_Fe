@@ -4,13 +4,14 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import VerificationResult from "@/components/credential/VerificationResult";
 import type { VerificationData } from "@/components/credential/VerificationResult";
+import { certificateApi } from "@/features/certificates/services/certificate.api";
 
 type VerifyMode = "code" | "qrcode" | "pdf";
 
 export default function VerifyPublicPage() {
   const [mode, setMode] = useState<VerifyMode>("code");
-  const [credentialCode, setCredentialCode] = useState("");
-  const [txHash, setTxHash] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [registryNumber, setRegistryNumber] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [result, setResult] = useState<VerificationData | null>(null);
   const [error, setError] = useState("");
@@ -20,50 +21,53 @@ export default function VerifyPublicPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const handleVerifyByCode = async () => {
-    if (!credentialCode.trim()) {
-      setError("Vui lòng nhập mã văn bằng");
+  const handleVerify = async (sNum: string, rNum: string) => {
+    if (!sNum.trim() || !rNum.trim()) {
+      setError("Vui lòng nhập đầy đủ Số hiệu và Số vào sổ");
       return;
     }
     setError("");
     setIsVerifying(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    const mockResult: VerificationData = {
-      status: credentialCode === "VD-2026-000001" ? "VALID" : "INVALID",
-      credentialCode,
-      studentName: "Nguyễn Văn Hùng",
-      credentialTitle: "Bằng cử nhân Công nghệ thông tin",
-      issuerName: "Đại học Bách khoa Hà Nội",
-      issueDate: "20/06/2026",
-      major: "Kỹ thuật phần mềm",
-      classification: "Giỏi",
-      serialNumber: "B2026/001",
-      ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-      transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-      contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-      network: "Sepolia",
-      credentialHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-      verifiedAt: new Date().toLocaleString("vi-VN"),
-    };
-    setResult(mockResult);
-    setIsVerifying(false);
-  };
+    setResult(null);
 
-  const handleVerifyByTxHash = async () => {
-    if (!txHash.trim()) {
-      setError("Vui lòng nhập transaction hash");
-      return;
+    try {
+      const data = await certificateApi.verify(sNum.trim(), rNum.trim());
+      
+      const statusMap: Record<string, "VALID" | "REVOKED" | "INVALID"> = {
+        ISSUED: "VALID",
+        REVOKED: "REVOKED",
+      };
+
+      const status: "VALID" | "REVOKED" | "INVALID" = data.isValid
+        ? (statusMap[data.status] || "INVALID")
+        : "INVALID";
+
+      const mappedResult: VerificationData = {
+        status,
+        credentialCode: data.certificateDetails?.certificateId || "",
+        studentName: data.certificateDetails?.studentFullName || "",
+        credentialTitle: data.certificateDetails?.certificateTitle || "",
+        issuerName: data.certificateDetails?.organizationName || "",
+        issueDate: data.certificateDetails?.issueDate || "",
+        serialNumber: data.certificateDetails?.serialNumber || "",
+        ipfsCid: data.blockchain?.cid || data.certificateDetails?.ipfsCid || "",
+        transactionHash: data.certificateDetails?.txHash || "",
+        contractAddress: data.blockchain?.issuer || "",
+        network: "Sepolia Blockchain",
+        credentialHash: data.blockchain?.sha3Hash || "",
+        verifiedAt: new Date().toLocaleString("vi-VN"),
+      };
+      setResult(mappedResult);
+    } catch (err: any) {
+      setResult({
+        status: "INVALID",
+        credentialCode: "",
+        error: err.message || "Không tìm thấy văn bằng tương ứng hoặc văn bằng chưa được phát hành lên Blockchain.",
+        verifiedAt: new Date().toLocaleString("vi-VN"),
+      });
+    } finally {
+      setIsVerifying(false);
     }
-    setError("");
-    setIsVerifying(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setResult({
-      status: "INVALID",
-      credentialCode: "",
-      error: "Transaction hash không tồn tại trên blockchain.",
-      verifiedAt: new Date().toLocaleString("vi-VN"),
-    });
-    setIsVerifying(false);
   };
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,29 +85,13 @@ export default function VerifyPublicPage() {
     setIsVerifying(true);
     await new Promise((r) => setTimeout(r, 1000));
 
-    const isMatch = hashHex.startsWith("abcdef");
-    if (isMatch) {
-      setResult({
-        status: "VALID",
-        credentialCode: "VD-2026-000001",
-        studentName: "Nguyễn Văn Hùng",
-        credentialTitle: "Bằng cử nhân Công nghệ thông tin",
-        issuerName: "Đại học Bách khoa Hà Nội",
-        issueDate: "20/06/2026",
-        ipfsCid: "bafybeigdyrzt5mmp4l6s5h3h3p4p5k5q5z5y5x5w5v5u5t5s5r5q5p5o5n5m",
-        transactionHash: "0x71c7e3b8a9c1d4f6e2a0b3c5d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e",
-        contractAddress: "0x3b82f6a7b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4",
-        network: "Sepolia",
-        verifiedAt: new Date().toLocaleString("vi-VN"),
-      });
-    } else {
-      setResult({
-        status: "INVALID",
-        credentialCode: "",
-        error: "Hash của file PDF không khớp với dữ liệu trên blockchain. File có thể đã bị chỉnh sửa.",
-        verifiedAt: new Date().toLocaleString("vi-VN"),
-      });
-    }
+    // Fallback stub for PDF check
+    setResult({
+      status: "INVALID",
+      credentialCode: "",
+      error: "Tính năng xác thực bằng File PDF đang được hoàn thiện. Vui lòng nhập số hiệu và số vào sổ.",
+      verifiedAt: new Date().toLocaleString("vi-VN"),
+    });
     setIsVerifying(false);
   };
 
@@ -142,7 +130,7 @@ export default function VerifyPublicPage() {
     return (
       <div className={styles._1}>
         <div className={styles._41}>
-        <Link href="/" className={`group ${styles._42}`}>
+          <Link href="/" className={`group ${styles._42}`}>
             <span className={styles._43}>C</span>
             <span className={styles._44}>CertiChain</span>
           </Link>
@@ -165,7 +153,7 @@ export default function VerifyPublicPage() {
   }
 
   const tabs: { key: VerifyMode; label: string; icon: string }[] = [
-    { key: "code", label: "Nhập mã văn bằng", icon: "M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" },
+    { key: "code", label: "Nhập mã số hiệu", icon: "M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" },
     { key: "qrcode", label: "Quét mã QR", icon: "M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" },
     { key: "pdf", label: "Upload file PDF", icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" },
   ];
@@ -215,28 +203,28 @@ export default function VerifyPublicPage() {
           {mode === "code" && (
             <div className={styles._12}>
               <div className={styles._13}>
-                <label className={styles._14}>Mã văn bằng</label>
+                <label className={styles._14}>Số hiệu (Số hiệu văn bằng) *</label>
                 <input
                   type="text"
-                  value={credentialCode}
-                  onChange={(e) => setCredentialCode(e.target.value)}
-                  placeholder="VD-2026-000001"
+                  value={serialNumber}
+                  onChange={(e) => setSerialNumber(e.target.value)}
+                  placeholder="Nhập số hiệu văn bằng..."
                   className={styles._15}
                 />
               </div>
               <div className={styles._13}>
-                <label className={styles._14}>Transaction Hash (tùy chọn)</label>
+                <label className={styles._14}>Số vào sổ cấp bằng *</label>
                 <input
                   type="text"
-                  value={txHash}
-                  onChange={(e) => setTxHash(e.target.value)}
-                  placeholder="0x..."
+                  value={registryNumber}
+                  onChange={(e) => setRegistryNumber(e.target.value)}
+                  placeholder="Nhập số vào sổ..."
                   className={styles._15}
                 />
               </div>
               {error && <p className={styles._16}>{error}</p>}
               <button
-                onClick={handleVerifyByCode}
+                onClick={() => handleVerify(serialNumber, registryNumber)}
                 disabled={isVerifying}
                 className={styles._17}
               >
@@ -271,16 +259,23 @@ export default function VerifyPublicPage() {
                 </div>
               )}
               <div className={styles._27}>
-                <p className={styles._28}>Hoặc nhập mã thủ công</p>
-                <div className={styles._51}>
+                <p className={styles._28}>Hoặc nhập mã số hiệu & số vào sổ để xác minh</p>
+                <div className="flex flex-col gap-2 mt-2">
                   <input
                     type="text"
-                    value={credentialCode}
-                    onChange={(e) => setCredentialCode(e.target.value)}
-                    placeholder="Nhập mã văn bằng..."
-                    className={styles._52}
+                    value={serialNumber}
+                    onChange={(e) => setSerialNumber(e.target.value)}
+                    placeholder="Nhập số hiệu..."
+                    className={styles._15}
                   />
-                  <button onClick={handleVerifyByCode} disabled={isVerifying} className={styles._53}>
+                  <input
+                    type="text"
+                    value={registryNumber}
+                    onChange={(e) => setRegistryNumber(e.target.value)}
+                    placeholder="Nhập số vào sổ..."
+                    className={styles._15}
+                  />
+                  <button onClick={() => handleVerify(serialNumber, registryNumber)} disabled={isVerifying} className={styles._17}>
                     {isVerifying ? "..." : "Xác minh"}
                   </button>
                 </div>
@@ -326,7 +321,7 @@ export default function VerifyPublicPage() {
         <div className={styles._37}>
           <div className={styles._38}>
             <div className={styles._39}>1</div>
-            <p className={styles._40}>Nhập mã văn bằng có trên bằng hoặc email cấp bằng</p>
+            <p className={styles._40}>Nhập số hiệu và số vào sổ cấp bằng tương ứng</p>
           </div>
           <div className={styles._38}>
             <div className={styles._39}>2</div>

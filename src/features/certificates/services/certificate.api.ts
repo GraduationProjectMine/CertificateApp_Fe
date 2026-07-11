@@ -72,6 +72,14 @@ export const certificateApi = {
     request<{ message: string }>(`/certificates/${id}`, {
       method: 'DELETE',
     }),
+
+  verify: (serialNumber: string, registryNumber: string) => {
+    const params = new URLSearchParams({ serialNumber, registryNumber });
+    return request<any>(`/verifier/verify?${params.toString()}`);
+  },
+
+  getPublicDetails: (id: string) =>
+    request<any>(`/verifier/certificate/${id}`),
 };
 
 export function mapCertificateDtoToStudentCert(
