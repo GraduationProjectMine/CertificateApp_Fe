@@ -2,8 +2,10 @@
 import styles from "./page.module.css";
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
+import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 
 type FormData = {
   student_id: string;
@@ -39,21 +41,6 @@ const initialForm: FormData = {
   registryNumber: "",
 };
 
-interface CachedStudent {
-  student_id: string;
-  student_fullName: string;
-  email: string;
-}
-
-function loadStudents(): CachedStudent[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("students") || "[]");
-  } catch {
-    return [];
-  }
-}
-
 export default function IssueCertificatePage() {
   const router = useRouter();
   const [step, setStep] = useState<"info" | "confirm" | "result">("info");
@@ -61,10 +48,15 @@ export default function IssueCertificatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; status: string } | null>(null);
   const [error, setError] = useState("");
-  const [cachedStudents, setCachedStudents] = useState<CachedStudent[]>([]);
+  const [students, setStudents] = useState<StudentDto[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [studentsError, setStudentsError] = useState("");
 
   useEffect(() => {
-    setCachedStudents(loadStudents());
+    studentApi.list()
+      .then(setStudents)
+      .catch((err) => setStudentsError(err instanceof Error ? err.message : "Không thể tải danh sách sinh viên"))
+      .finally(() => setStudentsLoading(false));
   }, []);
 
   // OCR
@@ -127,8 +119,8 @@ export default function IssueCertificatePage() {
       if (d.issue_date) updateField("issueDate", d.issue_date.split("/").reverse().join("-"));
       if (d.serial_number) updateField("serialNumber", d.serial_number);
       if (d.registry_number) updateField("registryNumber", d.registry_number);
-    } catch (err: any) {
-      setOcrError(err.message || "OCR thất bại");
+    } catch (err) {
+      setOcrError(err instanceof Error ? err.message : "OCR thất bại");
     } finally {
       setOcrScanning(false);
     }
@@ -159,8 +151,8 @@ export default function IssueCertificatePage() {
       });
       setResult({ id: created.certificate_id, status: created.status });
       setStep("result");
-    } catch (err: any) {
-      setError(err.message || "Tạo văn bằng thất bại");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Tạo văn bằng thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -285,18 +277,20 @@ export default function IssueCertificatePage() {
       <div className={styles._28}>
         <div>
           <label className={styles._29}>Sinh viên *</label>
-          {cachedStudents.length > 0 ? (
+          {studentsLoading ? (
+            <p className="text-xs text-gray-400">Đang tải danh sách sinh viên...</p>
+          ) : students.length > 0 ? (
             <select
               className={styles._30}
               value={formData.student_id}
               onChange={(e) => {
-                const s = cachedStudents.find((s) => s.student_id === e.target.value);
+                const s = students.find((s) => s.student_id === e.target.value);
                 updateField("student_id", e.target.value);
                 if (s) updateField("student_fullName", s.student_fullName);
               }}
             >
               <option value="">-- Chọn sinh viên --</option>
-              {cachedStudents.map((s) => (
+              {students.map((s) => (
                 <option key={s.student_id} value={s.student_id}>
                   {s.student_fullName} ({s.email})
                 </option>
@@ -304,8 +298,8 @@ export default function IssueCertificatePage() {
             </select>
           ) : (
             <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 rounded-lg">
-              Chưa có sinh viên nào.{' '}
-              <a href="/admin/students/create" className="underline">Tạo sinh viên</a> trước khi cấp bằng.
+              {studentsError || "Chưa có sinh viên nào."}{' '}
+              <Link href="/admin/students/create" className="underline">Tạo sinh viên</Link> trước khi cấp bằng.
             </div>
           )}
         </div>
