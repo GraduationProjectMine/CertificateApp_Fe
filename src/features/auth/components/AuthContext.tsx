@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { BrowserProvider } from 'ethers';
 import { useRouter, usePathname } from 'next/navigation';
 import { authApi } from '../services/api';
 import type { User } from '../types';
@@ -12,8 +11,6 @@ interface AuthContextType {
   isLoading: boolean;
   isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithMetaMask: () => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -89,50 +86,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       saveSession(token, appUser);
       setIsLoading(false);
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsLoading(false);
-      return { success: false, error: err.message || 'Đăng nhập thất bại' };
-    }
-  }, []);
-
-  const loginWithGoogle = useCallback(async (credential: string) => {
-    setIsLoading(true);
-    try {
-      const data = await authApi.loginGoogle(credential);
-      saveSession(data.token, { ...data.user, loginType: 'google' });
-      setIsLoading(false);
-      return { success: true };
-    } catch (err: any) {
-      setIsLoading(false);
-      return { success: false, error: err.message || 'Đăng nhập Google thất bại' };
-    }
-  }, []);
-
-  const loginWithMetaMask = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const eth = typeof window !== 'undefined' ? (window as any).ethereum : null;
-      if (!eth) {
-        setIsLoading(false);
-        return { success: false, error: 'Vui lòng cài đặt MetaMask' };
-      }
-
-      const provider = new BrowserProvider(eth);
-      await provider.send('eth_requestAccounts', []);
-      const signer = await provider.getSigner();
-      const walletAddress = await signer.getAddress();
-
-      const nonceRes = await authApi.getMetamaskLoginNonce(walletAddress);
-      const signature = await signer.signMessage(nonceRes.message);
-      const data = await authApi.loginMetamask(walletAddress, signature);
-
-      saveSession(data.token, { ...data.user, loginType: 'metamask' });
-      setIsLoading(false);
-      return { success: true };
-    } catch (err: any) {
-      setIsLoading(false);
-      if (err.code === 4001) return { success: false, error: 'Bạn đã từ chối ký' };
-      return { success: false, error: err.message || 'Lỗi MetaMask' };
+      return { success: false, error: err instanceof Error ? err.message : 'Đăng nhập thất bại' };
     }
   }, []);
 
@@ -152,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithGoogle, loginWithMetaMask, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

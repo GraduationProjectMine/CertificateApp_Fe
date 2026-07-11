@@ -1,39 +1,10 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import Button from "@/components/ui/Button";
-
-type GoogleCredentialResponse = {
-  credential: string;
-};
-
-type GoogleButtonConfig = {
-  theme: string;
-  size: string;
-  width: number;
-  shape?: string;
-  text?: string;
-};
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id?: string;
-            callback: (response: GoogleCredentialResponse) => void;
-          }) => void;
-          renderButton: (element: HTMLElement, config: GoogleButtonConfig) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
@@ -48,51 +19,17 @@ function getDashboardRedirect(role: string) {
 }
 
 export default function LoginPage() {
-  const { user, login, loginWithGoogle, loginWithMetaMask } = useAuth();
+  const { user, login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const googleBtnRef = useRef<HTMLDivElement>(null);
-
-  const handleGoogleResponse = useCallback(
-    async (response: GoogleCredentialResponse) => {
-      setIsSubmitting(true);
-      setError("");
-      const result = await loginWithGoogle(response.credential);
-      if (!result.success) setError(result.error || "Google login failed");
-      setIsSubmitting(false);
-    },
-    [loginWithGoogle],
-  );
 
   useEffect(() => {
     if (user) router.push(getDashboardRedirect(user.role));
   }, [user, router]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.google || !googleBtnRef.current) {
-      return;
-    }
-
-    try {
-      window.google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse,
-      });
-      window.google.accounts.id.renderButton(googleBtnRef.current, {
-        theme: "outline",
-        size: "large",
-        width: 336,
-        shape: "rectangular",
-        text: "signin_with",
-      });
-    } catch {
-      window.setTimeout(() => setError("Không thể khởi tạo đăng nhập Google"), 0);
-    }
-  }, [handleGoogleResponse]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -105,14 +42,6 @@ export default function LoginPage() {
     setIsSubmitting(true);
     const result = await login(email, password);
     if (!result.success) setError(result.error || "Sai email hoặc mật khẩu");
-    setIsSubmitting(false);
-  };
-
-  const handleMetaMask = async () => {
-    setError("");
-    setIsSubmitting(true);
-    const result = await loginWithMetaMask();
-    if (!result.success) setError(result.error || "Lỗi MetaMask");
     setIsSubmitting(false);
   };
 
@@ -145,7 +74,7 @@ export default function LoginPage() {
           </div>
 
           <div className={styles._15} data-reveal>
-            {["Ví điện tử", "Google OAuth", "JWT bảo vệ"].map((item) => (
+            {["JWT bảo vệ", "Tài khoản tổ chức", "Phiên đăng nhập"].map((item) => (
               <div key={item} className={styles._16}>
                 <span className={styles._17} />
                 <span className={styles._18}>{item}</span>
@@ -175,9 +104,7 @@ export default function LoginPage() {
               <h2 className={styles._28}>
                 Chào mừng trở lại
               </h2>
-              <p className={styles._29}>
-                Sử dụng email trường học, Google hoặc ví MetaMask đã liên kết.
-              </p>
+              <p className={styles._29}>Sử dụng email và mật khẩu đã được cấp trong hệ thống.</p>
             </div>
 
             {error && (
@@ -237,20 +164,6 @@ export default function LoginPage() {
                 {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
               </Button>
             </form>
-
-            <div className={styles._36}>
-              <span className={styles._37} />
-              <span className={styles._38}>Hoặc</span>
-              <span className={styles._37} />
-            </div>
-
-            <div className={styles._39}>
-              <div ref={googleBtnRef} className={styles._40} />
-              <Button variant="secondary" type="button" onClick={handleMetaMask} disabled={isSubmitting} className={styles._41}>
-                <span className={styles._42} />
-                Kết nối ví MetaMask
-              </Button>
-            </div>
 
             <div className={styles._43}>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._44}`}>

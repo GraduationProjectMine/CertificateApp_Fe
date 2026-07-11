@@ -5,7 +5,6 @@ import Link from "next/link";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
-import styles from "./page.module.css";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Draft", className: "bg-slate-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400" },

@@ -2,12 +2,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { staffApi, type StaffDto } from "@/features/staff/services/staff.api";
+import { useAuth } from "@/features/auth/components/AuthContext";
 
 export default function StaffListPage() {
+  const { user } = useAuth();
   const [staff, setStaff] = useState<StaffDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState("");
+  const canManageStaff = user?.role === "issuer";
 
   const fetchStaff = useCallback(async () => {
     setLoading(true);
@@ -27,6 +30,7 @@ export default function StaffListPage() {
   }, [fetchStaff]);
 
   const handleDelete = async (id: string) => {
+    if (!canManageStaff) return;
     if (!window.confirm("Xác nhận xóa nhân viên này?")) return;
     setDeletingId(id);
     try {
@@ -46,12 +50,14 @@ export default function StaffListPage() {
           <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Nhân viên</h1>
           <p className="text-xs text-gray-500 mt-1">Danh sách nhân viên trong trường.</p>
         </div>
-        <Link
-          href="/admin/staff/create"
-          className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
-        >
-          + Thêm nhân viên
-        </Link>
+        {canManageStaff && (
+          <Link
+            href="/admin/staff/create"
+            className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
+          >
+            + Thêm nhân viên
+          </Link>
+        )}
       </div>
 
       {error && (
@@ -65,9 +71,11 @@ export default function StaffListPage() {
       ) : staff.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p>Chưa có nhân viên nào.</p>
-          <Link href="/admin/staff/create" className="text-primary underline text-xs mt-2 inline-block">
-            Tạo nhân viên đầu tiên
-          </Link>
+          {canManageStaff && (
+            <Link href="/admin/staff/create" className="text-primary underline text-xs mt-2 inline-block">
+              Tạo nhân viên đầu tiên
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden">
@@ -77,7 +85,7 @@ export default function StaffListPage() {
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tên</th>
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Email</th>
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Vai trò</th>
-                <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>
+                  {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>}
               </tr>
             </thead>
             <tbody>
@@ -94,15 +102,17 @@ export default function StaffListPage() {
                       {s.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDelete(s.staff_id)}
-                      disabled={deletingId === s.staff_id}
-                      className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wider disabled:opacity-50"
-                    >
-                      {deletingId === s.staff_id ? "Đang xóa..." : "Xóa"}
-                    </button>
-                  </td>
+                  {canManageStaff && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleDelete(s.staff_id)}
+                        disabled={deletingId === s.staff_id}
+                        className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wider disabled:opacity-50"
+                      >
+                        {deletingId === s.staff_id ? "Đang xóa..." : "Xóa"}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
