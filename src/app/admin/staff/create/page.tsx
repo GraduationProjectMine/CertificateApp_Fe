@@ -18,10 +18,7 @@ export default function CreateStaffPage() {
     setSubmitting(true);
     setError("");
     try {
-      const res = await staffApi.create(form);
-      const cached = JSON.parse(localStorage.getItem("staff") || "[]");
-      cached.push(res.staff);
-      localStorage.setItem("staff", JSON.stringify(cached));
+      await staffApi.create(form);
       router.push("/admin/staff");
     } catch (err: any) {
       setError(err.message || "Tạo nhân viên thất bại");
