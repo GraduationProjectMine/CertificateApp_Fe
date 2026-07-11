@@ -20,9 +20,9 @@ test("public verification screens contain no hard-coded credential fixtures", as
     "../src/app/public/certificate/[id]/page.tsx",
   ]) {
     const source = await readFile(new URL(file, import.meta.url), "utf8");
-    assert.doesNotMatch(source, /minh/);
+    assert.doesNotMatch(source, /Nguyễn Văn Hùng/);
     assert.doesNotMatch(source, /VD-2026-000001/);
-    assert.doesNotMatch(source, /lmao\(\(r\) => setTimeout/);
+    assert.doesNotMatch(source, /new Promise\(\(r\) => setTimeout/);
   }
 });
 
