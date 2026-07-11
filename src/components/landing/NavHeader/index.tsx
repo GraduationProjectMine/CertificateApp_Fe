@@ -86,7 +86,7 @@ export default function NavHeader() {
                 href={
                   user.role === "super_admin" || user.role === "sysadmin"
                     ? "/super-admin/dashboard"
-                    : user.role === "institution_admin" || user.role === "issuer_staff" || user.role === "issuer"
+                    : user.role === "issuer" || user.role === "staff"
                       ? "/admin/dashboard"
                       : user.role === "student"
                         ? "/student/dashboard"

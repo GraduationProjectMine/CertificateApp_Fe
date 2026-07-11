@@ -2,37 +2,48 @@
 import styles from "./page.module.css";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { StudentDto } from "@/features/students/services/student.api";
-
-const STORAGE_KEY = "students";
-
-function loadStudents(): StudentDto[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
+import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 
 export default function AdminStudentsPage() {
   const router = useRouter();
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
-    setStudents(loadStudents());
+    studentApi.list()
+      .then(setStudents)
+      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải danh sách sinh viên"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const refresh = () => {
-    setStudents(loadStudents());
+  const refresh = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setStudents(await studentApi.list());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể tải danh sách sinh viên");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (studentId: string) => {
-    const updated = students.filter((s) => s.student_id !== studentId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    setStudents(updated);
+  const handleDelete = async (student: StudentDto) => {
+    if (!window.confirm(`Xóa sinh viên ${student.student_fullName}?`)) return;
+    setDeletingId(student.student_id);
+    setError("");
+    try {
+      await studentApi.delete(student.student_id);
+      setStudents((current) => current.filter((item) => item.student_id !== student.student_id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể xóa sinh viên");
+    } finally {
+      setDeletingId("");
+    }
   };
 
   const handleCopyId = (id: string) => {
@@ -75,9 +86,17 @@ export default function AdminStudentsPage() {
         />
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600 dark:bg-red-950/20">
+          {error} <button onClick={() => void refresh()} className="ml-2 underline">Thử lại</button>
+        </div>
+      )}
+
       <div className={styles._12}>
         <div className={styles._13}>
-          {students.length === 0 ? (
+          {loading ? (
+            <div className="p-8 text-center text-gray-400 text-xs">Đang tải danh sách sinh viên...</div>
+          ) : students.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-xs">
               Chưa có sinh viên nào.{' '}
               <button onClick={() => router.push("/admin/students/create")} className="text-primary underline">Tạo sinh viên đầu tiên</button>
@@ -119,8 +138,11 @@ export default function AdminStudentsPage() {
                       </span>
                     </td>
                     <td className={styles._25}>
-                      <button onClick={() => handleDelete(student.student_id)} className={styles._27}>
-                        Xóa
+                      <button onClick={() => router.push(`/admin/students/${student.student_id}`)} className="mr-3 text-primary hover:underline">
+                        Xem / Sửa
+                      </button>
+                      <button disabled={deletingId === student.student_id} onClick={() => void handleDelete(student)} className={styles._27}>
+                        {deletingId === student.student_id ? "Đang xóa..." : "Xóa"}
                       </button>
                     </td>
                   </tr>

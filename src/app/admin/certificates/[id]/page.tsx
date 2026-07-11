@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
+import { useAuth } from "@/features/auth/components/AuthContext";
 import styles from "./page.module.css";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
@@ -16,6 +17,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
 export default function CertificateDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [cert, setCert] = useState<CertificateDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,7 +151,7 @@ export default function CertificateDetailPage() {
             {actionLoading ? "Đang xử lý..." : "Gửi duyệt (PENDING)"}
           </button>
         )}
-        {cert.status === "PENDING" && (
+        {cert.status === "PENDING" && user?.role === "issuer" && (
           <button
             onClick={handleApprove}
             disabled={actionLoading}

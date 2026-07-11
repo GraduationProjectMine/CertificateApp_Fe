@@ -1,5 +1,4 @@
 ﻿"use client";
-import styles from "./page.module.css";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi } from "@/features/students/services/student.api";
@@ -19,13 +18,10 @@ export default function CreateStudentPage() {
     setSubmitting(true);
     setError("");
     try {
-      const res = await studentApi.create(form);
-      const cached = JSON.parse(localStorage.getItem("students") || "[]");
-      cached.push(res.student);
-      localStorage.setItem("students", JSON.stringify(cached));
+      await studentApi.create(form);
       router.push("/admin/students");
-    } catch (err: any) {
-      setError(err.message || "Tạo sinh viên thất bại");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Tạo sinh viên thất bại");
     } finally {
       setSubmitting(false);
     }

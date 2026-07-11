@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!mounted || isLoading || isLoggingOut) return <LoadingScreen />;
 
-  const isAuthorized = user && (user.role === "issuer" || user.role === "institution_admin" || user.role === "issuer_staff" || user.role === "sysadmin");
+  const isAuthorized = user && (user.role === "issuer" || user.role === "staff" || user.role === "sysadmin");
   if (!isAuthorized) return <UnauthorizedScreen />;
 
   return (
