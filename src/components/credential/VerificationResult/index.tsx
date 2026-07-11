@@ -6,6 +6,7 @@ import styles from "./VerificationResult.module.css";
 export interface VerificationData {
   status: "VALID" | "INVALID" | "REVOKED";
   credentialCode: string;
+  certificateId?: string;
   studentName?: string;
   credentialTitle?: string;
   issuerName?: string;
@@ -13,6 +14,7 @@ export interface VerificationData {
   major?: string;
   classification?: string;
   serialNumber?: string;
+  registryNumber?: string;
   ipfsCid?: string;
   transactionHash?: string;
   contractAddress?: string;
@@ -71,14 +73,18 @@ export default function VerificationResult({ result, onReset }: Props) {
               <dt className={styles._11}>Số hiệu</dt>
               <dd className={styles._12}>{result.serialNumber}</dd>
             </div>
-            <div className={styles._10}>
+            {result.registryNumber && <div className={styles._10}>
+              <dt className={styles._11}>Số vào sổ</dt>
+              <dd className={styles._12}>{result.registryNumber}</dd>
+            </div>}
+            {result.major && <div className={styles._10}>
               <dt className={styles._11}>Ngành</dt>
               <dd className={styles._12}>{result.major}</dd>
-            </div>
-            <div className={styles._10}>
+            </div>}
+            {result.classification && <div className={styles._10}>
               <dt className={styles._11}>Xếp loại</dt>
               <dd className={styles._12}>{result.classification}</dd>
-            </div>
+            </div>}
           </dl>
         </div>
 
@@ -124,7 +130,7 @@ export default function VerificationResult({ result, onReset }: Props) {
 
         <div className={styles._13}>
           <Link
-            href={`/public/certificate/${result.credentialCode}`}
+            href={`/public/certificate/${result.certificateId || result.credentialCode}`}
             className={styles._14}
           >
             Xem chi tiết văn bằng

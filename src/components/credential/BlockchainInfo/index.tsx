@@ -12,14 +12,14 @@ interface BlockchainInfoProps {
 }
 
 export default function BlockchainInfo({
-  network = "Sepolia",
+  network,
   contractAddress,
   transactionHash,
   blockNumber,
   gasUsed,
   timestamp,
 }: BlockchainInfoProps) {
-  const explorerUrl = contractAddress
+  const explorerUrl = transactionHash
     ? `https://sepolia.etherscan.io/tx/${transactionHash}`
     : null;
 
@@ -33,10 +33,10 @@ export default function BlockchainInfo({
         <span>Blockchain</span>
       </div>
       <dl className={styles._4}>
-        <div className={styles._5}>
+        {network && <div className={styles._5}>
           <dt className={styles._6}>Network</dt>
           <dd className={styles._7}>{network}</dd>
-        </div>
+        </div>}
         {contractAddress && (
           <div className={styles._5}>
             <dt className={styles._6}>Contract</dt>
