@@ -5,7 +5,7 @@
   email: string;
   department: string;
   major: string;
-  status: "Active" | "Pending" | "Graduated";
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export interface CreateStudentRequest {

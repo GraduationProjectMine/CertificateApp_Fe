@@ -16,6 +16,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function decodeTokenPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
 function beUserToAppUser(data: {
   id: string;
   email: string;
@@ -34,6 +46,9 @@ function beUserToAppUser(data: {
     appRole = 'sysadmin';
   }
 
+  const payload = decodeTokenPayload(data.accessToken);
+  const organizationId = (payload?.organization_id as string) ?? null;
+
   return {
     token: data.accessToken,
     user: {
@@ -42,7 +57,7 @@ function beUserToAppUser(data: {
       name: data.name,
       role: appRole,
       studentId: null,
-      institutionId: (appRole === 'issuer' || appRole === 'staff') ? data.id : null,
+      institutionId: organizationId,
       walletAddress: null,
     },
   };
