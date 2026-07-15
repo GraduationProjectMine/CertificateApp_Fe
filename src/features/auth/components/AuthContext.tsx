@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import { authApi } from '../services/api';
 import type { User } from '../types';
 export type { UserRole } from '../types';
@@ -20,12 +19,19 @@ function decodeTokenPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    const payload = parts[1];
-    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = payload.padEnd(Math.ceil(payload.length / 4) * 4, '=');
+    const decoded = atob(paddedPayload);
     return JSON.parse(decoded);
-  } catch {
+  } catch (error) {
+    console.warn('Unable to decode the authentication token.', error);
     return null;
   }
+}
+
+function isTokenValid(token: string): boolean {
+  const payload = decodeTokenPayload(token);
+  return typeof payload?.exp === 'number' && payload.exp * 1000 > Date.now();
 }
 
 function beUserToAppUser(data: {
@@ -67,22 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    if (isLoggingOut) {
-      setIsLoggingOut(false);
-    }
-  }, [pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('auth_user');
-    if (token && savedUser) {
+    if (token && savedUser && isTokenValid(token)) {
       try {
         setUser(JSON.parse(savedUser));
-      } catch { }
+      } catch (error) {
+        console.warn('Unable to restore the stored authentication user.', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth_user');
+      }
+    } else if (token || savedUser) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth_user');
     }
     setIsLoading(false);
   }, []);
@@ -94,15 +99,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
     try {
       const data = await authApi.login(email, password);
       const { token, user: appUser } = beUserToAppUser(data);
       saveSession(token, appUser);
-      setIsLoading(false);
       return { success: true };
     } catch (err: unknown) {
-      setIsLoading(false);
       return { success: false, error: err instanceof Error ? err.message : 'Đăng nhập thất bại' };
     }
   }, []);
@@ -117,10 +119,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('token');
       localStorage.removeItem('auth_user');
       setUser(null);
-      setIsLoggingOut(false);
-      router.replace('/');
+      // Tear down the protected tree atomically. Unlike pathname-based state,
+      // this also completes correctly when logout starts while already on `/`.
+      window.location.replace('/');
     }
-  }, [router]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, logout }}>
