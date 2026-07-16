@@ -56,6 +56,9 @@ export default function PublicCredentialPage() {
               <Field label="Nơi sinh" value={detail.placeOfBirth} />
               <Field label="Khóa thi" value={detail.examCohort} />
               <Field label="Hội đồng thi" value={detail.examBoard} />
+              {isRevoked && <Field label="Ngày thu hồi" value={detail.revokedAt ? new Date(detail.revokedAt).toLocaleString("vi-VN") : null} />}
+              {isRevoked && <Field label="Lý do thu hồi" value={detail.revokeReason} />}
+              {isRevoked && <Field label="Transaction thu hồi" value={detail.revokeTransactionHash} />}
             </dl>
             {verifyUrl && <QRCodeBox value={verifyUrl} size={140} title="Quét để xem bản xác minh" />}
           </div>

@@ -29,6 +29,9 @@ export interface CertificateDetails {
   organizationId: string;
   txHash: string | null;
   issuedAt: string | null;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  revokeTransactionHash: string | null;
 }
 
 export interface VerifyCertificateResponse {

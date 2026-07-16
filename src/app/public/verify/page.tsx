@@ -25,6 +25,9 @@ function mapVerification(response: VerifyCertificateResponse): VerificationData 
     ipfsCid: response.blockchain?.cid,
     transactionHash: detail.txHash || undefined,
     credentialHash: response.blockchain?.sha3Hash,
+    revokedAt: detail.revokedAt ? new Date(detail.revokedAt).toLocaleString("vi-VN") : undefined,
+    revokeReason: detail.revokeReason || undefined,
+    revokeTransactionHash: detail.revokeTransactionHash || undefined,
     verifiedAt: new Date().toLocaleString("vi-VN"),
     error: status === "INVALID" ? "Dữ liệu văn bằng không khớp với bản ghi blockchain." : undefined,
   };
