@@ -132,7 +132,7 @@ export default function HeroSection() {
                 </div>
 
                 <p className={styles._39} style={{ marginTop: "0.5rem", opacity: 0.6 }}>
-                  Verified by CertiChain
+                  Verified by NguyenTT
                 </p>
               </div>
             </div>
