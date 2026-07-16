@@ -1,8 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { BrowserProvider } from 'ethers';
-import { useRouter, usePathname } from 'next/navigation';
 import { authApi } from '../services/api';
 import type { User } from '../types';
 export type { UserRole } from '../types';
@@ -12,12 +10,29 @@ interface AuthContextType {
   isLoading: boolean;
   isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithMetaMask: () => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function decodeTokenPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = payload.padEnd(Math.ceil(payload.length / 4) * 4, '=');
+    const decoded = atob(paddedPayload);
+    return JSON.parse(decoded);
+  } catch (error) {
+    console.warn('Unable to decode the authentication token.', error);
+    return null;
+  }
+}
+
+function isTokenValid(token: string): boolean {
+  const payload = decodeTokenPayload(token);
+  return typeof payload?.exp === 'number' && payload.exp * 1000 > Date.now();
+}
 
 function beUserToAppUser(data: {
   id: string;
@@ -37,6 +52,9 @@ function beUserToAppUser(data: {
     appRole = 'sysadmin';
   }
 
+  const payload = decodeTokenPayload(data.accessToken);
+  const organizationId = (payload?.organization_id as string) ?? null;
+
   return {
     token: data.accessToken,
     user: {
@@ -45,7 +63,7 @@ function beUserToAppUser(data: {
       name: data.name,
       role: appRole,
       studentId: null,
-      institutionId: (appRole === 'issuer' || appRole === 'staff') ? data.id : null,
+      institutionId: organizationId,
       walletAddress: null,
     },
   };
@@ -55,22 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    if (isLoggingOut) {
-      setIsLoggingOut(false);
-    }
-  }, [pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('auth_user');
-    if (token && savedUser) {
+    if (token && savedUser && isTokenValid(token)) {
       try {
         setUser(JSON.parse(savedUser));
-      } catch { }
+      } catch (error) {
+        console.warn('Unable to restore the stored authentication user.', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth_user');
+      }
+    } else if (token || savedUser) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth_user');
     }
     setIsLoading(false);
   }, []);
@@ -82,57 +99,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
     try {
       const data = await authApi.login(email, password);
       const { token, user: appUser } = beUserToAppUser(data);
       saveSession(token, appUser);
-      setIsLoading(false);
       return { success: true };
-    } catch (err: any) {
-      setIsLoading(false);
-      return { success: false, error: err.message || 'Đăng nhập thất bại' };
-    }
-  }, []);
-
-  const loginWithGoogle = useCallback(async (credential: string) => {
-    setIsLoading(true);
-    try {
-      const data = await authApi.loginGoogle(credential);
-      saveSession(data.token, { ...data.user, loginType: 'google' });
-      setIsLoading(false);
-      return { success: true };
-    } catch (err: any) {
-      setIsLoading(false);
-      return { success: false, error: err.message || 'Đăng nhập Google thất bại' };
-    }
-  }, []);
-
-  const loginWithMetaMask = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const eth = typeof window !== 'undefined' ? (window as any).ethereum : null;
-      if (!eth) {
-        setIsLoading(false);
-        return { success: false, error: 'Vui lòng cài đặt MetaMask' };
-      }
-
-      const provider = new BrowserProvider(eth);
-      await provider.send('eth_requestAccounts', []);
-      const signer = await provider.getSigner();
-      const walletAddress = await signer.getAddress();
-
-      const nonceRes = await authApi.getMetamaskLoginNonce(walletAddress);
-      const signature = await signer.signMessage(nonceRes.message);
-      const data = await authApi.loginMetamask(walletAddress, signature);
-
-      saveSession(data.token, { ...data.user, loginType: 'metamask' });
-      setIsLoading(false);
-      return { success: true };
-    } catch (err: any) {
-      setIsLoading(false);
-      if (err.code === 4001) return { success: false, error: 'Bạn đã từ chối ký' };
-      return { success: false, error: err.message || 'Lỗi MetaMask' };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Đăng nhập thất bại' };
     }
   }, []);
 
@@ -146,13 +119,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('token');
       localStorage.removeItem('auth_user');
       setUser(null);
-      setIsLoggingOut(false);
-      router.replace('/');
+      // Tear down the protected tree atomically. Unlike pathname-based state,
+      // this also completes correctly when logout starts while already on `/`.
+      window.location.replace('/');
     }
-  }, [router]);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithGoogle, loginWithMetaMask, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

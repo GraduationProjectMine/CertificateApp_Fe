@@ -1,17 +1,10 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../../features/auth/components/AuthContext';
-import { authApi } from '../../../features/auth/services/api';
 
 export default function SuperAdminDashboard() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState({ pendingInstitutions: 0, activeInstitutions: 0, totalUsers: 0 });
-
-  useEffect(() => {
-    authApi.superAdminStats().then(setStats).catch(() => {});
-  }, []);
+  const stats = { pendingInstitutions: 0, activeInstitutions: 0, totalUsers: 0 };
 
   return (
     <div className={styles._1}>
@@ -33,6 +26,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       <div className={styles._9}>
+        <p className="mb-3 text-xs text-gray-500">Backend hiện chưa có API quản trị hệ thống, nên số liệu này đang được ẩn ở trạng thái trống.</p>
         <Link href="/super-admin/pending" className={styles._10}>
           Xem yêu cầu đăng ký
         </Link>

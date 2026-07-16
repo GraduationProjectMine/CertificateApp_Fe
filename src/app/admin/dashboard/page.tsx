@@ -33,9 +33,9 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const issuedCount = certs.filter((c) => c.status === "Issued").length;
-  const pendingCount = certs.filter((c) => c.status === "Pending" || c.status === "Pending Blockchain").length;
-  const revokedCount = certs.filter((c) => c.status === "Revoked").length;
+  const issuedCount = certs.filter((c) => c.status === "ISSUED").length;
+  const pendingCount = certs.filter((c) => c.status === "PENDING").length;
+  const revokedCount = certs.filter((c) => c.status === "REVOKED").length;
 
   const recentTx = certs
     .filter((c) => c.tx_hash)
@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className={styles._4}>Tổng quan Hệ thống</h1>
           <p className={styles._5}>
-            Chào mừng đại diện trường {user?.institutionName || "HUST"} quay trở lại cổng quản trị.
+            Chào mừng {user?.name || "người dùng"} quay trở lại cổng quản trị.
           </p>
         </div>
         <div className={styles._6}>
@@ -202,15 +202,15 @@ export default function AdminDashboardPage() {
             <div className={styles._45}>
               <div className={styles._46}>
                 <span className={styles._47}>Node RPC:</span>
-                <span className={styles._48}>Đã kết nối (12ms)</span>
+                <span className={styles._48}>Theo cấu hình backend</span>
               </div>
               <div className={styles._46}>
                 <span className={styles._47}>IPFS Cluster:</span>
-                <span className={styles._48}>Hoạt động (99.8%)</span>
+                <span className={styles._48}>Theo cấu hình backend</span>
               </div>
               <div className={styles._46}>
                 <span className={styles._47}>Smart Contract:</span>
-                <span className={`text-slate-350 ${styles._49}`}>0x3b82...b65f</span>
+                <span className={`text-slate-350 ${styles._49}`}>Chưa có API trạng thái</span>
               </div>
             </div>
           </div>

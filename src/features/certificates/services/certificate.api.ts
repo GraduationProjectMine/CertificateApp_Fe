@@ -43,7 +43,7 @@ export interface CreateCertificatePayload {
 export const certificateApi = {
   list: (params?: { status?: string; student_id?: string }) => {
     const query = params
-      ? '?' + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([_, v]) => !!v)) as Record<string, string>).toString()
+      ? '?' + new URLSearchParams(Object.fromEntries(Object.entries(params).filter((entry) => !!entry[1])) as Record<string, string>).toString()
       : '';
     return request<CertificateDto[]>(`/certificates${query}`);
   },
@@ -78,10 +78,10 @@ export function mapCertificateDtoToStudentCert(
   dto: CertificateDto,
 ): import("@/features/certificates/types").StudentCertificate {
   const statusMap: Record<string, "VALID" | "REVOKED"> = {
-    Issued: "VALID",
-    Revoked: "REVOKED",
-    "Pending Blockchain": "VALID",
-    Draft: "VALID",
+    ISSUED: "VALID",
+    REVOKED: "REVOKED",
+    PENDING: "VALID",
+    DRAFT: "VALID",
   };
   return {
     id: dto.certificate_id,

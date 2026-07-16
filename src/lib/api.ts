@@ -36,7 +36,7 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
     credentials: 'include', // Ensure HTTP-Only refresh cookies are sent/received
   };
 
-  let res = await fetch(`${API_URL}${path}`, fetchOptions);
+  const res = await fetch(`${API_URL}${path}`, fetchOptions);
   
   // Handle 401 Unauthorized for silent JWT refresh
   if (res.status === 401 && path !== '/auth/login' && path !== '/auth/refresh') {

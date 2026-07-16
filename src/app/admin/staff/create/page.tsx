@@ -2,15 +2,21 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { staffApi } from "@/features/staff/services/staff.api";
+import { useAuth } from "@/features/auth/components/AuthContext";
 
 export default function CreateStaffPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user?.role !== "issuer") {
+      setError("Chỉ tài khoản quản trị tổ chức được tạo nhân viên");
+      return;
+    }
     if (!form.name || !form.email || !form.password) {
       setError("Vui lòng điền đầy đủ thông tin");
       return;
@@ -18,10 +24,7 @@ export default function CreateStaffPage() {
     setSubmitting(true);
     setError("");
     try {
-      const res = await staffApi.create(form);
-      const cached = JSON.parse(localStorage.getItem("staff") || "[]");
-      cached.push(res.staff);
-      localStorage.setItem("staff", JSON.stringify(cached));
+      await staffApi.create(form);
       router.push("/admin/staff");
     } catch (err: any) {
       setError(err.message || "Tạo nhân viên thất bại");
@@ -29,6 +32,22 @@ export default function CreateStaffPage() {
       setSubmitting(false);
     }
   };
+
+  if (user?.role !== "issuer") {
+    return (
+      <div className="max-w-lg mx-auto p-6 space-y-4">
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Không có quyền</h1>
+        <p className="text-xs text-gray-500">Chỉ tài khoản quản trị tổ chức được tạo nhân viên.</p>
+        <button
+          type="button"
+          onClick={() => router.push("/admin/staff")}
+          className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+        >
+          Quay lại danh sách
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto p-6 space-y-6">

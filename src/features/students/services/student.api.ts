@@ -10,10 +10,26 @@ export interface StudentDto {
   createdAt: string;
 }
 
+export interface UpdateStudentPayload {
+  name?: string;
+  email?: string;
+  status?: string;
+  password?: string;
+}
+
 export const studentApi = {
+  list: () => request<StudentDto[]>('/students'),
+  get: (id: string) => request<StudentDto>(`/students/${id}`),
   create: (data: { name: string; email: string; password: string }) =>
-    request<{ message: string; student: StudentDto }>('/issuer/students', {
+    request<{ message: string; student: StudentDto }>('/students', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  update: (id: string, data: UpdateStudentPayload) =>
+    request<{ message: string; student: StudentDto }>(`/students/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id: string) =>
+    request<{ message: string }>(`/students/${id}`, { method: 'DELETE' }),
 };

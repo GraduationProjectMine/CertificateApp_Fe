@@ -1,4 +1,4 @@
-﻿export type CertificateStatus = "Issued" | "Pending Blockchain" | "Revoked" | "Draft";
+﻿export type CertificateStatus = "ISSUED" | "PENDING" | "REVOKED" | "DRAFT";
 
 export interface Certificate {
   id: string;
