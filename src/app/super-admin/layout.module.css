@@ -1,37 +1,87 @@
 @reference "../globals.css";
 @custom-variant dark (&:where(:global(.dark), :global(.dark) *));
-._1 {
- @apply min-h-screen bg-gray-50 dark:bg-gray-950;
+
+._shell {
+  @apply flex min-h-screen bg-gray-50 dark:bg-gray-950;
 }
 
-._2 {
- @apply bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between;
+/* Sidebar */
+._sidebar {
+  @apply fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 transition-all duration-200;
+}
+._sidebarCollapsed {
+  @apply w-20;
+}
+._sidebarHeader {
+  @apply flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800;
+}
+._logo {
+  @apply flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-black text-white text-sm;
+}
+._brand {
+  @apply flex flex-col;
+}
+._brandName {
+  @apply font-black text-sm;
+}
+._brandSub {
+  @apply text-[10px] font-bold uppercase tracking-wider text-gray-400;
+}
+._nav {
+  @apply flex-1 space-y-1 px-3 py-4;
+}
+._navItem {
+  @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white;
+}
+._navItemActive {
+  @apply bg-primary text-white shadow-md shadow-primary/10;
+}
+._navItemActive:hover {
+  @apply bg-primary-hover text-white;
+}
+._navIcon {
+  @apply h-5 w-5 shrink-0;
+}
+._sidebarFooter {
+  @apply border-t border-gray-100 px-3 py-3 dark:border-gray-800;
+}
+._toggleBtn {
+  @apply flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800;
 }
 
-._3 {
- @apply flex items-center gap-6;
+/* Main */
+._main {
+  @apply flex-1 ml-64 transition-all duration-200;
+}
+._mainExpanded {
+  @apply ml-20;
+}
+._topbar {
+  @apply sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-800 dark:bg-gray-900;
+}
+._topbarTitle {
+  @apply text-xs font-bold text-gray-500;
+}
+._topbarRight {
+  @apply flex items-center gap-3;
+}
+._userBadge {
+  @apply flex items-center gap-2;
+}
+._avatar {
+  @apply flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary;
+}
+._userName {
+  @apply text-xs font-semibold;
+}
+._logoutBtn {
+  @apply text-[10px] px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-100 font-bold;
+}
+._content {
+  @apply p-6;
 }
 
-._4 {
- @apply font-bold text-lg;
-}
-
-._5 {
- @apply flex gap-4 text-sm;
-}
-
-._6 {
- @apply text-gray-600 hover:text-primary;
-}
-
-._7 {
- @apply flex items-center gap-3;
-}
-
-._8 {
- @apply text-xs text-gray-500;
-}
-
-._9 {
- @apply text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-100;
+/* Mobile overlay */
+._overlay {
+  @apply fixed inset-0 z-20 bg-black/50 md:hidden;
 }
