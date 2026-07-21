@@ -20,8 +20,15 @@ export interface CertificateDto {
   registryNumber: string | null;
   ipfs_cid: string | null;
   tx_hash: string | null;
+  block_number?: number | null;
+  gas_used?: string | null;
   status: string;
   issuedAt: string;
+  revokedAt?: string | null;
+  revokedById?: string | null;
+  revokeReason?: string | null;
+  revoke_tx_hash?: string | null;
+  revoke_block_number?: number | null;
 }
 
 export interface CreateCertificatePayload {

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import { certificateApi, type CertificateDto } from "../../../features/certificates/services/certificate.api";
+import { operationsApi, type MonitorOverview } from "../../../features/admin/services/operations.api";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -25,10 +26,20 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<CertificateDto[]>([]);
+  const [monitorData, setMonitorData] = useState<MonitorOverview | null>(null);
 
   useEffect(() => {
-    certificateApi.list()
-      .then(setCerts)
+    Promise.all([
+      certificateApi.list(),
+      operationsApi.monitor().catch((err) => {
+        console.error("Failed to fetch monitor data:", err);
+        return null;
+      })
+    ])
+      .then(([certsData, monitorRes]) => {
+        setCerts(certsData);
+        setMonitorData(monitorRes);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -202,15 +213,21 @@ export default function AdminDashboardPage() {
             <div className={styles._45}>
               <div className={styles._46}>
                 <span className={styles._47}>Node RPC:</span>
-                <span className={styles._48}>Theo cấu hình backend</span>
+                <span className={monitorData?.blockchain.connected ? styles._48 : "font-semibold text-red-500"}>
+                  {loading ? "Đang tải..." : monitorData ? (monitorData.blockchain.connected ? "Đã kết nối" : "Mất kết nối") : "Theo cấu hình backend"}
+                </span>
               </div>
               <div className={styles._46}>
                 <span className={styles._47}>IPFS Cluster:</span>
-                <span className={styles._48}>Theo cấu hình backend</span>
+                <span className={monitorData?.ipfs.connected ? styles._48 : "font-semibold text-red-500"}>
+                  {loading ? "Đang tải..." : monitorData ? (monitorData.ipfs.connected ? "Hoạt động" : "Mất kết nối") : "Theo cấu hình backend"}
+                </span>
               </div>
               <div className={styles._46}>
                 <span className={styles._47}>Smart Contract:</span>
-                <span className={`text-slate-350 ${styles._49}`}>Chưa có API trạng thái</span>
+                <span className={`text-slate-350 ${styles._49}`}>
+                  {loading ? "Đang tải..." : monitorData ? (monitorData.blockchain.contractAddress ? shortHash(monitorData.blockchain.contractAddress) : "Chưa cấu hình") : "Chưa có API trạng thái"}
+                </span>
               </div>
             </div>
           </div>
