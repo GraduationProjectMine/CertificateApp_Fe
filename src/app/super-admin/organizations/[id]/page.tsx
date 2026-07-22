@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { superAdminApi, type Organization } from "@/features/super-admin/services/api";
+import { superAdminApi, type Organization, type OrgWalletInfo } from "@/features/super-admin/services/api";
 import toast from "react-hot-toast";
 
 export default function OrganizationDetailPage() {
@@ -10,8 +10,10 @@ export default function OrganizationDetailPage() {
   const router = useRouter();
   const id = params.id as string;
   const [org, setOrg] = useState<Organization | null>(null);
+  const [wallet, setWallet] = useState<OrgWalletInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [funding, setFunding] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -26,7 +28,18 @@ export default function OrganizationDetailPage() {
     }
   }, [id, router]);
 
+  const loadWallet = useCallback(async () => {
+    try {
+      const w = await superAdminApi.getOrgWallet(id);
+      setWallet(w);
+    } catch {}
+  }, [id]);
+
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (org) loadWallet();
+  }, [org, loadWallet]);
 
   async function handleVerify() {
     setProcessing(true);
@@ -121,6 +134,94 @@ export default function OrganizationDetailPage() {
             <p className="font-semibold">{org.logo_url || "Chưa có"}</p>
           </div>
         </div>
+      </div>
+
+      {/* Wallet info */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xs font-black uppercase tracking-wider">Ví điện tử</h2>
+          <button onClick={loadWallet} className="text-[10px] text-primary font-bold hover:underline">
+            Làm mới
+          </button>
+        </div>
+        {wallet ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <p className="text-gray-400 mb-1">Địa chỉ ví</p>
+                <p className="font-mono text-[10px] break-all">{wallet.wallet_address}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 mb-1">Số dư</p>
+                <p className={`font-bold text-sm ${Number(wallet.balance) > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                  {Number(wallet.balance).toFixed(4)} ETH
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400 mb-1">Trạng thái ủy quyền</p>
+                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                  wallet.is_authorized ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                }`}>
+                  {wallet.is_authorized ? "Đã ủy quyền (authorizedIssuer)" : "Chưa ủy quyền"}
+                </span>
+              </div>
+              <div>
+                <p className="text-gray-400 mb-1">Khóa riêng tư</p>
+                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                  wallet.has_private_key ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                }`}>
+                  {wallet.has_private_key ? "Đã lưu (mã hóa AES-256)" : "Chưa có"}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={async () => {
+                  const amount = prompt("Nhập số ETH để nạp:", "0.1");
+                  if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) return;
+                  setFunding(true);
+                  try {
+                    await superAdminApi.fundOrgWallet(id, amount);
+                    toast.success(`Đã nạp ${amount} ETH`);
+                    loadWallet();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Nạp thất bại");
+                  } finally {
+                    setFunding(false);
+                  }
+                }}
+                disabled={funding}
+                className="rounded-xl bg-teal-600 px-4 py-2 text-[10px] font-bold text-white hover:bg-teal-700 disabled:opacity-50"
+              >
+                {funding ? "..." : "Nạp ETH"}
+              </button>
+              <button
+                onClick={async () => {
+                  const action = wallet.is_authorized ? "thu hồi quyền" : "cấp quyền";
+                  if (!window.confirm(`Xác nhận ${action} trên blockchain?`)) return;
+                  try {
+                    const result = wallet.is_authorized
+                      ? await superAdminApi.deauthorizeOrg(id)
+                      : await superAdminApi.reauthorizeOrg(id);
+                    toast.success(result.message);
+                    loadWallet();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+                  }
+                }}
+                className={`rounded-xl border px-4 py-2 text-[10px] font-bold ${
+                  wallet.is_authorized
+                    ? "border-red-200 text-red-500 hover:bg-red-50"
+                    : "border-teal-200 text-teal-600 hover:bg-teal-50"
+                }`}
+              >
+                {wallet.is_authorized ? "Thu hồi quyền" : "Cấp quyền on-chain"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 italic">Đang tải thông tin ví...</p>
+        )}
       </div>
 
       {/* Staff list */}

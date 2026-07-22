@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { superAdminApi, type User, type Paginated } from "@/features/super-admin/services/api";
 import toast from "react-hot-toast";
 
@@ -16,6 +17,7 @@ export default function UsersPage() {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -27,8 +29,8 @@ export default function UsersPage() {
         search: appliedSearch || undefined,
       });
       setData(result);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Không thể tải dữ liệu");
+    } catch (err: any) {
+      toast.error(err.message || "Không thể tải dữ liệu");
     } finally {
       setLoading(false);
     }
@@ -42,11 +44,44 @@ export default function UsersPage() {
     setAppliedSearch(search.trim());
   }
 
+  async function handleLockToggle(userId: string, currentStatus: string) {
+    setActionLoading(userId);
+    try {
+      if (currentStatus === "ACTIVE") {
+        await superAdminApi.lockUser(userId);
+        toast.success("Đã khóa tài khoản thành công");
+      } else {
+        await superAdminApi.unlockUser(userId);
+        toast.success("Đã mở khóa tài khoản thành công");
+      }
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || "Thao tác thất bại");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleResetPassword(userId: string) {
+    if (!window.confirm("Bạn có chắc chắn muốn đặt lại mật khẩu của người dùng này về mặc định (Password123!) không?")) return;
+    setActionLoading(userId + "-reset");
+    try {
+      const res = await superAdminApi.resetUserPassword(userId);
+      toast.success(`Đặt lại mật khẩu thành công! Mật khẩu mới: ${res.defaultPassword || "Password123!"}`, {
+        duration: 6000
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Không thể đặt lại mật khẩu");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Quản lý người dùng</h1>
-        <p className="text-xs text-gray-500 mt-1">Danh sách tất cả người dùng trong hệ thống</p>
+        <p className="text-xs text-gray-500 mt-1">Danh sách tất cả người dùng trong hệ thống (Staff & Students)</p>
       </div>
 
       <form onSubmit={handleSearch} className="flex flex-wrap gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -85,32 +120,60 @@ export default function UsersPage() {
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tổ chức</th>
                 <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Vai trò</th>
                 <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Trạng thái</th>
+                <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {data.items.map((user) => (
-                <tr key={user.staff_id || user.student_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                  <td className="px-4 py-3 font-medium">{user.name || user.student_fullName}</td>
-                  <td className="px-4 py-3 text-gray-500">{user.email}</td>
-                  <td className="px-4 py-3 text-gray-500">{user.organization_name}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                      user.role === "ISSUER" ? "bg-primary/10 text-primary" :
-                      user.role === "STAFF" ? "bg-gray-100 dark:bg-gray-800 text-gray-500" :
-                      "bg-teal-50 text-teal-700"
-                    }`}>
-                      {roleLabels[user.role] || user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                      user.status === "ACTIVE" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                    }`}>
-                      {user.status === "ACTIVE" ? "Hoạt động" : "Ngừng"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {data.items.map((u) => {
+                const userId = u.staff_id || u.student_id || "";
+                return (
+                  <tr key={userId} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                    <td className="px-4 py-3 font-medium">{u.name || u.student_fullName}</td>
+                    <td className="px-4 py-3 text-gray-500">{u.email}</td>
+                    <td className="px-4 py-3 text-gray-500">{u.organization_name}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                        u.role === "ISSUER" ? "bg-primary/10 text-primary" :
+                        u.role === "STAFF" ? "bg-gray-100 dark:bg-gray-800 text-gray-500" :
+                        "bg-teal-50 text-teal-700"
+                      }`}>
+                        {roleLabels[u.role] || u.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                        u.status === "ACTIVE" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                      }`}>
+                        {u.status === "ACTIVE" ? "Hoạt động" : "Bị khóa"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right space-x-2">
+                      <Link
+                        href={`/super-admin/users/${userId}`}
+                        className="text-[10px] text-primary font-bold hover:underline"
+                      >
+                        Chi tiết
+                      </Link>
+                      <button
+                        onClick={() => handleLockToggle(userId, u.status)}
+                        disabled={actionLoading !== null}
+                        className={`text-[10px] font-bold hover:underline ${
+                          u.status === "ACTIVE" ? "text-red-500" : "text-emerald-600"
+                        }`}
+                      >
+                        {actionLoading === userId ? "Đang xử lý..." : u.status === "ACTIVE" ? "Khóa" : "Mở khóa"}
+                      </button>
+                      <button
+                        onClick={() => handleResetPassword(userId)}
+                        disabled={actionLoading !== null}
+                        className="text-[10px] text-amber-600 font-bold hover:underline"
+                      >
+                        {actionLoading === userId + "-reset" ? "Đang xử lý..." : "Đặt lại MK"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
