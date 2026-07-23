@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Draft", className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
@@ -18,6 +19,8 @@ export default function AdminCertificatesPage() {
   const [error, setError] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,13 +39,15 @@ export default function AdminCertificatesPage() {
     fetchData();
   }, [filterStatus]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this certificate?")) return;
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    setDeleteError("");
     try {
-      await certificateApi.delete(id);
-      setCertificates((prev) => prev.filter((c) => c.certificate_id !== id));
+      await certificateApi.delete(deleteTargetId);
+      setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
+      setDeleteTargetId("");
     } catch (err: any) {
-      alert(err.message || "Delete failed");
+      setDeleteError(err.message || "Delete failed");
     }
   };
 
@@ -58,6 +63,18 @@ export default function AdminCertificatesPage() {
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={!!deleteTargetId}
+        onClose={() => { setDeleteTargetId(""); setDeleteError(""); }}
+        title="Xóa văn bằng"
+        message="Bạn có chắc chắn muốn xóa văn bằng này? Hành động này không thể hoàn tác."
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        variant="danger"
+        icon="danger"
+        onConfirm={() => void handleDelete()}
+      />
+
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>Quản lý Văn bằng</h1>
@@ -86,6 +103,9 @@ export default function AdminCertificatesPage() {
           </select>
         </div>
       </div>
+
+      {error && <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600">{error}</div>}
+      {deleteError && <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600">{deleteError}</div>}
 
       <div className={styles._10}>
         <div className={styles._11}>
@@ -144,7 +164,7 @@ export default function AdminCertificatesPage() {
                           Chi tiết
                         </Link>
                         {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
-                          <button onClick={() => handleDelete(cert.certificate_id)} className={styles._29}>
+                          <button onClick={() => setDeleteTargetId(cert.certificate_id)} className={styles._29}>
                             Xóa
                           </button>
                         )}

@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { staffApi, type StaffDto } from "@/features/staff/services/staff.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import FormModal from "@/components/common/Modal/FormModal";
 
 export default function StaffListPage() {
   const { user } = useAuth();
@@ -10,6 +11,11 @@ export default function StaffListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "", email: "", password: "" });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
   const canManageStaff = user?.role === "issuer";
 
   const fetchStaff = useCallback(async () => {
@@ -29,34 +35,109 @@ export default function StaffListPage() {
     fetchStaff();
   }, [fetchStaff]);
 
-  const handleDelete = async (id: string) => {
-    if (!canManageStaff) return;
-    if (!window.confirm("Xác nhận xóa nhân viên này?")) return;
-    setDeletingId(id);
+  const handleDelete = async () => {
+    if (!canManageStaff || !deleteTargetId) return;
+    setDeletingId(deleteTargetId);
+    setDeleteTargetId("");
     try {
-      await staffApi.delete(id);
-      setStaff((prev) => prev.filter((s) => s.staff_id !== id));
+      await staffApi.delete(deleteTargetId);
+      setStaff((prev) => prev.filter((s) => s.staff_id !== deleteTargetId));
     } catch (err: any) {
-      alert(err.message || "Xóa nhân viên thất bại");
+      setError(err.message || "Xóa nhân viên thất bại");
     } finally {
       setDeletingId("");
     }
   };
 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.name || !createForm.email || !createForm.password) {
+      setCreateError("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+    setCreating(true);
+    setCreateError("");
+    try {
+      await staffApi.create(createForm);
+      setShowCreate(false);
+      setCreateForm({ name: "", email: "", password: "" });
+      await fetchStaff();
+    } catch (err: any) {
+      setCreateError(err.message || "Tạo nhân viên thất bại");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
+      <ConfirmModal
+        open={!!deleteTargetId}
+        onClose={() => setDeleteTargetId("")}
+        title="Xóa nhân viên"
+        message="Bạn có chắc chắn muốn xóa nhân viên này? Hành động này không thể hoàn tác."
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        variant="danger"
+        icon="danger"
+        onConfirm={() => void handleDelete()}
+      />
+
+      <FormModal
+        open={showCreate}
+        onClose={() => { setShowCreate(false); setCreateError(""); setCreateForm({ name: "", email: "", password: "" }); }}
+        title="Thêm nhân viên"
+        description="Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng."
+        onSubmit={(e) => void handleCreate(e)}
+        submitting={creating}
+        submitLabel="Tạo nhân viên"
+      >
+        <div>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Họ và tên *</label>
+          <input
+            type="text"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            value={createForm.name}
+            onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+            placeholder="Nguyễn Văn B"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
+          <input
+            type="email"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            value={createForm.email}
+            onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+            placeholder="staff@school.edu.vn"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu *</label>
+          <input
+            type="password"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            value={createForm.password}
+            onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+            placeholder="Tối thiểu 8 ký tự"
+          />
+        </div>
+        {createError && <div className="text-[11px] text-red-500 bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{createError}</div>}
+      </FormModal>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Nhân viên</h1>
           <p className="text-xs text-gray-500 mt-1">Danh sách nhân viên trong trường.</p>
         </div>
         {canManageStaff && (
-          <Link
-            href="/admin/staff/create"
+          <button
+            onClick={() => setShowCreate(true)}
             className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
           >
             + Thêm nhân viên
-          </Link>
+          </button>
         )}
       </div>
 
@@ -72,9 +153,9 @@ export default function StaffListPage() {
         <div className="text-center py-16 text-gray-400">
           <p>Chưa có nhân viên nào.</p>
           {canManageStaff && (
-            <Link href="/admin/staff/create" className="text-primary underline text-xs mt-2 inline-block">
+            <button onClick={() => setShowCreate(true)} className="text-primary underline text-xs mt-2 inline-block">
               Tạo nhân viên đầu tiên
-            </Link>
+            </button>
           )}
         </div>
       ) : (
@@ -105,7 +186,7 @@ export default function StaffListPage() {
                   {canManageStaff && (
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => handleDelete(s.staff_id)}
+                        onClick={() => setDeleteTargetId(s.staff_id)}
                         disabled={deletingId === s.staff_id}
                         className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wider disabled:opacity-50"
                       >

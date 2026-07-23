@@ -6,6 +6,7 @@ import styles from "./page.module.css";
 import { operationsApi, type IssuanceBatch } from "@/features/admin/services/operations.api";
 import { parseCsv, toCsv } from "@/features/admin/utils/csv";
 import type { CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 const fields: Array<{ key: keyof CreateCertificatePayload; label: string; aliases?: string[] }> = [
   { key: "student_id", label: "ID sinh viên", aliases: ["studentId"] },
@@ -26,6 +27,7 @@ const fields: Array<{ key: keyof CreateCertificatePayload; label: string; aliase
 export default function AdminBatchesPage() {
   const [batches, setBatches] = useState<IssuanceBatch[]>([]);
   const [selected, setSelected] = useState<IssuanceBatch | null>(null);
+  const [showConfirmBatch, setShowConfirmBatch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -82,14 +84,9 @@ export default function AdminBatchesPage() {
     setMapping(autoMapping);
   }
 
-  async function createBatch() {
-    if (!mappedRows.length || invalidRows > 0) {
-      toast.error("Hãy mapping đủ dữ liệu bắt buộc trước khi cấp phát");
-      return;
-    }
-    if (!window.confirm(`Xác nhận cấp ${mappedRows.length} văn bằng và ghi lên blockchain?`)) return;
+  async function executeBatch() {
+    setSubmitting(true);
     try {
-      setSubmitting(true);
       const result = await operationsApi.createBatch(fileName || `Lô ${new Date().toLocaleDateString("vi-VN")}`, mappedRows);
       setSelected(result);
       setHeaders([]);
@@ -101,6 +98,14 @@ export default function AdminBatchesPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function requestConfirm() {
+    if (!mappedRows.length || invalidRows > 0) {
+      toast.error("Hãy mapping đủ dữ liệu bắt buộc trước khi cấp phát");
+      return;
+    }
+    setShowConfirmBatch(true);
   }
 
   async function openBatch(batch: IssuanceBatch) {
@@ -133,6 +138,19 @@ export default function AdminBatchesPage() {
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={showConfirmBatch}
+        onClose={() => setShowConfirmBatch(false)}
+        title="Xác nhận cấp phát hàng loạt"
+        message={`Bạn có chắc chắn muốn cấp ${mappedRows.length} văn bằng và ghi lên blockchain?`}
+        confirmLabel="Xác nhận cấp phát"
+        cancelLabel="Hủy"
+        variant="warning"
+        icon="warning"
+        loading={submitting}
+        onConfirm={() => void executeBatch()}
+      />
+
       <div className={styles._2}>
         <div><h1 className={styles._3}>Cấp bằng hàng loạt</h1><p className={styles._4}>Import CSV, kiểm tra từng dòng và theo dõi giao dịch Web3.</p></div>
         <label className={styles._5}>+ Chọn file CSV<input className="hidden" type="file" accept=".csv,text/csv" onChange={onFile} /></label>
@@ -142,7 +160,7 @@ export default function AdminBatchesPage() {
         <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div><h2 className="text-sm font-black text-gray-900 dark:text-white">Mapping cột — {fileName}</h2><p className="mt-1 text-xs text-gray-500">{mappedRows.length} dòng · {invalidRows ? `${invalidRows} dòng thiếu dữ liệu` : "Dữ liệu hợp lệ"}</p></div>
-            <button className={styles._5} disabled={submitting || invalidRows > 0} onClick={createBatch}>{submitting ? "Đang ghi blockchain..." : "Xác nhận cấp phát"}</button>
+            <button className={styles._5} disabled={submitting || invalidRows > 0} onClick={requestConfirm}>{submitting ? "Đang ghi blockchain..." : "Xác nhận cấp phát"}</button>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {fields.map((field) => <label className="text-xs font-semibold text-gray-600 dark:text-gray-300" key={field.key}>{field.label}<select className="mt-1 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2 dark:border-gray-700" value={mapping[field.key] || ""} onChange={(event) => setMapping((current) => ({ ...current, [field.key]: event.target.value }))}><option value="">-- Chọn cột --</option>{headers.map((header) => <option key={header}>{header}</option>)}</select></label>)}

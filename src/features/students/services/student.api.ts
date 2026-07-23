@@ -7,6 +7,7 @@ export interface StudentDto {
   organization_id: string;
   organization_name: string;
   status: string;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -15,6 +16,7 @@ export interface UpdateStudentPayload {
   email?: string;
   status?: string;
   password?: string;
+  isActive?: boolean;
 }
 
 export interface ImportResult {
