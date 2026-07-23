@@ -31,6 +31,12 @@
 
 ._8 {
     @apply flex-1 px-3 py-4 space-y-1 overflow-y-auto overscroll-contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+._8::-webkit-scrollbar {
+    display: none;
 }
 
 ._9 {
@@ -78,7 +84,8 @@
 }
 
 ._0 {
-    @apply fixed inset-y-0 left-0 z-40 flex flex-col bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-r border-gray-200 dark:border-slate-800/80 transition-all duration-300 md:static;
+    @apply fixed inset-y-0 left-0 z-40 flex h-screen shrink-0 flex-col bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-r border-gray-200 dark:border-slate-800/80 transition-all duration-300 md:static;
+    height: 100dvh;
 }
 
 ._20 {

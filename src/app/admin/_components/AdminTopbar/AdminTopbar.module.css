@@ -1,7 +1,7 @@
 @reference "../../../globals.css";
 @custom-variant dark (&:where(:global(.dark), :global(.dark) *));
 ._1 {
- @apply h-16 bg-white dark:bg-gray-900 border-b border-gray-200/50 dark:border-gray-800/50 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 transition-colors;
+ @apply h-16 shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200/50 dark:border-gray-800/50 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 transition-colors;
 }
 
 ._2 {
