@@ -73,6 +73,9 @@ export default function AdminStudentsPage() {
           <button onClick={() => router.push("/admin/students/create")} className={styles._6}>
             + Thêm sinh viên
           </button>
+          <button onClick={() => router.push("/admin/students/import")} className={styles._7}>
+            Import CSV
+          </button>
         </div>
       </div>
 
