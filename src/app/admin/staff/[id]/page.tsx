@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { studentApi } from "@/features/students/services/student.api";
+import { staffApi } from "@/features/staff/services/staff.api";
 
-const emptyForm = { name: "", email: "", isActive: true, password: "" };
+const emptyForm = { name: "", email: "", role: "", isActive: true, password: "" };
 
-export default function StudentDetailPage() {
+export default function StaffDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [form, setForm] = useState(emptyForm);
@@ -17,14 +17,15 @@ export default function StudentDetailPage() {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    studentApi.get(id)
-      .then((student) => setForm({
-        name: student.student_fullName,
-        email: student.email,
-        isActive: student.isActive,
+    staffApi.get(id)
+      .then((staff) => setForm({
+        name: staff.name,
+        email: staff.email,
+        role: staff.role,
+        isActive: staff.isActive,
         password: "",
       }))
-      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải thông tin sinh viên"))
+      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải thông tin nhân viên"))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -34,23 +35,24 @@ export default function StudentDetailPage() {
     setError("");
     setSuccess("");
     try {
-      const payload = { ...form, password: form.password || undefined };
-      const response = await studentApi.update(id, payload);
-      setForm((current) => ({ ...current, name: response.student.student_fullName, password: "" }));
-      setSuccess("Đã cập nhật sinh viên.");
+      const payload: any = { name: form.name, email: form.email, isActive: form.isActive };
+      if (form.password) payload.password = form.password;
+      await staffApi.update(id, payload);
+      setForm((current) => ({ ...current, password: "" }));
+      setSuccess("Đã cập nhật nhân viên.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cập nhật sinh viên thất bại");
+      setError(err instanceof Error ? err.message : "Cập nhật nhân viên thất bại");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="p-8 text-xs text-gray-400">Đang tải thông tin sinh viên...</div>;
+  if (loading) return <div className="p-8 text-xs text-gray-400">Đang tải thông tin nhân viên...</div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-6 p-6">
       <div>
-        <h1 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Chi tiết sinh viên</h1>
+        <h1 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Chi tiết nhân viên</h1>
         <p className="mt-1 break-all text-xs text-gray-500">ID: {id}</p>
       </div>
 
@@ -60,6 +62,9 @@ export default function StudentDetailPage() {
         </label>
         <label className="block text-xs font-bold">Email
           <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800" />
+        </label>
+        <label className="block text-xs font-bold">Vai trò
+          <input readOnly value={form.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-normal text-gray-500 dark:border-gray-800 dark:bg-gray-800/50" />
         </label>
         <label className="block text-xs font-bold">Trạng thái
           <select value={form.isActive ? "ACTIVE" : "INACTIVE"} onChange={(e) => setForm({ ...form, isActive: e.target.value === "ACTIVE" })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800">
@@ -103,7 +108,7 @@ export default function StudentDetailPage() {
 
         <div className="flex gap-3">
           <button disabled={saving} className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
-          <button type="button" onClick={() => router.push("/admin/students")} className="rounded-xl bg-gray-100 px-4 py-2.5 text-xs font-bold text-gray-500 dark:bg-gray-800">Quay lại</button>
+          <button type="button" onClick={() => router.push("/admin/staff")} className="rounded-xl bg-gray-100 px-4 py-2.5 text-xs font-bold text-gray-500 dark:bg-gray-800">Quay lại</button>
         </div>
       </form>
     </div>

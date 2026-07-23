@@ -1,9 +1,11 @@
 "use client";
 import styles from "./page.module.css";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import { ActionLink, ActionButton } from "@/components/common/TableActions";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Draft", className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
@@ -13,11 +15,15 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
 };
 
 export default function AdminCertificatesPage() {
+  const router = useRouter();
   const [certificates, setCertificates] = useState<CertificateDto[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,13 +42,15 @@ export default function AdminCertificatesPage() {
     fetchData();
   }, [filterStatus]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this certificate?")) return;
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    setDeleteError("");
     try {
-      await certificateApi.delete(id);
-      setCertificates((prev) => prev.filter((c) => c.certificate_id !== id));
+      await certificateApi.delete(deleteTargetId);
+      setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
+      setDeleteTargetId("");
     } catch (err: any) {
-      alert(err.message || "Delete failed");
+      setDeleteError(err.message || "Delete failed");
     }
   };
 
@@ -58,14 +66,26 @@ export default function AdminCertificatesPage() {
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={!!deleteTargetId}
+        onClose={() => { setDeleteTargetId(""); setDeleteError(""); }}
+        title="Xóa văn bằng"
+        message="Bạn có chắc chắn muốn xóa văn bằng này? Hành động này không thể hoàn tác."
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        variant="danger"
+        icon="danger"
+        onConfirm={() => void handleDelete()}
+      />
+
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>Quản lý Văn bằng</h1>
           <p className={styles._4}>Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
         </div>
-        <Link href="/admin/certificates/issue" className={styles._5}>
+        <button onClick={() => router.push("/admin/certificates/issue")} className={styles._5}>
           + Cấp bằng mới
-        </Link>
+        </button>
       </div>
 
       <div className={styles._6}>
@@ -86,6 +106,9 @@ export default function AdminCertificatesPage() {
           </select>
         </div>
       </div>
+
+      {error && <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600">{error}</div>}
+      {deleteError && <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600">{deleteError}</div>}
 
       <div className={styles._10}>
         <div className={styles._11}>
@@ -140,13 +163,13 @@ export default function AdminCertificatesPage() {
                         </span>
                       </td>
                       <td className={styles._27}>
-                        <Link href={`/admin/certificates/${cert.certificate_id}`} className={styles._28}>
+                        <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
                           Chi tiết
-                        </Link>
+                        </ActionLink>
                         {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
-                          <button onClick={() => handleDelete(cert.certificate_id)} className={styles._29}>
+                          <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
                             Xóa
-                          </button>
+                          </ActionButton>
                         )}
                       </td>
                     </tr>

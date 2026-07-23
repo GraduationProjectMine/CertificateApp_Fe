@@ -11,9 +11,9 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
   const pathname = usePathname();
 
   const navItems = [
-    { label: "B\u1ea3ng \u0111i\u1ec1u khi\u1ec3n", href: "/employer/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-    { label: "X\u00e1c minh v\u0103n b\u1eb1ng", href: "/employer/verify", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
-    { label: "L\u1ecbch s\u1eed tra c\u1ee9u", href: "/employer/history", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { label: "Bảng điều khiển", href: "/employer/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+    { label: "Xác minh văn bằng", href: "/employer/verify", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
+    { label: "Lịch sử tra cứu", href: "/employer/history", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
   ];
 
   const getClassName = (href: string) => {
@@ -29,8 +29,8 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
             CertiChain
           </Link>
           <div className={styles._5}>
-            <span className={styles._6}>{user?.name || "Nh\u00e0 tuy\u1ec3n d\u1ee5ng"}</span>
-            <Link href="/" className={styles._7}>Trang ch\u1ee7</Link>
+            <span className={styles._6}>{user?.name || "Nhà tuyển dụng"}</span>
+            <Link href="/" className={styles._7}>Trang chủ</Link>
           </div>
         </div>
       </header>
