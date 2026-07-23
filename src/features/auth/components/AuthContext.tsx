@@ -10,6 +10,15 @@ interface AuthContextType {
   isLoading: boolean;
   isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithMetaMask: (walletAddress: string, signature: string, tempToken: string) => Promise<{ success: boolean; error?: string }>;
+  registerWithMetaMask: (data: {
+    walletAddress: string;
+    signature: string;
+    tempToken: string;
+    email: string;
+    name: string;
+    adminName?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -109,6 +118,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loginWithMetaMask = useCallback(async (walletAddress: string, signature: string, tempToken: string) => {
+    try {
+      const data = await authApi.loginWithMetaMask(walletAddress, signature, tempToken);
+      const { token, user: appUser } = beUserToAppUser(data);
+      saveSession(token, appUser);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Đăng nhập với MetaMask thất bại' };
+    }
+  }, []);
+
+  const registerWithMetaMask = useCallback(async (data: {
+    walletAddress: string;
+    signature: string;
+    tempToken: string;
+    email: string;
+    name: string;
+    adminName?: string;
+  }) => {
+    try {
+      const resData = await authApi.registerWithMetaMask(data);
+      const { token, user: appUser } = beUserToAppUser(resData);
+      saveSession(token, appUser);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Đăng ký với MetaMask thất bại' };
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
@@ -126,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithMetaMask, registerWithMetaMask, logout }}>
       {children}
     </AuthContext.Provider>
   );

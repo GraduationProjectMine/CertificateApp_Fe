@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../features/auth/components/AuthContext";
+import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
+import { BrowserProvider } from "ethers";
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
@@ -19,13 +21,14 @@ function getDashboardRedirect(role: string) {
 }
 
 export default function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, loginWithMetaMask } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWalletSubmitting, setIsWalletSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) router.push(getDashboardRedirect(user.role));
@@ -43,6 +46,43 @@ export default function LoginPage() {
     const result = await login(email, password);
     if (!result.success) setError(result.error || "Sai email hoặc mật khẩu");
     setIsSubmitting(false);
+  };
+
+  const handleMetaMaskLogin = async () => {
+    setError("");
+
+    if (typeof window === "undefined" || !(window as any).ethereum) {
+      setError("Không tìm thấy MetaMask. Vui lòng cài đặt tiện ích mở rộng MetaMask.");
+      return;
+    }
+
+    setIsWalletSubmitting(true);
+    try {
+      const provider = new BrowserProvider((window as any).ethereum);
+      
+      // Request account access
+      await provider.send("eth_requestAccounts", []);
+      
+      const signer = await provider.getSigner();
+      const walletAddress = await signer.getAddress();
+
+      // 1. Request Nonce
+      const { message, tempToken } = await authApi.getMetaMaskNonce(walletAddress);
+
+      // 2. Sign the message
+      const signature = await signer.signMessage(message);
+
+      // 3. Login with MetaMask
+      const result = await loginWithMetaMask(walletAddress, signature, tempToken);
+      if (!result.success) {
+        setError(result.error || "Đăng nhập MetaMask thất bại");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Lỗi kết nối hoặc chữ ký bị từ chối.");
+    } finally {
+      setIsWalletSubmitting(false);
+    }
   };
 
   return (
@@ -160,10 +200,45 @@ export default function LoginPage() {
                 </div>
               </label>
 
-              <Button type="submit" disabled={isSubmitting} className={styles._35}>
+              <Button type="submit" disabled={isSubmitting || isWalletSubmitting} className={styles._35}>
                 {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
               </Button>
             </form>
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+              <span className="flex-shrink mx-4 text-slate-400 text-xs font-semibold uppercase">Hoặc</span>
+              <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isSubmitting || isWalletSubmitting}
+              onClick={handleMetaMaskLogin}
+              className="w-full flex items-center justify-center gap-2 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors py-2.5 rounded-lg"
+            >
+              <svg className="w-5 h-5 mr-1" viewBox="0 0 318.6 318.6" xmlns="http://www.w3.org/2000/svg">
+                <path d="m274.1 35.5-99.5 73.9-29.3-51.5 89.2-22.3z" fill="#e2761b" stroke="#e2761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m44.4 35.5 99.5 73.9 29.3-51.5-89.2-22.3z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m251.8 165.4 22.3-94.4-99.5 73.9z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m66.7 165.4-22.3-94.4 99.5 73.9z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m123.6 152.4-56.9 13 25.1 27.2z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m194.9 152.4 56.9 13-25.1 27.2z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m78.7 186.4 75.3 47.7-41-11.3z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m239.8 186.4-75.3 47.7 41-11.3z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m113 222.8 46.2 59.8 46.2-59.8-46.2-7.8z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m174.6 144.9 20.3 7.5-16.2 24.2z" fill="#d7c1b1" stroke="#d7c1b1" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m143.9 144.9-20.3 7.5 16.2 24.2z" fill="#d7c1b1" stroke="#d7c1b1" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m113 222.8 46.2-7.8-46.2-4.1z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m205.5 222.8-46.2-7.8 46.2-4.1z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m66.7 165.4 12 21 44.9-34-16.2-24.2z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m251.8 165.4-12 21-44.9-34 16.2-24.2z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m159.3 215 46.2 7.8 34.3-36.4-45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                <path d="m159.3 215-46.2 7.8-34.3-36.4 45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+              </svg>
+              {isWalletSubmitting ? "Đang kết nối ví..." : "Đăng nhập với MetaMask"}
+            </Button>
 
             <div className={styles._43}>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._44}`}>
