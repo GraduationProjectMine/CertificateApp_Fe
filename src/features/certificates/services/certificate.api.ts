@@ -34,6 +34,7 @@ export interface CertificateDto {
 
 export interface CreateCertificatePayload {
   student_id: string;
+  student_fullName?: string;
   certificate_title: string;
   dob?: string;
   placeOfBirth?: string;

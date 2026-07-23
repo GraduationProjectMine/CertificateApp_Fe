@@ -349,3 +349,20 @@ html {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* Fix select option dark mode styling globally */
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.dark select {
+  color-scheme: dark;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
