@@ -86,10 +86,10 @@ function queryString(params: Record<string, string | number | undefined>) {
 export const operationsApi = {
   listBatches: () => request<IssuanceBatch[]>('/issuance-batches'),
   getBatch: (id: string) => request<IssuanceBatch>(`/issuance-batches/${id}`),
-  createBatch: (name: string, rows: CreateCertificatePayload[]) =>
+  createBatch: (name: string, rows: CreateCertificatePayload[], mode: 'DRAFT_ONLY' | 'FULL' = 'FULL') =>
     request<IssuanceBatch>('/issuance-batches', {
       method: 'POST',
-      body: JSON.stringify({ name, rows }),
+      body: JSON.stringify({ name, rows, mode }),
     }),
   retryBatchItem: (batchId: string, itemId: string) =>
     request<IssuanceBatch>(`/issuance-batches/${batchId}/items/${itemId}/retry`, {

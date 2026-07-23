@@ -78,10 +78,22 @@ export const certificateApi = {
       method: 'POST',
     }),
 
+  batchApprove: (ids: string[]) =>
+    request<{
+      results: { certificateId: string; status: 'SUCCESS' | 'FAILED'; error?: string }[];
+      successCount: number;
+      failCount: number;
+      total: number;
+    }>('/certificates/batch-approve', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+
   delete: (id: string) =>
     request<{ message: string }>(`/certificates/${id}`, {
       method: 'DELETE',
     }),
+
 };
 
 export function mapCertificateDtoToStudentCert(
