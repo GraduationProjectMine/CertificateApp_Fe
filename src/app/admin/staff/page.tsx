@@ -1,17 +1,20 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { staffApi, type StaffDto } from "@/features/staff/services/staff.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
+import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 
 export default function StaffListPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [staff, setStaff] = useState<StaffDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState("");
-  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [lockingId, setLockingId] = useState("");
+  const [lockTarget, setLockTarget] = useState<StaffDto | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ name: "", email: "", password: "" });
   const [creating, setCreating] = useState(false);
@@ -35,17 +38,20 @@ export default function StaffListPage() {
     fetchStaff();
   }, [fetchStaff]);
 
-  const handleDelete = async () => {
-    if (!canManageStaff || !deleteTargetId) return;
-    setDeletingId(deleteTargetId);
-    setDeleteTargetId("");
+  const handleLock = async () => {
+    if (!canManageStaff || !lockTarget) return;
+    const id = lockTarget.staff_id;
+    setLockingId(id);
+    setLockTarget(null);
     try {
-      await staffApi.delete(deleteTargetId);
-      setStaff((prev) => prev.filter((s) => s.staff_id !== deleteTargetId));
+      await staffApi.update(id, { isActive: false });
+      setStaff((prev) =>
+        prev.map((s) => (s.staff_id === id ? { ...s, isActive: false } : s)),
+      );
     } catch (err: any) {
-      setError(err.message || "Xóa nhân viên thất bại");
+      setError(err.message || "Khóa nhân viên thất bại");
     } finally {
-      setDeletingId("");
+      setLockingId("");
     }
   };
 
@@ -72,15 +78,15 @@ export default function StaffListPage() {
   return (
     <div className="p-6 space-y-6">
       <ConfirmModal
-        open={!!deleteTargetId}
-        onClose={() => setDeleteTargetId("")}
-        title="Xóa nhân viên"
-        message="Bạn có chắc chắn muốn xóa nhân viên này? Hành động này không thể hoàn tác."
-        confirmLabel="Xóa"
+        open={!!lockTarget}
+        onClose={() => setLockTarget(null)}
+        title="Khóa tài khoản"
+        message={lockTarget ? `Bạn có chắc chắn muốn khóa tài khoản của nhân viên ${lockTarget.name}? Nhân viên sẽ không thể đăng nhập vào hệ thống.` : ""}
+        confirmLabel="Khóa"
         cancelLabel="Hủy"
-        variant="danger"
-        icon="danger"
-        onConfirm={() => void handleDelete()}
+        variant="warning"
+        icon="warning"
+        onConfirm={() => void handleLock()}
       />
 
       <FormModal
@@ -166,6 +172,7 @@ export default function StaffListPage() {
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tên</th>
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Email</th>
                 <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Vai trò</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Trạng thái</th>
                   {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>}
               </tr>
             </thead>
@@ -183,15 +190,27 @@ export default function StaffListPage() {
                       {s.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                      s.isActive
+                        ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border border-green-200/50'
+                        : 'bg-amber-50 dark:bg-amber-950/20 text-warning border border-amber-250/50'
+                    }`}>
+                      {s.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </td>
                   {canManageStaff && (
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setDeleteTargetId(s.staff_id)}
-                        disabled={deletingId === s.staff_id}
-                        className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wider disabled:opacity-50"
-                      >
-                        {deletingId === s.staff_id ? "Đang xóa..." : "Xóa"}
-                      </button>
+                    <td className="px-4 py-3 text-right space-x-2">
+                      <ActionLink onClick={() => router.push(`/admin/staff/${s.staff_id}`)}>
+                        Xem / Sửa
+                      </ActionLink>
+                      {s.isActive ? (
+                        <ActionButton onClick={() => setLockTarget(s)} disabled={lockingId === s.staff_id}>
+                          {lockingId === s.staff_id ? "Đang khóa..." : "Khóa"}
+                        </ActionButton>
+                      ) : (
+                        <ActionText>Đã khóa</ActionText>
+                      )}
                     </td>
                   )}
                 </tr>

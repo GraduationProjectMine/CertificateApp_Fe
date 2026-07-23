@@ -6,7 +6,6 @@ export interface StudentDto {
   email: string;
   organization_id: string;
   organization_name: string;
-  status: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -14,7 +13,6 @@ export interface StudentDto {
 export interface UpdateStudentPayload {
   name?: string;
   email?: string;
-  status?: string;
   password?: string;
   isActive?: boolean;
 }

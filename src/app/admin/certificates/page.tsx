@@ -1,10 +1,11 @@
 "use client";
 import styles from "./page.module.css";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import { ActionLink, ActionButton } from "@/components/common/TableActions";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Draft", className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
@@ -14,7 +15,9 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
 };
 
 export default function AdminCertificatesPage() {
+  const router = useRouter();
   const [certificates, setCertificates] = useState<CertificateDto[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -80,9 +83,9 @@ export default function AdminCertificatesPage() {
           <h1 className={styles._3}>Quản lý Văn bằng</h1>
           <p className={styles._4}>Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
         </div>
-        <Link href="/admin/certificates/issue" className={styles._5}>
+        <button onClick={() => router.push("/admin/certificates/issue")} className={styles._5}>
           + Cấp bằng mới
-        </Link>
+        </button>
       </div>
 
       <div className={styles._6}>
@@ -160,13 +163,13 @@ export default function AdminCertificatesPage() {
                         </span>
                       </td>
                       <td className={styles._27}>
-                        <Link href={`/admin/certificates/${cert.certificate_id}`} className={styles._28}>
+                        <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
                           Chi tiết
-                        </Link>
+                        </ActionLink>
                         {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
-                          <button onClick={() => setDeleteTargetId(cert.certificate_id)} className={styles._29}>
+                          <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
                             Xóa
-                          </button>
+                          </ActionButton>
                         )}
                       </td>
                     </tr>

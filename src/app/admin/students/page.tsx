@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
+import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 
 export default function AdminStudentsPage() {
   const router = useRouter();
@@ -68,9 +69,9 @@ export default function AdminStudentsPage() {
     setLockTarget(null);
     setError("");
     try {
-      await studentApi.update(id, { status: "INACTIVE" });
+      await studentApi.update(id, { isActive: false });
       setStudents((current) =>
-        current.map((s) => (s.student_id === id ? { ...s, status: "INACTIVE", isActive: false } : s)),
+        current.map((s) => (s.student_id === id ? { ...s, isActive: false } : s)),
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể khóa tài khoản");
@@ -239,24 +240,23 @@ export default function AdminStudentsPage() {
                     <td className={styles._21}>{student.student_fullName}</td>
                     <td className={styles._16}>{student.email}</td>
                     <td className={styles._16}>
-                      <span className={`${styles._0} ${
-                        student.status === "ACTIVE"
+                      <span className={`${styles._0} ${student.isActive
                           ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200/50"
                           : "bg-amber-50 dark:bg-amber-950/20 text-warning border-amber-250/50"
-                      }`}>
-                        {student.status}
+                        }`}>
+                        {student.isActive ? "ACTIVE" : "INACTIVE"}
                       </span>
                     </td>
                     <td className={styles._25}>
-                      <button onClick={() => router.push(`/admin/students/${student.student_id}`)} className="mr-3 text-primary hover:underline">
+                      <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
                         Xem / Sửa
-                      </button>
+                      </ActionLink>
                       {student.isActive ? (
-                        <button disabled={lockingId === student.student_id} onClick={() => setLockTarget(student)} className={styles._27}>
+                        <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>
                           {lockingId === student.student_id ? "Đang khóa..." : "Khóa"}
-                        </button>
+                        </ActionButton>
                       ) : (
-                        <span className="text-[10px] text-gray-400">Đã khóa</span>
+                        <ActionText>Đã khóa</ActionText>
                       )}
                     </td>
                   </tr>
