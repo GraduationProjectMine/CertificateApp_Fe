@@ -22,6 +22,8 @@ type FormData = {
   issueDate: string;
   serialNumber: string;
   registryNumber: string;
+  ipfs_cid: string;
+  file_url: string;
 };
 
 const initialForm: FormData = {
@@ -39,6 +41,8 @@ const initialForm: FormData = {
   issueDate: "",
   serialNumber: "",
   registryNumber: "",
+  ipfs_cid: "",
+  file_url: "",
 };
 
 export default function IssueCertificatePage() {
@@ -119,6 +123,8 @@ export default function IssueCertificatePage() {
       if (d.issue_date) updateField("issueDate", d.issue_date.split("/").reverse().join("-"));
       if (d.serial_number) updateField("serialNumber", d.serial_number);
       if (d.registry_number) updateField("registryNumber", d.registry_number);
+      if (res.ipfs_cid) updateField("ipfs_cid", res.ipfs_cid);
+      if (res.ipfs_url) updateField("file_url", res.ipfs_url);
     } catch (err) {
       setOcrError(err instanceof Error ? err.message : "OCR thất bại");
     } finally {
@@ -148,6 +154,8 @@ export default function IssueCertificatePage() {
         issueDate: formData.issueDate || undefined,
         serialNumber: formData.serialNumber || undefined,
         registryNumber: formData.registryNumber || undefined,
+        ipfs_cid: formData.ipfs_cid || undefined,
+        file_url: formData.file_url || undefined,
       });
       setResult({ id: created.certificate_id, status: created.status });
       setStep("result");
