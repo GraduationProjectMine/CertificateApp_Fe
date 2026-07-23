@@ -135,7 +135,7 @@ export default function StaffListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Nhân viên</h1>
-          <p className="text-xs text-gray-500 mt-1">Danh sách nhân viên trong trường.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Danh sách nhân viên trong trường.</p>
         </div>
         {canManageStaff && (
           <button
@@ -154,9 +154,9 @@ export default function StaffListPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400 text-xs">Đang tải danh sách nhân viên...</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Đang tải danh sách nhân viên...</div>
       ) : staff.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p>Chưa có nhân viên nào.</p>
           {canManageStaff && (
             <button onClick={() => setShowCreate(true)} className="text-primary underline text-xs mt-2 inline-block">
@@ -180,12 +180,12 @@ export default function StaffListPage() {
               {staff.map((s) => (
                 <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{s.email}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{s.email}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                       s.role === 'ISSUER'
                         ? 'bg-primary/10 text-primary'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}>
                       {s.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'}
                     </span>

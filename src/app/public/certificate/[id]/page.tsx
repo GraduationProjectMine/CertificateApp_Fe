@@ -65,7 +65,7 @@ export default function PublicCredentialPage() {
 
           {(detail.fileUrl || data.blockchain?.cid) && (
             <div className="border-t border-slate-100 p-6 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tệp ảnh văn bằng gốc trên IPFS</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Tệp ảnh văn bằng gốc trên IPFS</h2>
               <div className="flex flex-col items-center justify-center">
                 <img
                   src={detail.fileUrl || `https://gateway.pinata.cloud/ipfs/${data.blockchain?.cid}`}
@@ -106,5 +106,5 @@ export default function PublicCredentialPage() {
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
-  return <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</dt><dd className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{value}</dd></div>;
+  return <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{value}</dd></div>;
 }

@@ -64,7 +64,7 @@ export default function StudentProfile() {
               {saving ? "Đang lưu..." : "Lưu"}
             </button>
             <button type="button" onClick={() => { setEditing(false); setName(user?.name || ""); setEmail(user?.email || ""); }}
-              className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
+              className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
               Hủy
             </button>
           </div>
@@ -73,15 +73,15 @@ export default function StudentProfile() {
         <div className="rounded-2xl border border-gray-200/60 bg-white p-5 text-sm dark:border-gray-800/60 dark:bg-gray-900">
           <dl className="space-y-3">
             <div>
-              <dt className="text-xs font-bold uppercase text-gray-400">Họ tên</dt>
+              <dt className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500">Họ tên</dt>
               <dd className={styles._3}>{user?.name || "Chưa có thông tin"}</dd>
             </div>
             <div>
-              <dt className="text-xs font-bold uppercase text-gray-400">Email</dt>
+              <dt className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500">Email</dt>
               <dd className={styles._3}>{user?.email || "Chưa có thông tin"}</dd>
             </div>
             <div>
-              <dt className="text-xs font-bold uppercase text-gray-400">Mã tài khoản</dt>
+              <dt className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500">Mã tài khoản</dt>
               <dd className={styles._3}>{user?.id || "Chưa có thông tin"}</dd>
             </div>
           </dl>

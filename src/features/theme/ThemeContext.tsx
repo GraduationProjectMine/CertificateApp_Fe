@@ -32,15 +32,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      const initialTheme = getInitialTheme();
-      setTheme(initialTheme);
-      setMounted(true);
-      document.documentElement.classList.toggle("dark", initialTheme === "dark");
-      localStorage.setItem(STORAGE_KEY, initialTheme);
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
+    const initialTheme = getInitialTheme();
+    setTheme(initialTheme);
+    setMounted(true);
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    localStorage.setItem(STORAGE_KEY, initialTheme);
   }, []);
 
   useEffect(() => {

@@ -87,7 +87,7 @@ export default function StudentDashboard() {
         <h2 className={styles._12}>Văn bằng gần đây</h2>
         <div className={styles._13}>
           {recent.length === 0 ? (
-            <p className="text-gray-400 text-sm px-2 py-4">Chưa có văn bằng nào.</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm px-2 py-4">Chưa có văn bằng nào.</p>
           ) : (
             recent.map((cert) => (
               <Link key={cert.id} href={`/student/certificates/${cert.id}`} className={styles._14}>

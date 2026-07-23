@@ -113,11 +113,11 @@ export default function AdminCertificatesPage() {
       <div className={styles._10}>
         <div className={styles._11}>
           {loading ? (
-            <div className="p-8 text-center text-gray-400 text-xs">Đang tải...</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
           ) : error ? (
             <div className="p-8 text-center text-red-500 text-xs">{error}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-xs">Không có văn bằng nào.</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không có văn bằng nào.</div>
           ) : (
             <table className={styles._12}>
               <thead>
@@ -136,7 +136,7 @@ export default function AdminCertificatesPage() {
                 {filtered.map((cert) => {
                   const statusStyle = STATUS_MAP[cert.status] || STATUS_MAP.DRAFT;
                   return (
-                    <tr key={cert.certificate_id} className={`hover:bg-slate-55 ${styles._18}`}>
+                    <tr key={cert.certificate_id} className={`${styles._18}`}>
                       <td className={styles._19}>{cert.certificate_id.slice(0, 8)}...</td>
                       <td className={styles._20}>{cert.student_fullName}</td>
                       <td className={styles._21}>{cert.certificate_title}</td>

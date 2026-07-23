@@ -47,13 +47,13 @@ export default function StaffDetailPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-xs text-gray-400">Đang tải thông tin nhân viên...</div>;
+  if (loading) return <div className="p-8 text-xs text-gray-400 dark:text-gray-500">Đang tải thông tin nhân viên...</div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-6 p-6">
       <div>
         <h1 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Chi tiết nhân viên</h1>
-        <p className="mt-1 break-all text-xs text-gray-500">ID: {id}</p>
+        <p className="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">ID: {id}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-gray-200/60 bg-white p-6 dark:border-gray-800/60 dark:bg-gray-900">
@@ -64,7 +64,7 @@ export default function StaffDetailPage() {
           <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800" />
         </label>
         <label className="block text-xs font-bold">Vai trò
-          <input readOnly value={form.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-normal text-gray-500 dark:border-gray-800 dark:bg-gray-800/50" />
+          <input readOnly value={form.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-normal text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400" />
         </label>
         <label className="block text-xs font-bold">Trạng thái
           <select value={form.isActive ? "ACTIVE" : "INACTIVE"} onChange={(e) => setForm({ ...form, isActive: e.target.value === "ACTIVE" })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800">

@@ -13,7 +13,7 @@ export default function Sidebar({ items, pathname }: { items: { label: string; h
           const isActive = pathname.startsWith(item.href);
           return (
             <Link key={item.href} href={item.href}
-              className={`${styles._0} ${isActive ? "bg-primary text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/40"}`}
+              className={`${styles._0} ${isActive ? "bg-primary text-white" : "text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-800/40"}`}
             >
               <svg className={styles._5} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />

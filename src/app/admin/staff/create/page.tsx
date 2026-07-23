@@ -37,11 +37,11 @@ export default function CreateStaffPage() {
     return (
       <div className="max-w-lg mx-auto p-6 space-y-4">
         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Không có quyền</h1>
-        <p className="text-xs text-gray-500">Chỉ tài khoản quản trị tổ chức được tạo nhân viên.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Chỉ tài khoản quản trị tổ chức được tạo nhân viên.</p>
         <button
           type="button"
           onClick={() => router.push("/admin/staff")}
-          className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+          className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
         >
           Quay lại danh sách
         </button>
@@ -53,7 +53,7 @@ export default function CreateStaffPage() {
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Thêm nhân viên</h1>
-        <p className="text-xs text-gray-500 mt-1">Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-4">
@@ -101,7 +101,7 @@ export default function CreateStaffPage() {
           <button
             type="button"
             onClick={() => router.push("/admin/staff")}
-            className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
           >
             Hủy
           </button>

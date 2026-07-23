@@ -162,9 +162,9 @@ export default function AdminDashboardPage() {
               </thead>
               <tbody className={styles._26}>
                 {loading ? (
-                  <tr><td colSpan={5} className="text-center py-4 text-gray-400">Đang tải...</td></tr>
+                  <tr><td colSpan={5} className="text-center py-4 text-gray-400 dark:text-gray-500">Đang tải...</td></tr>
                 ) : recentTx.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-4 text-gray-400">Chưa có giao dịch nào</td></tr>
+                  <tr><td colSpan={5} className="text-center py-4 text-gray-400 dark:text-gray-500">Chưa có giao dịch nào</td></tr>
                 ) : (
                   recentTx.map((tx) => (
                     <tr key={tx.id} className={styles._27}>
@@ -225,7 +225,7 @@ export default function AdminDashboardPage() {
               </div>
               <div className={styles._46}>
                 <span className={styles._47}>Smart Contract:</span>
-                <span className={`text-slate-350 ${styles._49}`}>
+                <span className={`${styles._49}`}>
                   {loading ? "Đang tải..." : monitorData ? (monitorData.blockchain.contractAddress ? shortHash(monitorData.blockchain.contractAddress) : "Chưa cấu hình") : "Chưa có API trạng thái"}
                 </span>
               </div>

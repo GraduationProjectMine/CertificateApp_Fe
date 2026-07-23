@@ -204,7 +204,7 @@ export default function TemplateEditorPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 text-xs">Đang tải...</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>;
   }
 
   const renderFieldContent = (field: TemplateField) => {
