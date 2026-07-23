@@ -2,16 +2,17 @@
 import styles from "./page.module.css";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../../features/auth/components/AuthContext";
 import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
+import { BrowserProvider } from "ethers";
 
 type RegisterForm = {
   institutionName: string;
   institutionCode: string;
   email: string;
   adminName: string;
-  password: string;
-  confirmPassword: string;
 };
 
 const initialForm: RegisterForm = {
@@ -19,8 +20,6 @@ const initialForm: RegisterForm = {
   institutionCode: "",
   email: "",
   adminName: "",
-  password: "",
-  confirmPassword: "",
 };
 
 function getErrorMessage(error: unknown) {
@@ -31,7 +30,9 @@ export default function RegisterPage() {
   const [form, setForm] = useState<RegisterForm>(initialForm);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWalletSubmitting, setIsWalletSubmitting] = useState(false);
+  const router = useRouter();
+  const { registerWithMetaMask } = useAuth();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -41,31 +42,57 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleMetaMaskRegister = async () => {
     setError("");
     setSuccess("");
 
-    if (form.password !== form.confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
+    if (!form.institutionName || !form.email) {
+      setError("Vui lòng nhập tên trường và email quản trị");
       return;
     }
 
-    setIsSubmitting(true);
+    if (typeof window === "undefined" || !(window as any).ethereum) {
+      setError("Không tìm thấy MetaMask. Vui lòng cài đặt tiện ích mở rộng MetaMask.");
+      return;
+    }
+
+    setIsWalletSubmitting(true);
     try {
-      await authApi.registerInstitution({
-        institutionName: form.institutionName,
-        institutionCode: form.institutionCode.toUpperCase(),
+      const provider = new BrowserProvider((window as any).ethereum);
+      
+      // Request account access
+      await provider.send("eth_requestAccounts", []);
+      
+      const signer = await provider.getSigner();
+      const walletAddress = await signer.getAddress();
+
+      // 1. Request Nonce
+      const { message, tempToken } = await authApi.getMetaMaskNonce(walletAddress);
+
+      // 2. Sign the message
+      const signature = await signer.signMessage(message);
+
+      // 3. Register with MetaMask
+      const result = await registerWithMetaMask({
+        walletAddress,
+        signature,
+        tempToken,
         email: form.email,
-        adminName: form.adminName,
-        password: form.password,
+        name: form.institutionName,
+        adminName: form.adminName || undefined,
       });
-      setSuccess("Đăng ký thành công! Vui lòng kiểm tra email để đăng nhập.");
-      setForm(initialForm);
-    } catch (err: unknown) {
-      setError(getErrorMessage(err));
+
+      if (result.success) {
+        setSuccess("Đăng ký và đăng nhập thành công!");
+        router.push("/admin/dashboard");
+      } else {
+        setError(result.error || "Đăng ký MetaMask thất bại");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Lỗi kết nối hoặc chữ ký bị từ chối.");
     } finally {
-      setIsSubmitting(false);
+      setIsWalletSubmitting(false);
     }
   };
 
@@ -148,7 +175,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <form className={styles._32} onSubmit={handleSubmit}>
+            <form className={styles._32} onSubmit={(event) => { event.preventDefault(); handleMetaMaskRegister(); }}>
               <label className={styles._33}>
                 <span className={styles._34}>
                   Tên trường / Học viện
@@ -213,39 +240,27 @@ export default function RegisterPage() {
                 </span>
               </label>
 
-              <label className={styles._36}>
-                <span className={styles._34}>
-                  Mật khẩu
-                </span>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                  minLength={8}
-                  className={styles._35}
-                  placeholder="Tối thiểu 8 ký tự"
-                />
-              </label>
-
-              <label className={styles._36}>
-                <span className={styles._34}>
-                  Xác nhận mật khẩu
-                </span>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={form.confirmPassword}
-                  onChange={handleChange}
-                  required
-                  className={styles._35}
-                  placeholder="Nhập lại mật khẩu"
-                />
-              </label>
-
-              <Button type="submit" disabled={isSubmitting} className={styles._39}>
-                {isSubmitting ? "Đang tạo tài khoản..." : "Đăng ký tạo tài khoản"}
+              <Button type="submit" disabled={isWalletSubmitting} className={styles._39}>
+                <svg className="w-5 h-5 mr-2 inline-block align-middle" viewBox="0 0 318.6 318.6" xmlns="http://www.w3.org/2000/svg">
+                  <path d="m274.1 35.5-99.5 73.9-29.3-51.5 89.2-22.3z" fill="#e2761b" stroke="#e2761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m44.4 35.5 99.5 73.9 29.3-51.5-89.2-22.3z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m251.8 165.4 22.3-94.4-99.5 73.9z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m66.7 165.4-22.3-94.4 99.5 73.9z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m123.6 152.4-56.9 13 25.1 27.2z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m194.9 152.4 56.9 13-25.1 27.2z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m78.7 186.4 75.3 47.7-41-11.3z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m239.8 186.4-75.3 47.7 41-11.3z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m113 222.8 46.2 59.8 46.2-59.8-46.2-7.8z" fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m174.6 144.9 20.3 7.5-16.2 24.2z" fill="#d7c1b1" stroke="#d7c1b1" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m143.9 144.9-20.3 7.5 16.2 24.2z" fill="#d7c1b1" stroke="#d7c1b1" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m113 222.8 46.2-7.8-46.2-4.1z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m205.5 222.8-46.2-7.8 46.2-4.1z" fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m66.7 165.4 12 21 44.9-34-16.2-24.2z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m251.8 165.4-12 21-44.9-34 16.2-24.2z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m159.3 215 46.2 7.8 34.3-36.4-45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                  <path d="m159.3 215-46.2 7.8-34.3-36.4 45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
+                </svg>
+                {isWalletSubmitting ? "Đang đăng ký ví..." : "Đăng ký với MetaMask"}
               </Button>
             </form>
 
