@@ -62,6 +62,35 @@ export default function PublicCredentialPage() {
             </dl>
             {verifyUrl && <QRCodeBox value={verifyUrl} size={140} title="Quét để xem bản xác minh" />}
           </div>
+
+          {(detail.fileUrl || data.blockchain?.cid) && (
+            <div className="border-t border-slate-100 p-6 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tệp ảnh văn bằng gốc trên IPFS</h2>
+              <div className="flex flex-col items-center justify-center">
+                <img
+                  src={detail.fileUrl || `https://gateway.pinata.cloud/ipfs/${data.blockchain?.cid}`}
+                  alt="Original Certificate Scan"
+                  className="max-h-[500px] w-auto object-contain rounded-2xl border border-slate-200 shadow-md dark:border-slate-800"
+                  onError={(e) => {
+                    if (data.blockchain?.cid && !(e.target as HTMLImageElement).src.includes('ipfs.io')) {
+                      (e.target as HTMLImageElement).src = `https://ipfs.io/ipfs/${data.blockchain.cid}`;
+                    }
+                  }}
+                />
+                <a
+                  href={detail.fileUrl || `https://gateway.pinata.cloud/ipfs/${data.blockchain?.cid}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Xem ảnh gốc trực tiếp trên IPFS Gateway</span>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          )}
         </section>
 
         <div className="grid gap-6 md:grid-cols-2">

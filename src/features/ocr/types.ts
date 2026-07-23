@@ -25,6 +25,9 @@ export interface DiplomaExtractionResponse {
   accuracy: number;
   rawText: string;
   validationErrors?: Record<string, string>;
+  ipfs_cid?: string;
+  ipfs_url?: string;
+  sha3_hash?: string;
 }
 
 export interface SupportedLanguages {

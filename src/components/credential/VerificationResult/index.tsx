@@ -16,6 +16,7 @@ export interface VerificationData {
   serialNumber?: string;
   registryNumber?: string;
   ipfsCid?: string;
+  fileUrl?: string;
   transactionHash?: string;
   contractAddress?: string;
   network?: string;
@@ -34,6 +35,10 @@ interface Props {
 
 export default function VerificationResult({ result, onReset }: Props) {
   if (result.status === "VALID") {
+    const imageUrl =
+      result.fileUrl ||
+      (result.ipfsCid ? `https://gateway.pinata.cloud/ipfs/${result.ipfsCid}` : null);
+
     return (
       <div className={styles._1}>
         <div className={styles._2}>
@@ -45,6 +50,35 @@ export default function VerificationResult({ result, onReset }: Props) {
           <h2 className={styles._5}>Văn bằng hợp lệ</h2>
           <p className={styles._6}>Văn bằng này đã được xác thực trên blockchain và không có dấu hiệu giả mạo.</p>
         </div>
+
+        {imageUrl && (
+          <div className={styles._7}>
+            <h3 className={styles._8}>Ảnh văn bằng gốc (IPFS)</h3>
+            <div className="mt-3 flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+              <img
+                src={imageUrl}
+                alt="Ảnh văn bằng gốc"
+                className="max-h-96 w-auto object-contain rounded-xl shadow-md border border-gray-200 dark:border-gray-700 transition-all hover:scale-[1.01]"
+                onError={(e) => {
+                  if (result.ipfsCid && !(e.target as HTMLImageElement).src.includes('ipfs.io')) {
+                    (e.target as HTMLImageElement).src = `https://ipfs.io/ipfs/${result.ipfsCid}`;
+                  }
+                }}
+              />
+              <a
+                href={imageUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline"
+              >
+                <span>Mở ảnh gốc trên IPFS Gateway</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        )}
 
         <div className={styles._7}>
           <h3 className={styles._8}>Thông tin văn bằng</h3>

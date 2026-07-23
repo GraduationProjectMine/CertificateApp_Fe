@@ -19,6 +19,7 @@ export interface CertificateDto {
   serialNumber: string | null;
   registryNumber: string | null;
   ipfs_cid: string | null;
+  file_url?: string | null;
   tx_hash: string | null;
   block_number?: number | null;
   gas_used?: string | null;
@@ -45,6 +46,8 @@ export interface CreateCertificatePayload {
   issueDate?: string;
   serialNumber?: string;
   registryNumber?: string;
+  ipfs_cid?: string;
+  file_url?: string;
 }
 
 export const certificateApi = {

@@ -25,6 +25,7 @@ export interface CertificateDetails {
   issueDate: string | null;
   serialNumber: string | null;
   registryNumber: string | null;
+  fileUrl?: string | null;
   organizationName: string;
   organizationId: string;
   txHash: string | null;

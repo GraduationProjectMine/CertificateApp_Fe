@@ -23,6 +23,11 @@ function mapVerification(response: VerifyCertificateResponse): VerificationData 
     serialNumber: detail.serialNumber || undefined,
     registryNumber: detail.registryNumber || undefined,
     ipfsCid: response.blockchain?.cid,
+    fileUrl:
+      detail.fileUrl ||
+      (response.blockchain?.cid
+        ? `https://gateway.pinata.cloud/ipfs/${response.blockchain.cid}`
+        : undefined),
     transactionHash: detail.txHash || undefined,
     credentialHash: response.blockchain?.sha3Hash,
     revokedAt: detail.revokedAt ? new Date(detail.revokedAt).toLocaleString("vi-VN") : undefined,
