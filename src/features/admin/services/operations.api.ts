@@ -106,7 +106,6 @@ export const operationsApi = {
     request<CertificateDto>(`/certificates/${certificateId}/retry-revoke`, {
       method: 'POST',
     }),
-  monitor: () => request<MonitorOverview>('/system/monitor'),
   auditLogs: (params: {
     page?: number;
     limit?: number;
