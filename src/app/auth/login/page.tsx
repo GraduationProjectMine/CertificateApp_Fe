@@ -10,10 +10,7 @@ import { BrowserProvider } from "ethers";
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
-  if (normalizedRole === "super_admin" || normalizedRole === "sysadmin") {
-    return "/super-admin/dashboard";
-  }
-  if (normalizedRole === "issuer" || normalizedRole === "staff") {
+  if (normalizedRole === "issuer" || normalizedRole === "staff" || normalizedRole === "super_admin" || normalizedRole === "sysadmin") {
     return "/admin/dashboard";
   }
   if (normalizedRole === "student") return "/student/dashboard";
