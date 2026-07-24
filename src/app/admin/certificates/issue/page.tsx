@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
+import { ipfsApi } from "@/features/ipfs/services/ipfs.api";
 
 type FormData = {
   student_id: string;
@@ -71,9 +72,29 @@ export default function IssueCertificatePage() {
   const [ocrLang, setOcrLang] = useState("vie");
   const [ocrError, setOcrError] = useState("");
 
+  // File upload
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFile(true);
+    setUploadError("");
+    try {
+      const res = await ipfsApi.uploadFile(file);
+      updateField("ipfs_cid", res.cid);
+      updateField("file_url", res.ipfsUrl);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload file thất bại");
+    } finally {
+      setUploadingFile(false);
+    }
+  }, []);
 
   const handleOcrFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -280,6 +301,58 @@ export default function IssueCertificatePage() {
           )}
         </div>
       )}
+
+      {/* File Upload Section */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="text-sm font-bold text-gray-900 dark:text-white">File văn bằng (IPFS)</div>
+          <span className="text-[10px] text-gray-400">(Tùy chọn - có thể upload sau)</span>
+        </div>
+
+        {formData.ipfs_cid ? (
+          <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Đã upload thành công</div>
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-500 font-mono truncate">{formData.ipfs_cid}</div>
+            </div>
+            <button
+              onClick={() => { updateField("ipfs_cid", ""); updateField("file_url", ""); }}
+              className="text-xs text-red-500 hover:text-red-700 font-bold"
+            >
+              Xóa
+            </button>
+          </div>
+        ) : (
+          <label className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors flex flex-col items-center gap-2">
+            <svg className="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+              {uploadingFile ? "Đang upload lên IPFS..." : "Kéo thả file hoặc nhấp để chọn"}
+            </div>
+            <div className="text-[10px] text-gray-400">Hỗ trợ: JPEG, PNG, PDF (tối đa 10MB)</div>
+            {uploadError && <div className="text-[11px] text-red-500">{uploadError}</div>}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              onChange={handleFileUpload}
+              disabled={uploadingFile}
+              className="hidden"
+            />
+            {uploadingFile && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              </div>
+            )}
+          </label>
+        )}
+      </div>
 
       {/* Form */}
       <div className={styles._28}>

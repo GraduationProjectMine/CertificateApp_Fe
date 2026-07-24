@@ -55,6 +55,10 @@ const COL_MAP: Record<string, string> = {
   "ngày cấp": "issueDate",
   "số hiệu": "serialNumber",
   "số vào sổ": "registryNumber",
+  "ipfs cid (file văn bằng)": "ipfs_cid",
+  "ipfs cid": "ipfs_cid",
+  "cid": "ipfs_cid",
+  "mã ipfs": "ipfs_cid",
 };
 
 function autoMapHeaders(headers: string[]): Record<string, string> {
@@ -126,6 +130,9 @@ export default function AdminBatchesPage() {
           missingFields: [
             !record.student_id?.trim() ? "ID sinh viên" : null,
             !record.certificate_title?.trim() ? "Tên văn bằng" : null,
+          ].filter(Boolean) as string[],
+          warnings: [
+            !record.ipfs_cid?.trim() ? "Thiếu file văn bằng (ipfs_cid)" : null,
           ].filter(Boolean) as string[],
         };
       })
@@ -244,6 +251,21 @@ export default function AdminBatchesPage() {
   function requestConfirm() {
     if (!mappedRows.length || invalidRowsCount > 0) {
       toast.error("Hãy kiểm tra và hoàn thiện dữ liệu bắt buộc trước khi cấp phát");
+      return;
+    }
+    // Check for warnings (missing ipfs_cid)
+    const rowsWithWarnings = mappedRowsWithStatus.filter(item => item.warnings.length > 0);
+    if (rowsWithWarnings.length > 0 && mode === "FULL") {
+      toast((t) => (
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold">⚠ {rowsWithWarnings.length} dòng chưa có file văn bằng (ipfs_cid)</p>
+          <p className="text-xs text-gray-500">Văn bằng sẽ được đăng lên Blockchain nhưng chưa có file đính kèm. Bạn có thể upload file sau.</p>
+          <div className="flex gap-2 mt-1">
+            <button onClick={() => { toast.dismiss(t.id); setShowConfirmBatch(true); }} className="px-3 py-1 bg-teal-600 text-white rounded-lg text-xs font-bold">Tiếp tục</button>
+            <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 bg-gray-200 rounded-lg text-xs font-bold">Hủy</button>
+          </div>
+        </div>
+      ), { duration: 8000 });
       return;
     }
     setShowConfirmBatch(true);
@@ -467,6 +489,7 @@ export default function AdminBatchesPage() {
                     <th className="py-3.5 px-3">Nơi sinh</th>
                     <th className="py-3.5 px-3">Số hiệu</th>
                     <th className="py-3.5 px-3">Số vào sổ</th>
+                    <th className="py-3.5 px-3">File (IPFS)</th>
                     <th className="py-3.5 px-3 text-center">Trạng thái</th>
                   </tr>
                 </thead>
@@ -484,11 +507,24 @@ export default function AdminBatchesPage() {
                       <td className="p-3 text-gray-600 dark:text-gray-400">{item.record.placeOfBirth || "—"}</td>
                       <td className="p-3 font-mono text-gray-600 dark:text-gray-400">{item.record.serialNumber || "—"}</td>
                       <td className="p-3 font-mono text-gray-600 dark:text-gray-400">{item.record.registryNumber || "—"}</td>
+                      <td className="p-3 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[120px] truncate" title={item.record.ipfs_cid || ""}>
+                        {item.record.ipfs_cid ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">✓ Đã có</span>
+                        ) : (
+                          <span className="text-amber-500">Chưa có file</span>
+                        )}
+                      </td>
                       <td className="p-3 text-center">
                         {item.isValid ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                            ✓ Sẵn sàng
-                          </span>
+                          item.warnings.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-[11px] font-bold" title={item.warnings.join(", ")}>
+                              ⚠ {item.warnings[0]}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
+                              ✓ Sẵn sàng
+                            </span>
+                          )
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold" title={`Thiếu: ${item.missingFields.join(", ")}`}>
                             ⚠ Thiếu {item.missingFields.join(", ")}
@@ -499,7 +535,7 @@ export default function AdminBatchesPage() {
                   ))}
                   {filteredPreviewRows.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="p-8 text-center text-xs text-gray-400">
+                      <td colSpan={10} className="p-8 text-center text-xs text-gray-400">
                         {searchKeyword ? "Không tìm thấy sinh viên phù hợp." : "Không có dữ liệu ở mục này."}
                       </td>
                     </tr>
