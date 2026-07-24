@@ -45,13 +45,13 @@ export default function StudentDetailPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-xs text-gray-400">Đang tải thông tin sinh viên...</div>;
+  if (loading) return <div className="p-8 text-xs text-gray-400 dark:text-gray-500">Đang tải thông tin sinh viên...</div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-6 p-6">
       <div>
         <h1 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Chi tiết sinh viên</h1>
-        <p className="mt-1 break-all text-xs text-gray-500">ID: {id}</p>
+        <p className="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">ID: {id}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-gray-200/60 bg-white p-6 dark:border-gray-800/60 dark:bg-gray-900">
@@ -81,7 +81,7 @@ export default function StudentDetailPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
               title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
               {showPassword ? (
@@ -103,7 +103,7 @@ export default function StudentDetailPage() {
 
         <div className="flex gap-3">
           <button disabled={saving} className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
-          <button type="button" onClick={() => router.push("/admin/students")} className="rounded-xl bg-gray-100 px-4 py-2.5 text-xs font-bold text-gray-500 dark:bg-gray-800">Quay lại</button>
+          <button type="button" onClick={() => router.push("/admin/students")} className="rounded-xl bg-gray-100 px-4 py-2.5 text-xs font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400">Quay lại</button>
         </div>
       </form>
     </div>

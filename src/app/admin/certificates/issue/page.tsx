@@ -174,11 +174,11 @@ export default function IssueCertificatePage() {
           <h2 className="text-xl font-black text-gray-900 dark:text-white">Tạo văn bằng thành công!</h2>
           <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-6 space-y-2 text-left">
             <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Mã văn bằng:</span>
+              <span className="text-gray-500 dark:text-gray-400">Mã văn bằng:</span>
               <span className="font-mono text-gray-900 dark:text-white">{result.id}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Trạng thái:</span>
+              <span className="text-gray-500 dark:text-gray-400">Trạng thái:</span>
               <span className="text-amber-600 font-bold">{result.status}</span>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function IssueCertificatePage() {
           onClick={() => setInputMode("manual")}
           className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${inputMode === "manual"
               ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           Nhập tay
@@ -217,7 +217,7 @@ export default function IssueCertificatePage() {
           onClick={() => setInputMode("ocr")}
           className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${inputMode === "ocr"
               ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +258,7 @@ export default function IssueCertificatePage() {
                     </span>
                   ) : "Quét văn bằng"}
                 </button>
-                <button onClick={() => { setOcrFile(null); setOcrPreview(null); setOcrError(""); }} className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
+                <button onClick={() => { setOcrFile(null); setOcrPreview(null); setOcrError(""); }} className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
                   Làm lại
                 </button>
               </div>
@@ -273,7 +273,7 @@ export default function IssueCertificatePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả ảnh vào đây</div>
-              <div className="text-[10px] text-gray-400">hoặc nhấp để chọn file (JPEG, PNG, WebP, TIFF)</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn file (JPEG, PNG, WebP, TIFF)</div>
               {ocrError && <div className="text-[11px] text-red-500">{ocrError}</div>}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" onChange={handleOcrFileSelect} className="hidden" />
             </label>
@@ -388,7 +388,7 @@ export default function IssueCertificatePage() {
         </button>
         <button
           onClick={() => router.push("/admin/certificates")}
-          className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+          className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
         >
           Hủy
         </button>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
 import type { User } from "@/features/auth/types";
+import Tooltip from "@/components/common/Tooltip";
 
 interface AdminSidebarProps {
   user: User;
@@ -23,36 +24,40 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
         open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       } ${collapsed ? "md:w-20" : "w-64 md:w-64"}`}
     >
-      <div className={styles._1}>
-        <Link href="/" className={styles._2}>
-          <div className={styles._3}>
-            C
-          </div>
-          {!collapsed && (
-            <div className={styles._4}>
-              <span className={styles._5}>CertiChain</span>
-              <span className={styles._6}>ADMIN CỔNG</span>
+      <div className={`${styles._1} ${collapsed ? "!px-2 justify-between" : "px-5 justify-between"}`}>
+        <Tooltip content="Về trang chủ CertiChain" position="right">
+          <Link href="/" className={styles._2}>
+            <div className={styles._3}>
+              C
             </div>
-          )}
-        </Link>
+            {!collapsed && (
+              <div className={styles._4}>
+                <span className={styles._5}>CertiChain</span>
+                <span className={styles._6}>ADMIN CỔNG</span>
+              </div>
+            )}
+          </Link>
+        </Tooltip>
 
-        <button
-          onClick={onToggleCollapse}
-          className={styles._7}
-          aria-label="Collapse sidebar"
-        >
-          <svg
-            className={`${styles._20} ${collapsed ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <Tooltip content={collapsed ? "Mở rộng thanh menu" : "Thu gọn thanh menu"} position="right">
+          <button
+            onClick={onToggleCollapse}
+            className={`${styles._7} ${collapsed ? "!p-1" : ""}`}
+            aria-label="Collapse sidebar"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-          </svg>
-        </button>
+            <svg
+              className={`${styles._20} ${collapsed ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+            </svg>
+          </button>
+        </Tooltip>
       </div>
 
-      <nav className={styles._8}>
+      <nav className={`${styles._8} ${collapsed ? "!px-2" : "px-3"}`}>
         {menuItems
           .filter(item => {
             if (user.role === 'staff') {
@@ -69,15 +74,15 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
             return acc;
           }, '');
           const isActive = item.path === activeItemPath;
-          return (
+          const linkElement = (
             <Link
               key={item.path}
               href={item.path}
               onClick={onClose}
-              className={`group ${styles._21} ${
+              className={`group ${styles._21} ${collapsed ? "justify-center !px-0 w-full" : "w-full"} ${
                 isActive
                   ? "bg-primary text-white shadow-md shadow-primary/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                  : "text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-800/40"
               }`}
             >
               <div className={`${styles._22} ${isActive ? "scale-105" : "group-hover:scale-105"}`}>
@@ -88,6 +93,14 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
                 <span className={styles._10}></span>
               )}
             </Link>
+          );
+
+          return collapsed ? (
+            <Tooltip key={item.path} content={item.title} position="right" className="w-full">
+              {linkElement}
+            </Tooltip>
+          ) : (
+            <React.Fragment key={item.path}>{linkElement}</React.Fragment>
           );
         })}
       </nav>

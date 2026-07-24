@@ -41,7 +41,7 @@ export default function ChangePasswordPage() {
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Đổi mật khẩu</h1>
-        <p className="text-xs text-gray-500 mt-1">Cập nhật mật khẩu đăng nhập của bạn.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cập nhật mật khẩu đăng nhập của bạn.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-4">
@@ -80,7 +80,7 @@ export default function ChangePasswordPage() {
             {saving ? "Đang xử lý..." : "Đổi mật khẩu"}
           </button>
           <button type="button" onClick={() => router.push("/student/profile")}
-            className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
+            className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
             Quay lại
           </button>
         </div>

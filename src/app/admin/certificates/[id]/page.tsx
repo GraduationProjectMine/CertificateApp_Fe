@@ -79,7 +79,7 @@ export default function CertificateDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 text-sm">Đang tải...</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Đang tải...</div>;
   }
 
   if (error || !cert) {

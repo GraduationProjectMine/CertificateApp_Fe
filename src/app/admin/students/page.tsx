@@ -153,7 +153,7 @@ export default function AdminStudentsPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
               title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
               {showPassword ? (
@@ -206,14 +206,14 @@ export default function AdminStudentsPage() {
       <div className={styles._12}>
         <div className={styles._13}>
           {loading ? (
-            <div className="p-8 text-center text-gray-400 text-xs">Đang tải danh sách sinh viên...</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải danh sách sinh viên...</div>
           ) : students.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-xs">
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">
               Chưa có sinh viên nào.{' '}
               <button onClick={() => setShowCreate(true)} className="text-primary underline">Tạo sinh viên đầu tiên</button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-xs">Không tìm thấy kết quả.</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không tìm thấy kết quả.</div>
           ) : (
             <table className={styles._14}>
               <thead>
@@ -227,7 +227,7 @@ export default function AdminStudentsPage() {
               </thead>
               <tbody className={styles._18}>
                 {filtered.map((student) => (
-                  <tr key={student.student_id} className={`hover:bg-slate-55 ${styles._19}`}>
+                  <tr key={student.student_id} className={`${styles._19}`}>
                     <td className={styles._20}>
                       <span className="font-mono text-[10px]">{student.student_id.slice(0, 8)}...</span>
                       <button

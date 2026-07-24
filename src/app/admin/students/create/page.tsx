@@ -32,7 +32,7 @@ export default function CreateStudentPage() {
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Thêm sinh viên</h1>
-        <p className="text-xs text-gray-500 mt-1">Tạo tài khoản sinh viên mới để cấp văn bằng.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tạo tài khoản sinh viên mới để cấp văn bằng.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-4">
@@ -69,7 +69,7 @@ export default function CreateStudentPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
               title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
               {showPassword ? (
@@ -99,7 +99,7 @@ export default function CreateStudentPage() {
           <button
             type="button"
             onClick={() => router.push("/admin/students")}
-            className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+            className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
           >
             Hủy
           </button>

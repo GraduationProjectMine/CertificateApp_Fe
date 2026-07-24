@@ -144,11 +144,11 @@ export default function AdminTemplatesPage() {
 
       <div className={styles._6}>
         {loading ? (
-          <div className="p-8 text-center text-gray-400 text-xs">Đang tải...</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
         ) : error ? (
-          <div className="p-8 text-center text-red-500 text-xs">{error}</div>
+          <div className="p-8 text-center text-red-500 dark:text-red-400 text-xs">{error}</div>
         ) : templates.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-xs">Chưa có mẫu văn bằng nào. Hãy tạo mẫu đầu tiên!</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Chưa có mẫu văn bằng nào. Hãy tạo mẫu đầu tiên!</div>
         ) : (
           templates.map((template) => (
             <div key={template.id} className={styles._7}>
@@ -174,14 +174,14 @@ export default function AdminTemplatesPage() {
                 </Link>
                 {!template.is_default && (
                   <button
-                    className="text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     onClick={() => handleSetDefault(template.id)}
                   >
                     Đặt mặc định
                   </button>
                 )}
                 <button
-                  className="text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   onClick={() => handleDuplicate(template.id)}
                 >
                   Nhân bản
