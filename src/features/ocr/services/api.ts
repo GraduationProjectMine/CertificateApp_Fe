@@ -23,4 +23,25 @@ export const ocrApi = {
       body: formData,
     });
   },
+
+  extractDiplomasBatch: (files: File[], language = 'vie') => {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    return request<{
+      total: number;
+      results: Array<{
+        rowNumber: number;
+        fileName: string;
+        data: Record<string, string>;
+        accuracy: number;
+        validationErrors?: Record<string, string>;
+        ipfs_cid?: string;
+        ipfs_url?: string;
+        error?: string;
+      }>;
+    }>(`/ocr/extract-diplomas-batch?language=${language}`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };

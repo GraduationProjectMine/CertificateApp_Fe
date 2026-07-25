@@ -125,6 +125,15 @@ export default function IssueCertificatePage() {
       if (d.registry_number) updateField("registryNumber", d.registry_number);
       if (res.ipfs_cid) updateField("ipfs_cid", res.ipfs_cid);
       if (res.ipfs_url) updateField("file_url", res.ipfs_url);
+
+      // Convert original image file to base64 for IPFS upload upon createDraft
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          updateField("file_url", reader.result);
+        }
+      };
+      reader.readAsDataURL(ocrFile);
     } catch (err) {
       setOcrError(err instanceof Error ? err.message : "OCR thất bại");
     } finally {
