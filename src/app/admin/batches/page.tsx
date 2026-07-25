@@ -2,19 +2,15 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import * as XLSX from "xlsx";
+import Link from "next/link";
 import styles from "./page.module.css";
 import { operationsApi, type IssuanceBatch } from "@/features/admin/services/operations.api";
-import { parseCsv, toCsv } from "@/features/admin/utils/csv";
-import {
-  certificateImportFields as fields,
-  createCertificateTemplateCsv,
-  createCertificateTemplateHtmlExcel,
-} from "@/features/admin/utils/certificate-import-template";
+import { toCsv } from "@/features/admin/utils/csv";
 import type { CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
+import { ocrApi } from "@/features/ocr/services/api";
+import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
-import Tooltip from "@/components/common/Tooltip";
 
 function downloadFile(content: Blob, filename: string) {
   const url = URL.createObjectURL(content);
@@ -25,58 +21,39 @@ function downloadFile(content: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function downloadCsvTemplate() {
-  downloadFile(new Blob(["\uFEFF" + createCertificateTemplateCsv()], { type: "text/csv;charset=utf-8" }), "certificate-import-template.csv");
-}
+const REQUIRED_BATCH_FIELDS: Array<{ key: string; label: string }> = [
+  { key: "student_id", label: "Sinh viên" },
+  { key: "student_fullName", label: "Tên sinh viên" },
+  { key: "certificate_title", label: "Tên văn bằng" },
+  { key: "dob", label: "Ngày sinh" },
+  { key: "placeOfBirth", label: "Nơi sinh" },
+  { key: "gender", label: "Giới tính" },
+  { key: "ethnicity", label: "Dân tộc" },
+  { key: "schoolName", label: "Trường" },
+  { key: "examCohort", label: "Niên khóa" },
+  { key: "examBoard", label: "Hội đồng thi" },
+  { key: "issueLocation", label: "Nơi cấp" },
+  { key: "issueDate", label: "Ngày cấp" },
+  { key: "serialNumber", label: "Số hiệu văn bằng" },
+  { key: "registryNumber", label: "Số vào sổ" },
+];
 
-function downloadExcelTemplate() {
-  const htmlContent = createCertificateTemplateHtmlExcel();
-  downloadFile(
-    new Blob(["\uFEFF" + htmlContent], { type: "application/vnd.ms-excel;charset=utf-8" }),
-    "certificate-import-template.xls"
-  );
-}
-
-const COL_MAP: Record<string, string> = {
-  "id sinh viên": "student_id",
-  "tên văn bằng": "certificate_title",
-  "tên sinh viên": "student_fullName",
-  "họ tên": "student_fullName",
-  "họ tên sinh viên": "student_fullName",
-  "ngày sinh": "dob",
-  "nơi sinh": "placeOfBirth",
-  "giới tính": "gender",
-  "dân tộc": "ethnicity",
-  "tên trường": "schoolName",
-  "khóa": "examCohort",
-  "năm tn": "examCohort",
-  "hội đồng thi": "examBoard",
-  "nơi cấp": "issueLocation",
-  "ngày cấp": "issueDate",
-  "số hiệu": "serialNumber",
-  "số vào sổ": "registryNumber",
+const EMPTY_RECORD: Record<string, string> = {
+  student_id: "",
+  student_fullName: "",
+  certificate_title: "",
+  dob: "",
+  placeOfBirth: "",
+  gender: "",
+  ethnicity: "",
+  schoolName: "",
+  examCohort: "",
+  examBoard: "",
+  issueLocation: "",
+  issueDate: "",
+  serialNumber: "",
+  registryNumber: "",
 };
-
-function autoMapHeaders(headers: string[]): Record<string, string> {
-  const mapping: Record<string, string> = {};
-  const fieldKeys = fields.map((f) => f.key);
-  const fieldLabels = fields.map((f) => f.label.toLowerCase());
-  for (const key of fieldKeys) {
-    mapping[key] = "";
-  }
-  for (const header of headers) {
-    const h = header.toLowerCase().trim();
-    const exact = fieldLabels.indexOf(h);
-    if (exact >= 0) { mapping[fieldKeys[exact]] = header; continue; }
-    const byKey = fields.find((f) => f.key.toLowerCase() === h);
-    if (byKey) { mapping[byKey.key] = header; continue; }
-    const byAlias = fields.find((f) => (f.aliases || []).some((a) => a.toLowerCase() === h));
-    if (byAlias) { mapping[byAlias.key] = header; continue; }
-    const byColMap = COL_MAP[h];
-    if (byColMap) { mapping[byColMap] = header; }
-  }
-  return mapping;
-}
 
 export default function AdminBatchesPage() {
   const { user } = useAuth();
@@ -89,12 +66,21 @@ export default function AdminBatchesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [sourceRows, setSourceRows] = useState<Record<string, string>[]>([]);
-  const [mapping, setMapping] = useState<Record<string, string>>({});
 
-  // Preview & Accordion state
-  const [showMappingConfig, setShowMappingConfig] = useState(false);
+  // Initialize with 1 editable record so the UI Form is always visible by default
+  const [sourceRows, setSourceRows] = useState<Record<string, string>[]>([{ ...EMPTY_RECORD }]);
+
+  // OCR state
+  const [scanningOcr, setScanningOcr] = useState(false);
+  const [ocrLang, setOcrLang] = useState("vie");
+
+  // Student accounts list
+  const [students, setStudents] = useState<StudentDto[]>([]);
+
+  // Active record index in batch editor
+  const [activeRecordIndex, setActiveRecordIndex] = useState(0);
+
+  // Tab preview & search keyword
   const [previewTab, setPreviewTab] = useState<"ALL" | "VALID" | "INVALID">("ALL");
   const [searchKeyword, setSearchKeyword] = useState("");
 
@@ -109,37 +95,156 @@ export default function AdminBatchesPage() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    studentApi.list().then(setStudents).catch(() => {});
+  }, [load]);
 
-  // Filter out empty rows and build rows with validation status
+  // Handle Drag-and-drop OCR scan
+  const handleOcrDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    const files = Array.from(e.dataTransfer.files);
+    void processOcrFiles(files);
+  }, [ocrLang]);
+
+  // Handle OCR Batch Files Upload
+  async function onOcrFiles(event: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = event.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    await processOcrFiles(files);
+    event.target.value = "";
+  }
+
+  async function processOcrFiles(files: File[]) {
+    setScanningOcr(true);
+    try {
+      toast.loading(`Đang quét OCR ${files.length} ảnh văn bằng...`, { id: "ocr-batch" });
+      const res = await ocrApi.extractDiplomasBatch(files, ocrLang);
+      toast.dismiss("ocr-batch");
+
+      if (!res.results || res.results.length === 0) {
+        toast.error("Không tìm thấy dữ liệu từ ảnh");
+        return;
+      }
+
+      const base64List = await Promise.all(
+        files.map((file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+          })
+        )
+      );
+
+      const rows: Record<string, string>[] = res.results.map((r, idx) => {
+        const d = r.data || {};
+        return {
+          student_id: d.student_id || "",
+          student_fullName: d.full_name || "",
+          certificate_title: d.diploma_title || "BẰNG TỐT NGHIỆP",
+          dob: d.dob || "",
+          placeOfBirth: d.place_of_birth || "",
+          gender: d.gender || "",
+          ethnicity: d.ethnicity || "",
+          schoolName: d.school_name || "",
+          examCohort: d.exam_cohort || "",
+          examBoard: d.exam_board || "",
+          issueLocation: d.issue_location || "",
+          issueDate: d.issue_date || "",
+          serialNumber: d.serial_number || "",
+          registryNumber: d.registry_number || "",
+          file_url: base64List[idx] || "",
+        };
+      });
+
+      setFileName(`Lô quét OCR (${files.length} văn bằng)`);
+      setSourceRows(rows);
+      setActiveRecordIndex(0);
+
+      toast.success(`Đã quét thành công ${res.total} ảnh văn bằng!`);
+    } catch (err: any) {
+      toast.dismiss("ocr-batch");
+      toast.error(err.message || "Quét OCR thất bại");
+    } finally {
+      setScanningOcr(false);
+    }
+  }
+
+  const handleFieldEdit = (fieldKey: string, newValue: string) => {
+    setSourceRows((prev) => {
+      const next = [...prev];
+      if (next[activeRecordIndex]) {
+        next[activeRecordIndex] = {
+          ...next[activeRecordIndex],
+          [fieldKey]: newValue,
+        };
+      }
+      return next;
+    });
+  };
+
+  const handleTableRowEdit = (originalIndex: number, fieldKey: string, newValue: string) => {
+    setSourceRows((prev) => {
+      const next = [...prev];
+      const sourceRowIndex = originalIndex - 1;
+      if (next[sourceRowIndex]) {
+        next[sourceRowIndex] = {
+          ...next[sourceRowIndex],
+          [fieldKey]: newValue,
+        };
+      }
+      return next;
+    });
+  };
+
+  const addNewRecord = () => {
+    setSourceRows((prev) => [...prev, { ...EMPTY_RECORD }]);
+    setActiveRecordIndex(sourceRows.length);
+  };
+
+  const removeActiveRecord = (idx: number) => {
+    if (sourceRows.length <= 1) {
+      setSourceRows([{ ...EMPTY_RECORD }]);
+      setActiveRecordIndex(0);
+      return;
+    }
+    setSourceRows((prev) => prev.filter((_, i) => i !== idx));
+    setActiveRecordIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  // Require ALL 14 fields in the batch form
   const mappedRowsWithStatus = useMemo(() => {
     return sourceRows
       .map((source, originalIndex) => {
-        const output: Record<string, string> = {};
-        fields.forEach(({ key }) => { output[key] = source[mapping[key]] || ""; });
-        const record = output as unknown as CreateCertificatePayload;
-        const isValid = !!(record.student_id?.trim() && record.certificate_title?.trim());
+        const record = source as unknown as CreateCertificatePayload;
+        const missingFields = REQUIRED_BATCH_FIELDS
+          .filter(({ key }) => !source[key]?.trim())
+          .map(({ label }) => label);
+
+        const isValid = missingFields.length === 0;
+
         return {
           originalIndex: originalIndex + 1,
           record,
           isValid,
-          missingFields: [
-            !record.student_id?.trim() ? "ID sinh viên" : null,
-            !record.certificate_title?.trim() ? "Tên văn bằng" : null,
-          ].filter(Boolean) as string[],
+          missingFields,
         };
       })
-      .filter(({ record }) => !!(record.student_id?.trim() || record.certificate_title?.trim() || record.student_fullName?.trim()));
-  }, [sourceRows, mapping]);
+      .filter(({ record }) =>
+        Object.values(record).some((val) => typeof val === "string" && val.trim() !== "")
+      );
+  }, [sourceRows]);
 
   const mappedRows = useMemo(() => mappedRowsWithStatus.map((item) => item.record), [mappedRowsWithStatus]);
-
   const validRowsCount = useMemo(() => mappedRowsWithStatus.filter((item) => item.isValid).length, [mappedRowsWithStatus]);
   const invalidRowsCount = useMemo(() => mappedRowsWithStatus.filter((item) => !item.isValid).length, [mappedRowsWithStatus]);
 
-  const mappedFieldsCount = useMemo(() => fields.filter((f) => !!mapping[f.key]).length, [mapping]);
+  const activeRecord = sourceRows[activeRecordIndex] || { ...EMPTY_RECORD };
 
-  // Filtered rows for preview table based on active tab and search keyword
   const filteredPreviewRows = useMemo(() => {
     return mappedRowsWithStatus.filter((item) => {
       if (previewTab === "VALID" && !item.isValid) return false;
@@ -156,84 +261,27 @@ export default function AdminBatchesPage() {
     });
   }, [mappedRowsWithStatus, previewTab, searchKeyword]);
 
-  async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const lower = file.name.toLowerCase();
-    let parsed: { headers: string[]; rows: Record<string, string>[] };
-    if (lower.endsWith(".csv")) {
-      parsed = parseCsv(await file.text());
-    } else if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const aoa: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      if (aoa.length < 1) { toast.error("File Excel không có dữ liệu"); return; }
-      
-      let headerRowIdx = -1;
-      for (let i = 0; i < aoa.length; i++) {
-        const rowStr = (aoa[i] || []).map((c) => String(c ?? "").toLowerCase().trim()).join(" ");
-        if (
-          rowStr.includes("id sinh viên") ||
-          rowStr.includes("student_id") ||
-          rowStr.includes("mã sinh viên") ||
-          rowStr.includes("tên văn bằng") ||
-          rowStr.includes("tên sinh viên")
-        ) {
-          headerRowIdx = i;
-          break;
-        }
-      }
-      if (headerRowIdx === -1) {
-        headerRowIdx = aoa.findIndex((r) => r && r.some((c) => String(c ?? "").trim().length > 0));
-      }
-      if (headerRowIdx === -1 || headerRowIdx >= aoa.length) {
-        toast.error("File Excel không có dữ liệu hợp lệ"); return;
-      }
-
-      const rawHdrs = (aoa[headerRowIdx] as string[]).map((h) => String(h ?? "").trim());
-      const validHdrIndices = rawHdrs.map((h, i) => (h ? i : -1)).filter((i) => i >= 0);
-      const hdrs = validHdrIndices.map((i) => rawHdrs[i]);
-      const rows = aoa.slice(headerRowIdx + 1).filter((r: unknown[]) => r && r.some((c) => String(c ?? "").trim()));
-      parsed = {
-        headers: hdrs,
-        rows: rows.map((r: unknown[]) =>
-          Object.fromEntries(validHdrIndices.map((hdrIdx, i) => [hdrs[i], String((r as unknown[])[hdrIdx] ?? "").trim()]))
-        ),
-      };
-    } else {
-      toast.error("Chỉ hỗ trợ file CSV hoặc Excel (.xlsx, .xls)");
-      return;
-    }
-    if (!parsed.headers.length || !parsed.rows.length) {
-      toast.error("File không có dữ liệu");
-      return;
-    }
-    setFileName(file.name.replace(/\.(csv|xlsx|xls)$/i, ""));
-    setHeaders(parsed.headers);
-    setSourceRows(parsed.rows);
-    setMapping(autoMapHeaders(parsed.headers));
-    setShowMappingConfig(false);
-  }
-
   function resetImport() {
     setFileName("");
-    setHeaders([]);
-    setSourceRows([]);
-    setMapping({});
-    setShowMappingConfig(false);
+    setSourceRows([{ ...EMPTY_RECORD }]);
     setSearchKeyword("");
+    setActiveRecordIndex(0);
     setPreviewTab("ALL");
   }
 
   async function executeBatch() {
+    setShowConfirmBatch(false);
     setSubmitting(true);
     try {
-      const result = await operationsApi.createBatch(fileName || `Lô ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, mode);
+      const result = await operationsApi.createBatch(fileName || `Lô cấp phát ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, mode);
       setSelected(result);
       resetImport();
       await load();
-      toast.success(`Đã xử lý thành công ${result.successRows}/${result.totalRows} dòng`);
+      toast.success(
+        mode === "FULL"
+          ? `Đã phát hành và đẩy Blockchain thành công ${result.successRows}/${result.totalRows} văn bằng!`
+          : `Đã lưu DRAFT chờ duyệt thành công ${result.successRows}/${result.totalRows} văn bằng!`
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Không thể tạo lô cấp phát");
     } finally {
@@ -243,7 +291,7 @@ export default function AdminBatchesPage() {
 
   function requestConfirm() {
     if (!mappedRows.length || invalidRowsCount > 0) {
-      toast.error("Hãy kiểm tra và hoàn thiện dữ liệu bắt buộc trước khi cấp phát");
+      toast.error("Vui lòng điền đầy đủ tất cả các trường thông tin bắt buộc (*) trước khi cấp phát lô");
       return;
     }
     setShowConfirmBatch(true);
@@ -278,7 +326,7 @@ export default function AdminBatchesPage() {
         open={showConfirmBatch}
         onClose={() => setShowConfirmBatch(false)}
         title="Xác nhận phát hành lô văn bằng"
-        message={mode === "FULL" ? `Bạn có chắc chắn muốn cấp ${mappedRows.length} văn bằng và ghi trực tiếp lên Blockchain?` : `Tạo ${mappedRows.length} văn bằng ở trạng thái DRAFT (chờ Issuer duyệt sau).`}
+        message={mode === "FULL" ? `Bạn có chắc chắn muốn cấp ${mappedRows.length} văn bằng và ghi trực tiếp lên Blockchain?` : `Tạo ${mappedRows.length} văn bằng ở trạng thái DRAFT / PENDING (chờ Issuer duyệt phát hành sau).`}
         confirmLabel={mode === "FULL" ? "Xác nhận phát hành" : "Xác nhận tạo DRAFT"}
         cancelLabel="Hủy"
         variant="warning"
@@ -287,133 +335,345 @@ export default function AdminBatchesPage() {
         onConfirm={() => void executeBatch()}
       />
 
-      {/* Title & Import Actions Bar */}
-      <div className={styles._2}>
-        <div>
-          <h1 className={styles._3}>Cấp bằng hàng loạt</h1>
-          <p className={styles._4}>Import CSV hoặc Excel, xem trước dữ liệu chi tiết và phát hành văn bằng.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Tooltip content="Tải file mẫu CSV cơ bản" position="bottom">
-            <button type="button" onClick={downloadCsvTemplate} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 transition-all">Tải template CSV</button>
-          </Tooltip>
-          <Tooltip content="Tải file mẫu Excel định dạng sẵn" position="bottom">
-            <button type="button" onClick={downloadExcelTemplate} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 transition-all">Tải template Excel</button>
-          </Tooltip>
-          <Tooltip content="Tải lên file danh sách sinh viên (.csv, .xlsx, .xls)" position="bottom">
-            <label className={styles._5}>+ Chọn file<input className="hidden" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onFile} /></label>
-          </Tooltip>
-        </div>
+      {/* Header aligned with Cấp bằng mới */}
+      <div>
+        <h1 className={styles._2}>Cấp phát văn bằng theo lô & OCR</h1>
+        <p className={styles._3}>Quét danh sách ảnh văn bằng, trích xuất thông tin OCR, nhập đầy đủ thông tin và lưu nháp DRAFT trước khi phát hành.</p>
       </div>
 
-      {/* Main File Data Preview & Validation Section */}
-      {headers.length > 0 && (
-        <section className="space-y-4">
-          {/* File Overview Banner */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/50 dark:border-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 font-bold text-sm">
-                📄
+      {/* OCR Drag-and-Drop Dropzone Panel matching Cấp bằng mới */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Tải lên ảnh văn bằng (Quét OCR hàng loạt)</div>
+          <select
+            value={ocrLang}
+            onChange={(e) => setOcrLang(e.target.value)}
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="vie">Ngôn ngữ: Tiếng Việt</option>
+            <option value="eng">Ngôn ngữ: English</option>
+          </select>
+        </div>
+
+        <label
+          className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors flex flex-col items-center gap-3"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleOcrDrop}
+        >
+          <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả danh sách ảnh văn bằng vào đây</div>
+          <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn nhiều ảnh cùng lúc (JPEG, PNG, WebP, TIFF)</div>
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" multiple onChange={onOcrFiles} className="hidden" disabled={scanningOcr} />
+        </label>
+      </div>
+
+      {scanningOcr && (
+        <div className="rounded-2xl border border-teal-200 bg-teal-50/80 p-4 text-xs font-bold text-teal-800 flex items-center gap-3 animate-pulse">
+          <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+          Đang trích xuất OCR văn bằng... Vui lòng chờ trong giây lát.
+        </div>
+      )}
+
+      {/* Main Form & Edit Section (ALWAYS VISIBLE BY DEFAULT) */}
+      <section className="space-y-6">
+        {/* Header Banner & Record Switcher */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-black text-sm flex items-center justify-center">
+                🎓
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-black text-gray-900 dark:text-white">{fileName}</h2>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                    {mappedRows.length} bản ghi
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center gap-3 text-xs">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ {validRowsCount} dòng hợp lệ</span>
-                  {invalidRowsCount > 0 && (
-                    <span className="text-rose-500 font-semibold">⚠ {invalidRowsCount} dòng thiếu thông tin</span>
-                  )}
-                </div>
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white">{fileName || "Lô văn bằng mới"}</h2>
+                <p className="text-xs text-gray-500">Đang nhập dữ liệu cho {sourceRows.length} văn bằng (Tất cả thông tin là bắt buộc)</p>
               </div>
             </div>
 
-            {/* Processing Mode Toggle & Accordion Button */}
-            <div className="flex flex-wrap items-center gap-3">
-              {isIssuer && (
+            <div className="flex items-center gap-3">
+              {isIssuer ? (
                 <div className="flex items-center bg-gray-100 dark:bg-gray-800/80 p-1 rounded-xl border border-gray-200/60 dark:border-gray-700/60">
                   <button
                     type="button"
                     onClick={() => setMode("FULL")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === "FULL" ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === "FULL" ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-900 dark:text-gray-400"}`}
                   >
-                    Tạo & phát hành (Blockchain)
+                    Phát hành Blockchain
                   </button>
                   <button
                     type="button"
                     onClick={() => setMode("DRAFT_ONLY")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === "DRAFT_ONLY" ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === "DRAFT_ONLY" ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-900 dark:text-gray-400"}`}
                   >
-                    Chỉ tạo DRAFT
+                    Tạo DRAFT / Gửi duyệt
                   </button>
                 </div>
+              ) : (
+                <span className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-200/60">
+                  Tạo DRAFT (Chờ Issuer duyệt)
+                </span>
               )}
 
               <button
                 type="button"
-                onClick={() => setShowMappingConfig(!showMappingConfig)}
-                className="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 transition-all"
+                onClick={addNewRecord}
+                className="px-3 py-1.5 text-xs font-bold text-primary bg-primary/10 rounded-xl hover:bg-primary/20 transition-all flex items-center gap-1"
               >
-                ⚙ Cấu hình Mapping ({mappedFieldsCount}/{fields.length} cột)
-                <span className={`transform transition-transform ${showMappingConfig ? "rotate-180" : ""}`}>▼</span>
+                + Thêm văn bằng
               </button>
 
               <button
                 type="button"
                 onClick={resetImport}
-                className="px-3.5 py-2 rounded-xl border border-red-200/60 dark:border-red-900/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-bold transition-all"
+                className="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/30 rounded-xl hover:bg-rose-100 transition-all"
               >
-                Hủy file
+                Làm mới
               </button>
             </div>
           </div>
 
-          {/* Collapsible Mapping Configuration Section */}
-          {showMappingConfig && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 animate-fadeIn">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">Tùy chỉnh ghép nối cột (Column Mapping)</h3>
-                <span className="text-xs text-gray-400">Hệ thống đã tự động ghép cột từ file Excel</span>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {fields.map((field) => (
-                  <label className="text-xs font-semibold text-gray-600 dark:text-gray-300" key={field.key}>
-                    {field.label} {["student_id", "certificate_title"].includes(field.key) && <span className="text-red-500">*</span>}
-                    <select
-                      className="mt-1 w-full rounded-xl border border-gray-200 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-medium dark:border-gray-700 text-gray-900 dark:text-white"
-                      value={mapping[field.key] || ""}
-                      onChange={(event) => setMapping((current) => ({ ...current, [field.key]: event.target.value }))}
+          {/* Record Switcher Stepper */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide mr-1">Văn bằng:</span>
+            {sourceRows.map((row, idx) => {
+              const title = row.student_fullName || row.student_id || `Văn bằng #${idx + 1}`;
+              const isValid = REQUIRED_BATCH_FIELDS.every(({ key }) => !!row[key]?.trim());
+              return (
+                <div key={idx} className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveRecordIndex(idx)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeRecordIndex === idx
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                    }`}
+                  >
+                    <span>#{idx + 1} {title}</span>
+                    {!isValid && <span className="text-[10px] text-amber-400 font-extrabold">⚠</span>}
+                  </button>
+                  {sourceRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeActiveRecord(idx)}
+                      title="Xóa văn bằng này"
+                      className="text-xs text-gray-400 hover:text-rose-500 px-1"
                     >
-                      <option value="" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">-- Không ghép cột --</option>
-                      {headers.map((header) => (
-                        <option key={header} value={header} className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">{header}</option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
+                      ✕
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-          {/* Data Preview Table & Filtering Toolbar */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
-              {/* Status Filter Tabs */}
-              <div className="flex items-center gap-2">
+        {/* Form Editor Card for Active Record (ALL 14 LABELS ARE REQUIRED *) */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">
+              Thông tin văn bằng #{activeRecordIndex + 1} / {sourceRows.length} (Tất cả thông tin là bắt buộc)
+            </span>
+          </div>
+
+          <div className={styles._28}>
+            <div>
+              <label className={styles._29}>Sinh viên *</label>
+              {students.length > 0 ? (
+                <select
+                  className={styles._30}
+                  value={activeRecord.student_id || ""}
+                  onChange={(e) => {
+                    const s = students.find((st) => st.student_id === e.target.value);
+                    handleFieldEdit("student_id", e.target.value);
+                    if (s) handleFieldEdit("student_fullName", s.student_fullName);
+                  }}
+                >
+                  <option value="">-- Chọn sinh viên --</option>
+                  {students.map((s) => (
+                    <option key={s.student_id} value={s.student_id}>
+                      {s.student_fullName} ({s.email})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  className={styles._30}
+                  placeholder="Nhập ID sinh viên..."
+                  value={activeRecord.student_id || ""}
+                  onChange={(e) => handleFieldEdit("student_id", e.target.value)}
+                />
+              )}
+            </div>
+
+            <div>
+              <label className={styles._29}>Tên sinh viên *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="Họ và tên sinh viên"
+                value={activeRecord.student_fullName || ""}
+                onChange={(e) => handleFieldEdit("student_fullName", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Tên văn bằng *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: BẰNG CỬ NHÂN KỸ THUẬT"
+                value={activeRecord.certificate_title || ""}
+                onChange={(e) => handleFieldEdit("certificate_title", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Ngày sinh *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: 15/08/2002"
+                value={activeRecord.dob || ""}
+                onChange={(e) => handleFieldEdit("dob", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Nơi sinh *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: Hà Nội"
+                value={activeRecord.placeOfBirth || ""}
+                onChange={(e) => handleFieldEdit("placeOfBirth", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Giới tính *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: Nam / Nữ"
+                value={activeRecord.gender || ""}
+                onChange={(e) => handleFieldEdit("gender", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Dân tộc *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: Kinh"
+                value={activeRecord.ethnicity || ""}
+                onChange={(e) => handleFieldEdit("ethnicity", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Trường *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="Tên trường..."
+                value={activeRecord.schoolName || ""}
+                onChange={(e) => handleFieldEdit("schoolName", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Niên khóa *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: 2022 - 2026"
+                value={activeRecord.examCohort || ""}
+                onChange={(e) => handleFieldEdit("examCohort", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Hội đồng thi *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: Hội đồng thi Kỹ thuật"
+                value={activeRecord.examBoard || ""}
+                onChange={(e) => handleFieldEdit("examBoard", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Nơi cấp *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: Hà Nội"
+                value={activeRecord.issueLocation || ""}
+                onChange={(e) => handleFieldEdit("issueLocation", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Ngày cấp *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: 20/06/2026"
+                value={activeRecord.issueDate || ""}
+                onChange={(e) => handleFieldEdit("issueDate", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Số hiệu văn bằng *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: B123456"
+                value={activeRecord.serialNumber || ""}
+                onChange={(e) => handleFieldEdit("serialNumber", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>Số vào sổ *</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="VD: 789/QĐ-ĐH"
+                value={activeRecord.registryNumber || ""}
+                onChange={(e) => handleFieldEdit("registryNumber", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Lô Cấp Phát Scanned Data Overview Data Grid (All 14 labels required) */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
+            <div>
+              <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Bảng tổng quan dữ liệu cấp phát lô</h3>
+              <p className="text-[11px] text-gray-500">Xem lại và chỉnh sửa trực tiếp trên từng dòng (Tất cả thông tin là bắt buộc)</p>
+            </div>
+
+            {/* Filter Tabs & Search */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setPreviewTab("ALL")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${previewTab === "ALL" ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"}`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${previewTab === "ALL" ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm" : "text-gray-500"}`}
                 >
                   Tất cả ({mappedRowsWithStatus.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setPreviewTab("VALID")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${previewTab === "VALID" ? "bg-emerald-600 text-white" : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"}`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${previewTab === "VALID" ? "bg-white dark:bg-gray-900 text-emerald-600 shadow-sm" : "text-gray-500"}`}
                 >
                   ✓ Hợp lệ ({validRowsCount})
                 </button>
@@ -421,99 +681,173 @@ export default function AdminBatchesPage() {
                   <button
                     type="button"
                     onClick={() => setPreviewTab("INVALID")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${previewTab === "INVALID" ? "bg-rose-600 text-white" : "text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"}`}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${previewTab === "INVALID" ? "bg-white dark:bg-gray-900 text-rose-600 shadow-sm" : "text-gray-500"}`}
                   >
-                    ⚠ Cần kiểm tra ({invalidRowsCount})
+                    ⚠ Thiếu thông tin ({invalidRowsCount})
                   </button>
                 )}
               </div>
 
-              {/* Search Bar & Action Button */}
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Tìm sinh viên, văn bằng..."
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    className="w-60 rounded-xl border border-gray-200 bg-transparent px-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:border-gray-700"
-                  />
-                  {searchKeyword && (
-                    <button onClick={() => setSearchKeyword("")} className="absolute right-2.5 top-1.5 text-xs text-gray-400 hover:text-gray-600">✕</button>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  disabled={submitting || mappedRows.length === 0 || invalidRowsCount > 0}
-                  onClick={requestConfirm}
-                  className={`${styles._5} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {submitting ? "Đang phát hành..." : mode === "FULL" ? `Xác nhận phát hành ${mappedRows.length} bằng` : `Xác nhận tạo ${mappedRows.length} DRAFT`}
-                </button>
-              </div>
-            </div>
-
-            {/* Data Preview Table List */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700/80">
-                  <tr className="text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider">
-                    <th className="py-3.5 px-3 w-12 text-center">STT</th>
-                    <th className="py-3.5 px-3">ID sinh viên</th>
-                    <th className="py-3.5 px-3">Họ và tên</th>
-                    <th className="py-3.5 px-3">Tên văn bằng</th>
-                    <th className="py-3.5 px-3">Ngày sinh</th>
-                    <th className="py-3.5 px-3">Nơi sinh</th>
-                    <th className="py-3.5 px-3">Số hiệu</th>
-                    <th className="py-3.5 px-3">Số vào sổ</th>
-                    <th className="py-3.5 px-3 text-center">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {filteredPreviewRows.map((item) => (
-                    <tr
-                      key={item.originalIndex}
-                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${!item.isValid ? "bg-rose-50/30 dark:bg-rose-950/10" : ""}`}
-                    >
-                      <td className="p-3 text-center font-bold text-gray-400">{item.originalIndex}</td>
-                      <td className="p-3 font-mono font-bold text-teal-600 dark:text-teal-400">{item.record.student_id || "—"}</td>
-                      <td className="p-3 font-semibold text-gray-900 dark:text-white">{item.record.student_fullName || "—"}</td>
-                      <td className="p-3 font-medium text-gray-800 dark:text-gray-200">{item.record.certificate_title || "—"}</td>
-                      <td className="p-3 text-gray-600 dark:text-gray-400">{item.record.dob || "—"}</td>
-                      <td className="p-3 text-gray-600 dark:text-gray-400">{item.record.placeOfBirth || "—"}</td>
-                      <td className="p-3 font-mono text-gray-600 dark:text-gray-400">{item.record.serialNumber || "—"}</td>
-                      <td className="p-3 font-mono text-gray-600 dark:text-gray-400">{item.record.registryNumber || "—"}</td>
-                      <td className="p-3 text-center">
-                        {item.isValid ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                            ✓ Sẵn sàng
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold" title={`Thiếu: ${item.missingFields.join(", ")}`}>
-                            ⚠ Thiếu {item.missingFields.join(", ")}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredPreviewRows.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="p-8 text-center text-xs text-gray-400">
-                        {searchKeyword ? "Không tìm thấy sinh viên phù hợp." : "Không có dữ liệu ở mục này."}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="w-48 rounded-xl border border-gray-200 bg-transparent px-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:border-gray-700"
+              />
             </div>
           </div>
-        </section>
-      )}
+
+          {/* Scanned Data Table View */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-100 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700/80">
+                <tr className="text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider">
+                  <th className="py-3.5 px-3 w-12 text-center">STT</th>
+                  <th className="py-3.5 px-3">Sinh viên *</th>
+                  <th className="py-3.5 px-3">Tên sinh viên *</th>
+                  <th className="py-3.5 px-3">Tên văn bằng *</th>
+                  <th className="py-3.5 px-3">Ngày sinh *</th>
+                  <th className="py-3.5 px-3">Nơi sinh *</th>
+                  <th className="py-3.5 px-3">Trường *</th>
+                  <th className="py-3.5 px-3">Số hiệu *</th>
+                  <th className="py-3.5 px-3">Số vào sổ *</th>
+                  <th className="py-3.5 px-3 text-center">Trạng thái</th>
+                  <th className="py-3.5 px-3 text-center">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {filteredPreviewRows.map((item) => (
+                  <tr
+                    key={item.originalIndex}
+                    className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${!item.isValid ? "bg-rose-50/30 dark:bg-rose-950/10" : ""}`}
+                  >
+                    <td className="p-3 text-center font-bold text-gray-400">{item.originalIndex}</td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.student_id || ""}
+                        placeholder="Mã SV..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "student_id", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded font-mono font-bold text-primary dark:text-teal-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.student_fullName || ""}
+                        placeholder="Họ tên..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "student_fullName", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded font-semibold text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.certificate_title || ""}
+                        placeholder="Tên văn bằng..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "certificate_title", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded font-medium text-gray-800 dark:text-gray-200 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.dob || ""}
+                        placeholder="Ngày sinh..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "dob", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.placeOfBirth || ""}
+                        placeholder="Nơi sinh..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "placeOfBirth", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.schoolName || ""}
+                        placeholder="Trường..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "schoolName", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.serialNumber || ""}
+                        placeholder="Số hiệu..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "serialNumber", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded font-mono text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={item.record.registryNumber || ""}
+                        placeholder="Số vào sổ..."
+                        onChange={(e) => handleTableRowEdit(item.originalIndex, "registryNumber", e.target.value)}
+                        className="w-full bg-transparent px-2 py-1.5 rounded font-mono text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
+                      />
+                    </td>
+                    <td className="p-3 text-center">
+                      {item.isValid ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
+                          ✓ Sẵn sàng
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold" title={`Thiếu: ${item.missingFields.join(", ")}`}>
+                          ⚠ Thiếu {item.missingFields.length} thông tin
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setActiveRecordIndex(item.originalIndex - 1)}
+                        className="px-2.5 py-1 text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all"
+                      >
+                        Sửa Form
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredPreviewRows.length === 0 && (
+                  <tr>
+                    <td colSpan={11} className="p-8 text-center text-xs text-gray-400">
+                      {searchKeyword ? "Không tìm thấy kết quả phù hợp." : "Chưa có dữ liệu. Vui lòng nhập dữ liệu hoặc quét OCR ảnh văn bằng."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Execution Footer Bar */}
+          <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4 mt-4">
+            <div className="text-xs text-gray-500">
+              {validRowsCount} / {mappedRows.length} văn bằng hợp lệ (Đầy đủ tất cả trường thông tin)
+            </div>
+            <button
+              type="button"
+              disabled={submitting || mappedRows.length === 0 || invalidRowsCount > 0}
+              onClick={requestConfirm}
+              className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md transition-all disabled:opacity-50"
+            >
+              {submitting ? "Đang xử lý..." : mode === "FULL" ? `Xác nhận phát hành ${mappedRows.length} văn bằng` : `Xác nhận tạo ${mappedRows.length} DRAFT`}
+            </button>
+          </div>
+        </div>
+      </section>
 
       {error && <div role="alert" className="rounded-xl bg-red-50 p-4 text-xs font-semibold text-red-600">{error}</div>}
 
-      {/* Historical Batches Table */}
+      {/* Historical Batches List */}
       <div className={styles._6}>
         <div className={styles._7}>
           <table className={styles._8}>

@@ -32,4 +32,25 @@ export const templateApi = {
     request<CertificateTemplate>(`/templates/${id}/duplicate`, {
       method: "POST",
     }),
+
+  importDataFile: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<{
+      fileName: string;
+      headers: string[];
+      totalRows: number;
+      validRowsCount: number;
+      invalidRowsCount: number;
+      rows: Array<{
+        rowNumber: number;
+        record: Record<string, string>;
+        isValid: boolean;
+        missingFields: string[];
+      }>;
+    }>("/templates/import-data", {
+      method: "POST",
+      body: formData,
+    });
+  },
 };

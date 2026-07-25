@@ -81,6 +81,18 @@
  @apply text-xs font-semibold text-primary hover:underline;
 }
 
+._28 {
+ @apply grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs;
+}
+
+._29 {
+ @apply block font-bold text-gray-700 dark:text-gray-300 mb-1.5;
+}
+
+._30 {
+ @apply w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all;
+}
+
 ._0 {
  @apply px-2 py-0.5 rounded text-[10px] font-bold border;
 }

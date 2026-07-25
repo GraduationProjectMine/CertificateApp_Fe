@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
 
@@ -62,6 +64,34 @@ export default function TemplateEditorPage() {
   const [dragging, setDragging] = useState<{ fieldId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [resizing, setResizing] = useState<{ fieldId: string; dir: string; startX: number; startY: number; origW: number; origH: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic Manual Input Data & Import File State
+  const [mockData, setMockData] = useState<Record<string, string>>({
+    student_fullName: "Họ và tên",
+    certificate_title: "Tên văn bằng",
+    dob: "Ngày sinh",
+    placeOfBirth: "Nơi sinh",
+    gender: "Giới tính",
+    ethnicity: "Dân tộc",
+    schoolName: "Tên trường",
+    examCohort: "Khóa học",
+    examBoard: "Hội đồng thi",
+    issueLocation: "Nơi cấp",
+    issueDate: "Ngày cấp",
+    serialNumber: "Số hiệu",
+    registryNumber: "Số vào sổ",
+    organization_name: "Tên tổ chức",
+    verification_url: "https://verify.certchain.edu/cert/sample-id",
+  });
+
+  const [importedData, setImportedData] = useState<{
+    fileName: string;
+    totalRows: number;
+    rows: Array<{ rowNumber: number; record: Record<string, string>; isValid: boolean }>;
+  } | null>(null);
+  const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
+  const [importingFile, setImportingFile] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   useEffect(() => {
     if (id === "new") {
@@ -194,12 +224,71 @@ export default function TemplateEditorPage() {
         router.push(`/admin/templates/editor/${created.id}`);
       } else {
         await templateApi.update(id, { name: templateName, design_data: design as any });
-        alert("Đã lưu!");
+        alert("Đã lưu mẫu thành công!");
       }
     } catch (err: any) {
-      alert(err.message || "Save failed");
+      alert(err.message || "Lưu mẫu thất bại");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportingFile(true);
+    try {
+      const res = await templateApi.importDataFile(file);
+      if (!res.rows || res.rows.length === 0) {
+        alert("File không chứa dữ liệu hợp lệ.");
+        return;
+      }
+      setImportedData(res);
+      setActiveRowIndex(0);
+      setMockData((prev) => ({ ...prev, ...res.rows[0].record }));
+      setPreviewMode(true);
+      alert(`Đã tải ${res.totalRows} dòng từ file ${res.fileName}`);
+    } catch (err: any) {
+      alert(err.message || "Không thể nạp dữ liệu từ file");
+    } finally {
+      setImportingFile(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleSelectRowIndex = (index: number) => {
+    if (!importedData || index < 0 || index >= importedData.rows.length) return;
+    setActiveRowIndex(index);
+    setMockData((prev) => ({ ...prev, ...importedData.rows[index].record }));
+  };
+
+  const exportToPdf = async () => {
+    if (!canvasRef.current) return;
+    setExportingPdf(true);
+    try {
+      const canvasEl = canvasRef.current;
+      const canvas = await html2canvas(canvasEl, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: design.page.bgColor || "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const isLandscape = design.page.width >= design.page.height;
+      const pdf = new jsPDF({
+        orientation: isLandscape ? "landscape" : "portrait",
+        unit: "px",
+        format: [design.page.width, design.page.height],
+      });
+
+      pdf.addImage(imgData, "PNG", 0, 0, design.page.width, design.page.height);
+      const docName = (mockData.student_fullName || mockData.student_id || templateName || "van_bang").replace(/\s+/g, "_");
+      pdf.save(`${docName}.pdf`);
+    } catch (err: any) {
+      alert(err.message || "Xuất PDF thất bại");
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -208,16 +297,15 @@ export default function TemplateEditorPage() {
   }
 
   const renderFieldContent = (field: TemplateField) => {
-    const scale = previewMode ? 1 : zoom;
     const isLine = field.type === "line";
     const isRect = field.type === "rect";
     const styles: React.CSSProperties = {
       position: "absolute",
-      left: field.x * (1 / (previewMode ? 1 : 1)),
-      top: field.y * (1 / (previewMode ? 1 : 1)),
+      left: field.x,
+      top: field.y,
       width: field.w,
       height: field.h,
-      fontSize: (field.size || 14) * (1 / (previewMode ? 1 : 1)),
+      fontSize: field.size || 14,
       fontFamily: field.font || "sans-serif",
       color: field.color || "#333",
       textAlign: field.align || "left",
@@ -237,7 +325,7 @@ export default function TemplateEditorPage() {
 
     const content = (() => {
       if (field.type === "qr") {
-        return <span style={{ fontSize: 9, color: "#999" as any, textAlign: "center" as any, width: "100%" }}>QR</span>;
+        return <span style={{ fontSize: 9, color: "#999", textAlign: "center", width: "100%" }}>QR Code</span>;
       }
       if (field.type === "line") {
         return <div style={{ width: "100%", height: "100%", background: field.color || "#c9a84c" }} />;
@@ -246,8 +334,12 @@ export default function TemplateEditorPage() {
         return <div style={{ width: "100%", height: "100%", border: `2px solid ${field.color || "#c9a84c"}`, boxSizing: "border-box" }} />;
       }
       if (field.dynamic && field.binding) {
+        const val = mockData[field.binding];
+        if (val) {
+          return <span>{(field.label ? `${field.label} ` : "") + val}</span>;
+        }
         const label = FIELD_BINDINGS.find((b) => b.value === field.binding)?.label || field.binding;
-        return <span style={{ opacity: 0.7 }}>[{label}]</span>;
+        return <span style={{ opacity: previewMode ? 0.4 : 0.7 }}>[{label}]</span>;
       }
       return <span>{field.text || "Văn bản"}</span>;
     })();
@@ -284,6 +376,7 @@ export default function TemplateEditorPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
+      {/* Top Header Toolbar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#fff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button onClick={() => router.push("/admin/templates")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#64748b", padding: 4 }}>←</button>
@@ -291,34 +384,56 @@ export default function TemplateEditorPage() {
             type="text"
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 300 }}
+            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 280 }}
             placeholder="Tên mẫu văn bằng"
           />
         </div>
+
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Zoom controls */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f1f5f9", borderRadius: 8, padding: "2px" }}>
             <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>−</button>
             <span style={{ fontSize: 11, color: "#64748b", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>+</button>
           </div>
+
+          {/* Import Data File button */}
+          <label style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#334155", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+            📥 {importingFile ? "Đang nạp file..." : "Import CSV/Excel"}
+            <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFileChange} disabled={importingFile} style={{ display: "none" }} />
+          </label>
+
+          {/* PDF Export button */}
+          <button
+            onClick={exportToPdf}
+            disabled={exportingPdf}
+            style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#059669", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+          >
+            📄 {exportingPdf ? "Đang xuất PDF..." : "Xuất PDF"}
+          </button>
+
+          {/* Mode Switcher */}
           <button
             onClick={() => setPreviewMode(!previewMode)}
             style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: previewMode ? "#3b82f6" : "#fff", color: previewMode ? "#fff" : "#64748b", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
           >
-            {previewMode ? "Chỉnh sửa" : "Xem trước"}
+            {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
           </button>
+
+          {/* Save button */}
           <button
             onClick={handleSave}
             disabled={saving || !templateName.trim()}
             style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving || !templateName.trim() ? 0.6 : 1 }}
           >
-            {saving ? "Đang lưu..." : "Lưu"}
+            {saving ? "Đang lưu..." : "Lưu mẫu"}
           </button>
         </div>
       </div>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {!previewMode && (
+        {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
+        {!previewMode ? (
           <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
             <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
             {FIELD_TEMPLATES.map((ft) => (
@@ -345,8 +460,84 @@ export default function TemplateEditorPage() {
               </div>
             ))}
           </div>
+        ) : (
+          /* Manual Input & Import Record Navigation Side Panel */
+          <div style={{ width: 320, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
+            <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
+              <p style={{ fontSize: 11, color: "#64748b" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
+            </div>
+
+            {/* Imported File Record Selector */}
+            {importedData && (
+              <div style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: 12, borderRadius: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
+                  📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={() => handleSelectRowIndex(activeRowIndex - 1)}
+                    disabled={activeRowIndex <= 0}
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#fff", fontSize: 11, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                  >
+                    ◄
+                  </button>
+                  <select
+                    value={activeRowIndex}
+                    onChange={(e) => handleSelectRowIndex(Number(e.target.value))}
+                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#fff" }}
+                  >
+                    {importedData.rows.map((r, i) => (
+                      <option key={i} value={i}>
+                        Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => handleSelectRowIndex(activeRowIndex + 1)}
+                    disabled={activeRowIndex >= importedData.rows.length - 1}
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#fff", fontSize: 11, cursor: "pointer", opacity: activeRowIndex >= importedData.rows.length - 1 ? 0.4 : 1 }}
+                  >
+                    ►
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Form Inputs for Certificate Fields */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { key: "student_fullName", label: "Họ và tên sinh viên" },
+                { key: "certificate_title", label: "Tên văn bằng" },
+                { key: "organization_name", label: "Tên tổ chức / Trường" },
+                { key: "dob", label: "Ngày sinh" },
+                { key: "placeOfBirth", label: "Nơi sinh" },
+                { key: "gender", label: "Giới tính" },
+                { key: "ethnicity", label: "Dân tộc" },
+                { key: "schoolName", label: "Đơn vị đào tạo" },
+                { key: "examCohort", label: "Khóa học" },
+                { key: "examBoard", label: "Hội đồng thi" },
+                { key: "issueLocation", label: "Nơi cấp" },
+                { key: "issueDate", label: "Ngày cấp" },
+                { key: "serialNumber", label: "Số hiệu" },
+                { key: "registryNumber", label: "Số vào sổ" },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{label}</label>
+                  <input
+                    type="text"
+                    value={mockData[key] || ""}
+                    onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#1e293b", outline: "none" }}
+                    placeholder={`Nhập ${label.toLowerCase()}...`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
+        {/* Center Canvas Workspace */}
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "#f1f5f9" }}>
           <div
             ref={canvasRef}
@@ -402,9 +593,10 @@ export default function TemplateEditorPage() {
           </div>
         </div>
 
+        {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
           <div style={{ width: 280, background: "#fff", borderLeft: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính trường</h3>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại</label>
@@ -423,7 +615,7 @@ export default function TemplateEditorPage() {
 
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
@@ -438,7 +630,7 @@ export default function TemplateEditorPage() {
 
             {!selectedField.dynamic && selectedField.type === "text" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung tĩnh</label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
