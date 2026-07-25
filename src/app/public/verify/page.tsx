@@ -54,7 +54,7 @@ export default function VerifyPublicPage() {
     setError("");
     setIsVerifying(true);
     try {
-      setResult(mapVerification(await verifierApi.verify(serialNumber.trim(), registryNumber.trim())));
+      setResult(mapVerification(await verifierApi.verifyAny(serialNumber.trim(), registryNumber.trim())));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể xác minh văn bằng.");
     } finally {

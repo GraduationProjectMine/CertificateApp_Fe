@@ -37,6 +37,7 @@ export interface CertificateDetails {
 
 export interface VerifyCertificateResponse {
   isValid: boolean;
+  isOnlineCertificate?: boolean;
   status: string;
   blockchain: BlockchainVerification | null;
   ipfsData: Record<string, unknown> | null;
@@ -49,6 +50,34 @@ export const verifierApi = {
     const query = new URLSearchParams({ serialNumber, registryNumber });
     return request<VerifyCertificateResponse>(`/verifier/verify?${query.toString()}`);
   },
+
+  verifyOnline: (serialNumber: string, registryNumber: string) => {
+    const query = new URLSearchParams({ serialNumber, registryNumber });
+    return request<VerifyCertificateResponse>(`/verifier/verify-online?${query.toString()}`);
+  },
+
   getCertificate: (id: string) =>
     request<VerifyCertificateResponse>(`/verifier/certificate/${id}`),
+
+  getOnlineCertificate: (id: string) =>
+    request<VerifyCertificateResponse>(`/verifier/online-certificate/${id}`),
+
+  // Fallback helper: Check normal certificate first; if not found, verify online certificate!
+  verifyAny: async (serialNumber: string, registryNumber: string) => {
+    try {
+      return await verifierApi.verify(serialNumber, registryNumber);
+    } catch (err: any) {
+      return await verifierApi.verifyOnline(serialNumber, registryNumber);
+    }
+  },
+
+  // Fallback helper for certificate detail page by ID
+  getAnyCertificate: async (id: string) => {
+    try {
+      return await verifierApi.getCertificate(id);
+    } catch (err: any) {
+      return await verifierApi.getOnlineCertificate(id);
+    }
+  },
 };
+
