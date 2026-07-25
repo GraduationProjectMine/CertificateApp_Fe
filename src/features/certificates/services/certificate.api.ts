@@ -35,6 +35,7 @@ export interface CertificateDto {
 export interface CreateCertificatePayload {
   student_id: string;
   student_fullName?: string;
+  template_id?: string;
   certificate_title: string;
   dob?: string;
   placeOfBirth?: string;
@@ -51,6 +52,24 @@ export interface CreateCertificatePayload {
   file_url?: string;
 }
 
+export interface OnlineCertificateDto {
+  certificate_id: string;
+  organization_id: string;
+  student_id: string;
+  template_id?: string | null;
+  certificate_title: string;
+  student_fullName: string;
+  serialNumber?: string | null;
+  registryNumber?: string | null;
+  ipfs_cid?: string | null;
+  file_url?: string | null;
+  tx_hash?: string | null;
+  block_number?: number | null;
+  gas_used?: string | null;
+  status: string;
+  issuedAt: string;
+}
+
 export const certificateApi = {
   list: (params?: { status?: string; student_id?: string }) => {
     const query = params
@@ -58,6 +77,9 @@ export const certificateApi = {
       : '';
     return request<CertificateDto[]>(`/certificates${query}`);
   },
+
+  listOnline: () => request<OnlineCertificateDto[]>('/certificates/online'),
+
 
   get: (id: string) =>
     request<CertificateDto>(`/certificates/${id}`),
@@ -95,7 +117,33 @@ export const certificateApi = {
       method: 'DELETE',
     }),
 
+  templateIssueSingle: (data: CreateCertificatePayload) =>
+    request<CertificateDto>('/certificates/template-issue/single', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  templateIssueBatch: (data: { rows: CreateCertificatePayload[]; template_id?: string }) =>
+    request<{
+      total: number;
+      successCount: number;
+      failCount: number;
+      results: Array<{
+        index: number;
+        student_fullName: string;
+        certificate_id?: string;
+        status: 'SUCCESS' | 'FAILED';
+        cid?: string;
+        file_url?: string;
+        tx_hash?: string;
+        error?: string;
+      }>;
+    }>('/certificates/template-issue/batch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
+
 
 export function mapCertificateDtoToStudentCert(
   dto: CertificateDto,

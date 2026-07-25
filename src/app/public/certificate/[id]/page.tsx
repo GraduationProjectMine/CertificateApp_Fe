@@ -17,7 +17,7 @@ export default function PublicCredentialPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    verifierApi.getCertificate(id)
+    verifierApi.getAnyCertificate(id)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : "Không tìm thấy văn bằng."))
       .finally(() => setLoading(false));

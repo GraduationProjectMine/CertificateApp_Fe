@@ -6,8 +6,11 @@ import jsPDF from "jspdf";
 import JSZip from "jszip";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
+import { certificateApi, type CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
+import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 
 const ALL_BINDING_LABELS: Record<string, string> = {
+  student_id: "Mã sinh viên",
   student_fullName: "Họ tên sinh viên",
   certificate_title: "Tên văn bằng",
   organization_name: "Tên tổ chức",
@@ -42,6 +45,7 @@ export default function CertificateGeneratorPage() {
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateTemplate | null>(null);
+  const [students, setStudents] = useState<StudentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [zoom, setZoom] = useState(0.75);
 
@@ -55,20 +59,29 @@ export default function CertificateGeneratorPage() {
   const [exportingBatch, setExportingBatch] = useState(false);
   const [batchProgress, setBatchProgress] = useState<string>("");
 
+  // Direct Issuing state (IPFS JSON + Blockchain)
+  const [issuingSingle, setIssuingSingle] = useState(false);
+  const [issuingBatch, setIssuingBatch] = useState(false);
+  const [issueResult, setIssueResult] = useState<{ type: "SINGLE" | "BATCH"; data: any } | null>(null);
+
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchTemplates = async () => {
+    const initData = async () => {
       try {
-        const list = await templateApi.list();
+        const [list, studList] = await Promise.all([
+          templateApi.list(),
+          studentApi.list().catch(() => []),
+        ]);
         setTemplates(list);
+        setStudents(studList);
       } catch (err: any) {
-        console.error("Failed to load templates", err);
+        console.error("Failed to load initial data", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchTemplates();
+    initData();
   }, []);
 
   const handleSelectTemplate = (id: string) => {
@@ -97,11 +110,14 @@ export default function CertificateGeneratorPage() {
     return DEFAULT_DESIGN;
   }, [selectedTemplate]);
 
-  // Dynamically extract bound fields present in the selected template
+  // Dynamically extract bound fields present in the selected template + student_id
   const boundFields = useMemo(() => {
     const fields = activeDesign.fields || [];
     const bound = fields.filter((f) => f.dynamic && f.binding);
     const uniqueKeys = Array.from(new Set(bound.map((f) => f.binding!)));
+    if (!uniqueKeys.includes("student_id")) {
+      uniqueKeys.unshift("student_id");
+    }
     return uniqueKeys.map((key) => ({
       key,
       label: ALL_BINDING_LABELS[key] || key,
@@ -225,6 +241,82 @@ export default function CertificateGeneratorPage() {
     }
   };
 
+  // Issue single certificate with JSON file pinned to IPFS & registered on-chain
+  const handleIssueSingle = async () => {
+    if (!selectedTemplate) return;
+    setIssuingSingle(true);
+    try {
+      const payload: CreateCertificatePayload = {
+        student_id: activeRecord.student_id || `SV_${Date.now()}`,
+        student_fullName: activeRecord.student_fullName,
+        template_id: selectedTemplate.id,
+        certificate_title: activeRecord.certificate_title || selectedTemplate.name || "BẰNG TỐT NGHIỆP",
+        dob: activeRecord.dob,
+        placeOfBirth: activeRecord.placeOfBirth,
+        gender: activeRecord.gender,
+        ethnicity: activeRecord.ethnicity,
+        schoolName: activeRecord.schoolName,
+        examCohort: activeRecord.examCohort,
+        examBoard: activeRecord.examBoard,
+        issueLocation: activeRecord.issueLocation,
+        issueDate: activeRecord.issueDate,
+        serialNumber: activeRecord.serialNumber,
+        registryNumber: activeRecord.registryNumber,
+      };
+
+      const cert = await certificateApi.templateIssueSingle(payload);
+      setIssueResult({
+        type: "SINGLE",
+        data: cert,
+      });
+    } catch (err: any) {
+      alert(err.message || "Cấp phát văn bằng thất bại");
+    } finally {
+      setIssuingSingle(false);
+    }
+  };
+
+  // Issue batch certificates with JSON files pinned to IPFS & registered on-chain
+  const handleIssueBatch = async () => {
+    if (!selectedTemplate || records.length === 0) return;
+    if (!confirm(`Bạn có chắc chắn muốn phát hành ${records.length} văn bằng lên IPFS JSON & Blockchain?`)) return;
+
+    setIssuingBatch(true);
+    try {
+      const rows: CreateCertificatePayload[] = records.map((r, i) => ({
+        student_id: r.student_id || `SV_${Date.now()}_${i + 1}`,
+        student_fullName: r.student_fullName,
+        template_id: selectedTemplate.id,
+        certificate_title: r.certificate_title || selectedTemplate.name || "BẰNG TỐT NGHIỆP",
+        dob: r.dob,
+        placeOfBirth: r.placeOfBirth,
+        gender: r.gender,
+        ethnicity: r.ethnicity,
+        schoolName: r.schoolName,
+        examCohort: r.examCohort,
+        examBoard: r.examBoard,
+        issueLocation: r.issueLocation,
+        issueDate: r.issueDate,
+        serialNumber: r.serialNumber,
+        registryNumber: r.registryNumber,
+      }));
+
+      const batchRes = await certificateApi.templateIssueBatch({
+        rows,
+        template_id: selectedTemplate.id,
+      });
+
+      setIssueResult({
+        type: "BATCH",
+        data: batchRes,
+      });
+    } catch (err: any) {
+      alert(err.message || "Cấp phát lô thất bại");
+    } finally {
+      setIssuingBatch(false);
+    }
+  };
+
   const renderFieldContent = (field: TemplateField) => {
     const isLine = field.type === "line";
     const isRect = field.type === "rect";
@@ -305,7 +397,7 @@ export default function CertificateGeneratorPage() {
         </div>
 
         {selectedTemplate && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {/* Zoom controls */}
             <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f1f5f9", borderRadius: 8, padding: "2px" }}>
               <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>−</button>
@@ -322,8 +414,8 @@ export default function CertificateGeneratorPage() {
             {/* Export Single PDF */}
             <button
               onClick={exportSinglePdf}
-              disabled={exportingSingle || exportingBatch}
-              style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#059669", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
+              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#059669", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
             >
               📄 {exportingSingle ? "Đang xuất..." : "Xuất PDF bản ghi này"}
             </button>
@@ -331,18 +423,36 @@ export default function CertificateGeneratorPage() {
             {/* Export Batch ZIP */}
             <button
               onClick={exportBatchZip}
-              disabled={exportingSingle || exportingBatch || records.length === 0}
-              style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
+              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#2563eb", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
             >
-              📦 {exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất tất cả PDF (${records.length} bản ghi)`}
+              📦 {exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất tất cả PDF (${records.length})`}
+            </button>
+
+            {/* Issue Single Certificate (JSON to IPFS & Blockchain) */}
+            <button
+              onClick={handleIssueSingle}
+              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
+              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "#059669", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+            >
+              🚀 {issuingSingle ? "Đang phát hành..." : "Phát hành bản ghi này (IPFS/Chain)"}
+            </button>
+
+            {/* Issue Batch Certificates (JSON to IPFS & Blockchain) */}
+            <button
+              onClick={handleIssueBatch}
+              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
+              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "#2563eb", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+            >
+              🚀 {issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length} bằng)`}
             </button>
 
             {/* Cancel & Clear Data button */}
             <button
               onClick={handleCancel}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", color: "#e11d48", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}
+              style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", color: "#e11d48", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}
             >
-              ✕ Hủy / Đổi mẫu
+              ✕ Đổi mẫu
             </button>
           </div>
         )}
@@ -356,7 +466,7 @@ export default function CertificateGeneratorPage() {
             <div style={{ fontSize: 52, marginBottom: 12 }}>🎓</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>Vui lòng chọn mẫu văn bằng</h2>
             <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
-              Hãy chọn 1 mẫu văn bằng bên dưới để hiển thị phôi thiết kế, nạp dữ liệu nhập tay hoặc file Excel và xuất PDF.
+              Hãy chọn 1 mẫu văn bằng bên dưới để hiển thị phôi thiết kế, nạp dữ liệu nhập tay hoặc file Excel và xuất PDF / Phát hành IPFS & Blockchain.
             </p>
           </div>
 
@@ -500,20 +610,58 @@ export default function CertificateGeneratorPage() {
 
             {/* Dynamic Input Form (Only for bound fields in the active template) */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-              {boundFields.map(({ key, label }) => (
-                <div key={key}>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
-                    {label}
-                  </label>
-                  <input
-                    type="text"
-                    value={activeRecord[key] || ""}
-                    onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
-                    placeholder={`Nhập ${label.toLowerCase()}...`}
-                  />
-                </div>
-              ))}
+              {boundFields.map(({ key, label }) => {
+                if (key === "student_id" && students.length > 0) {
+                  return (
+                    <div key={key}>
+                      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                        {label} (Chọn hoặc Nhập tay)
+                      </label>
+                      <select
+                        value={activeRecord[key] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleUpdateActiveField("student_id", val);
+                          const st = students.find((s) => s.student_id === val);
+                          if (st) {
+                            handleUpdateActiveField("student_fullName", st.student_fullName);
+                          }
+                        }}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box", marginBottom: 4 }}
+                      >
+                        <option value="">-- Chọn sinh viên có sẵn --</option>
+                        {students.map((st) => (
+                          <option key={st.student_id} value={st.student_id}>
+                            {st.student_id} - {st.student_fullName}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={activeRecord[key] || ""}
+                        onChange={(e) => handleUpdateActiveField(key, e.target.value)}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+                        placeholder="Hoặc nhập mã SV mới..."
+                      />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={key}>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                      {label}
+                    </label>
+                    <input
+                      type="text"
+                      value={activeRecord[key] || ""}
+                      onChange={(e) => handleUpdateActiveField(key, e.target.value)}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+                      placeholder={`Nhập ${label.toLowerCase()}...`}
+                    />
+                  </div>
+                );
+              })}
 
               {boundFields.length === 0 && (
                 <div style={{ padding: 16, background: "#fffbe6", border: "1px solid #ffe58f", borderRadius: 8, fontSize: 11, color: "#873800" }}>
@@ -583,6 +731,111 @@ export default function CertificateGeneratorPage() {
                 <React.Fragment key={field.id}>{renderFieldContent(field)}</React.Fragment>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Result Modal for Direct Single / Batch Issuance */}
+      {issueResult && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 16, maxWidth: 650, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
+            {issueResult.type === "SINGLE" ? (
+              <div>
+                <div style={{ textAlign: "center", marginBottom: 20 }}>
+                  <div style={{ fontSize: 44, marginBottom: 8 }}>🎉</div>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>Cấp phát văn bằng thành công!</h2>
+                  <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Văn bằng số đã được lưu vào bảng <strong>online_certificates</strong>, tệp JSON lên IPFS và ghi vĩnh viễn lên Blockchain.</p>
+                </div>
+
+                <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
+                  <div>
+                    <span style={{ fontWeight: 700, color: "#475569" }}>Mã văn bằng (ID): </span>
+                    <code style={{ background: "#e2e8f0", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>{issueResult.data.certificate_id}</code>
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 700, color: "#475569" }}>Sinh viên: </span>
+                    <strong>{issueResult.data.student_fullName}</strong> ({issueResult.data.student_id})
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 700, color: "#475569" }}>Tên văn bằng: </span>
+                    {issueResult.data.certificate_title}
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 700, color: "#475569" }}>IPFS CID (JSON Metadata): </span>
+                    <div style={{ marginTop: 4 }}>
+                      <a href={issueResult.data.file_url || `https://gateway.pinata.cloud/ipfs/${issueResult.data.ipfs_cid}`} target="_blank" rel="noreferrer" style={{ color: "#2563eb", wordBreak: "break-all", fontWeight: 600, textDecoration: "underline" }}>
+                        🔗 {issueResult.data.ipfs_cid}
+                      </a>
+                    </div>
+                  </div>
+                  {issueResult.data.tx_hash && (
+                    <div>
+                      <span style={{ fontWeight: 700, color: "#475569" }}>Blockchain Tx Hash: </span>
+                      <div style={{ marginTop: 4 }}>
+                        <code style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 8px", borderRadius: 6, fontSize: 11, wordBreak: "break-all", display: "block" }}>
+                          ⚡ {issueResult.data.tx_hash}
+                        </code>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button onClick={() => setIssueResult(null)} style={{ marginTop: 20, width: "100%", padding: "10px", borderRadius: 8, background: "#0f172a", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>
+                  Đóng thông báo
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ textAlign: "center", marginBottom: 16 }}>
+                  <div style={{ fontSize: 44, marginBottom: 8 }}>📦</div>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>Kết quả cấp phát lô văn bằng</h2>
+                  <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
+                    Đã xử lý <strong>{issueResult.data.total}</strong> bản ghi (Thành công: <strong style={{ color: "#16a34a" }}>{issueResult.data.successCount}</strong>, Thất bại: <strong style={{ color: "#dc2626" }}>{issueResult.data.failCount}</strong>).
+                  </p>
+                </div>
+
+                <div style={{ overflowX: "auto", maxHeight: 300, border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
+                  <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
+                        <th style={{ padding: "8px 12px" }}>STT</th>
+                        <th style={{ padding: "8px 12px" }}>Sinh viên</th>
+                        <th style={{ padding: "8px 12px" }}>Trạng thái</th>
+                        <th style={{ padding: "8px 12px" }}>IPFS CID / Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {issueResult.data.results.map((r: any) => (
+                        <tr key={r.index} style={{ borderTop: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "8px 12px" }}>{r.index}</td>
+                          <td style={{ padding: "8px 12px", fontWeight: 600 }}>{r.student_fullName}</td>
+                          <td style={{ padding: "8px 12px" }}>
+                            {r.status === "SUCCESS" ? (
+                              <span style={{ color: "#16a34a", fontWeight: 700 }}>✓ Thành công</span>
+                            ) : (
+                              <span style={{ color: "#dc2626", fontWeight: 700 }}>✕ Thất bại</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            {r.status === "SUCCESS" ? (
+                              <a href={r.file_url || `https://gateway.pinata.cloud/ipfs/${r.cid}`} target="_blank" rel="noreferrer" style={{ color: "#2563eb", textDecoration: "underline" }}>
+                                {r.cid?.slice(0, 16)}...
+                              </a>
+                            ) : (
+                              <span style={{ color: "#dc2626" }}>{r.error}</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <button onClick={() => setIssueResult(null)} style={{ width: "100%", padding: "10px", borderRadius: 8, background: "#0f172a", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>
+                  Đóng thông báo
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
