@@ -1,0 +1,10 @@
+
+> backend@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 5173
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://127.0.0.1:5173
+- Network:       http://127.0.0.1:5173
+- Environments: .env.local
+✓ Ready in 536ms
+[?25h

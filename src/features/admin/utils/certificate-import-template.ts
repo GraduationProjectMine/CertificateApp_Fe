@@ -26,6 +26,7 @@ export const certificateImportFields: CertificateImportField[] = [
   { key: "serialNumber", label: "Số hiệu", sample: "BK-2025-001", width: 18, guide: "Số hiệu in trên văn bằng." },
   { key: "registryNumber", label: "Số vào sổ", sample: "001", width: 14, guide: "Số vào sổ cấp phát." },
   { key: "ipfs_cid", label: "IPFS CID (file văn bằng)", aliases: ["ipfsCid", "CID", "Mã IPFS"], sample: "bafkreihdwdcefgh...", width: 30, guide: "Mã CID từ IPFS của file văn bằng. Để trống nếu chưa có file." },
+  { key: "document_file", label: "Tên file văn bằng", aliases: ["documentFile", "file", "file văn bằng", "tên file"], sample: "SV001.pdf", width: 24, guide: "Tên file trong thư mục documents/ của gói ZIP." },
 ];
 
 const templateRows = [
@@ -102,9 +103,9 @@ export function createCertificateTemplateHtmlExcel(): string {
   const colCount = fields.length + 1;
 
   const sampleRows = [
-    ["1", "SV2025001", "Nguyễn Văn An", "Cử nhân Công nghệ thông tin", "2002-05-15", "Hà Nội", "Nam", "Kinh", "Đại học Bách Khoa Hà Nội", "2025", "Hội đồng 1", "Hà Nội", "2025-06-15", "BK-2025-001", "001", ""],
-    ["2", "SV2025002", "Trần Thị Bình", "Kỹ sư Khoa học máy tính", "2002-08-20", "Đà Nẵng", "Nữ", "Kinh", "Đại học Bách Khoa Hà Nội", "2025", "Hội đồng 1", "Hà Nội", "2025-06-15", "BK-2025-002", "002", ""],
-    ["3", "SV2025003", "Lê Hoàng Cường", "Cử nhân Quản trị kinh doanh", "2001-11-10", "TP. Hồ Chí Minh", "Nam", "Kinh", "Đại học Bách Khoa Hà Nội", "2025", "Hội đồng 2", "Hà Nội", "2025-06-15", "BK-2025-003", "003", ""],
+    ["1", "SV2025001", "Nguyễn Văn An", "Cử nhân Công nghệ thông tin", "2002-05-15", "Hà Nội", "Nam", "Kinh", "Đại học Bách Khoa Hà Nội", "2025", "Hội đồng 1", "Hà Nội", "2025-06-15", "BK-2025-001", "001", "", "SV2025001.pdf"],
+    ["2", "SV2025002", "Trần Thị Bình", "Kỹ sư Khoa học máy tính", "2002-08-20", "Đà Nẵng", "Nữ", "Kinh", "Đại học Bách Khoa Hà Nội", "2025", "Hội đồng 1", "Hà Nội", "2025-06-15", "BK-2025-002", "002", "", "SV2025002.pdf"],
+    ["3", "SV2025003", "Lê Hoàng Cường", "Cử nhân Quản trị kinh doanh", "2001-11-10", "TP. Hồ Chí Minh", "Nam", "Kinh", "Đại học Bách Khoa Hà Nội", "2025", "Hội đồng 2", "Hà Nội", "2025-06-15", "BK-2025-003", "003", "", "SV2025003.pdf"],
   ];
 
   const emptyRows = Array.from({ length: 15 }, (_, i) => [String(i + 4), ...Array(fields.length).fill("")]);

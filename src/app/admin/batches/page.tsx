@@ -12,6 +12,13 @@ import {
   createCertificateTemplateHtmlExcel,
 } from "@/features/admin/utils/certificate-import-template";
 import type { CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
+import { ipfsApi } from "@/features/ipfs/services/ipfs.api";
+import {
+  extractZipEntries,
+  isSupportedDocumentPath,
+  matchPackageDocument,
+  type BatchDocument,
+} from "@/features/admin/utils/batch-package";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import Tooltip from "@/components/common/Tooltip";
@@ -59,6 +66,11 @@ const COL_MAP: Record<string, string> = {
   "ipfs cid": "ipfs_cid",
   "cid": "ipfs_cid",
   "mã ipfs": "ipfs_cid",
+  "tên file văn bằng": "document_file",
+  "document file": "document_file",
+  "document_file": "document_file",
+  "file văn bằng": "document_file",
+  "tên file": "document_file",
 };
 
 function autoMapHeaders(headers: string[]): Record<string, string> {
@@ -91,16 +103,27 @@ export default function AdminBatchesPage() {
   const [showConfirmBatch, setShowConfirmBatch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [sourceRows, setSourceRows] = useState<Record<string, string>[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [packageDocuments, setPackageDocuments] = useState<Map<string, File> | null>(null);
 
   // Preview & Accordion state
   const [showMappingConfig, setShowMappingConfig] = useState(false);
   const [previewTab, setPreviewTab] = useState<"ALL" | "VALID" | "INVALID">("ALL");
   const [searchKeyword, setSearchKeyword] = useState("");
+
+  const packageDocumentList = useMemo<BatchDocument[]>(
+    () => packageDocuments
+      ? Array.from(packageDocuments.entries())
+        .filter(([path]) => isSupportedDocumentPath(path))
+        .map(([path, file]) => ({ path, name: file.name, file }))
+      : [],
+    [packageDocuments],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -122,7 +145,12 @@ export default function AdminBatchesPage() {
         const output: Record<string, string> = {};
         fields.forEach(({ key }) => { output[key] = source[mapping[key]] || ""; });
         const record = output as unknown as CreateCertificatePayload;
-        const isValid = !!(record.student_id?.trim() && record.certificate_title?.trim());
+        const documentMatch = packageDocuments
+          ? matchPackageDocument(record.document_file?.trim() || `${record.student_id}.pdf`, packageDocumentList)
+          : null;
+        const hasRequiredFields = !!(record.student_id?.trim() && record.certificate_title?.trim());
+        const hasDocument = !packageDocuments || documentMatch?.status === "MATCHED";
+        const isValid = hasRequiredFields && hasDocument;
         return {
           originalIndex: originalIndex + 1,
           record,
@@ -130,14 +158,18 @@ export default function AdminBatchesPage() {
           missingFields: [
             !record.student_id?.trim() ? "ID sinh viên" : null,
             !record.certificate_title?.trim() ? "Tên văn bằng" : null,
+            packageDocuments && !record.document_file?.trim() ? "Tên file văn bằng" : null,
+            packageDocuments && documentMatch?.status === "MISSING_FILE" ? "Không tìm thấy file" : null,
+            packageDocuments && documentMatch?.status === "DUPLICATE_FILE" ? "File trùng tên" : null,
           ].filter(Boolean) as string[],
           warnings: [
-            !record.ipfs_cid?.trim() ? "Thiếu file văn bằng (ipfs_cid)" : null,
+            !packageDocuments && !record.ipfs_cid?.trim() ? "Thiếu file văn bằng (ipfs_cid)" : null,
           ].filter(Boolean) as string[],
+          documentMatch,
         };
       })
       .filter(({ record }) => !!(record.student_id?.trim() || record.certificate_title?.trim() || record.student_fullName?.trim()));
-  }, [sourceRows, mapping]);
+  }, [sourceRows, mapping, packageDocuments, packageDocumentList]);
 
   const mappedRows = useMemo(() => mappedRowsWithStatus.map((item) => item.record), [mappedRowsWithStatus]);
 
@@ -168,10 +200,28 @@ export default function AdminBatchesPage() {
     if (!file) return;
     const lower = file.name.toLowerCase();
     let parsed: { headers: string[]; rows: Record<string, string>[] };
-    if (lower.endsWith(".csv")) {
-      parsed = parseCsv(await file.text());
-    } else if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
-      const buf = await file.arrayBuffer();
+    let extractedDocuments: Map<string, File> | null = null;
+    let sourceFile = file;
+    if (lower.endsWith(".zip")) {
+      try {
+        const entries = await extractZipEntries(file);
+        const dataEntry = Array.from(entries.entries()).find(([path]) => /(^|\/)data\.(csv|xlsx|xls)$/i.test(path))
+          || Array.from(entries.entries()).find(([path]) => /\.(csv|xlsx|xls)$/i.test(path));
+        if (!dataEntry) {
+          toast.error("Gói ZIP phải chứa data.xlsx, data.xls hoặc data.csv");
+          return;
+        }
+        sourceFile = dataEntry[1];
+        extractedDocuments = new Map(Array.from(entries.entries()).filter(([path]) => isSupportedDocumentPath(path)));
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Không thể đọc gói ZIP");
+        return;
+      }
+    }
+    if (sourceFile.name.toLowerCase().endsWith(".csv")) {
+      parsed = parseCsv(await sourceFile.text());
+    } else if (sourceFile.name.toLowerCase().endsWith(".xlsx") || sourceFile.name.toLowerCase().endsWith(".xls")) {
+      const buf = await sourceFile.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const aoa: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
@@ -209,17 +259,18 @@ export default function AdminBatchesPage() {
         ),
       };
     } else {
-      toast.error("Chỉ hỗ trợ file CSV hoặc Excel (.xlsx, .xls)");
+      toast.error("Chỉ hỗ trợ ZIP, CSV hoặc Excel (.xlsx, .xls)");
       return;
     }
     if (!parsed.headers.length || !parsed.rows.length) {
       toast.error("File không có dữ liệu");
       return;
     }
-    setFileName(file.name.replace(/\.(csv|xlsx|xls)$/i, ""));
+    setFileName(file.name.replace(/\.(zip|csv|xlsx|xls)$/i, ""));
     setHeaders(parsed.headers);
     setSourceRows(parsed.rows);
     setMapping(autoMapHeaders(parsed.headers));
+    setPackageDocuments(extractedDocuments);
     setShowMappingConfig(false);
   }
 
@@ -228,6 +279,7 @@ export default function AdminBatchesPage() {
     setHeaders([]);
     setSourceRows([]);
     setMapping({});
+    setPackageDocuments(null);
     setShowMappingConfig(false);
     setSearchKeyword("");
     setPreviewTab("ALL");
@@ -235,8 +287,30 @@ export default function AdminBatchesPage() {
 
   async function executeBatch() {
     setSubmitting(true);
+    setUploadingDocuments(Boolean(packageDocuments));
     try {
-      const result = await operationsApi.createBatch(fileName || `Lô ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, mode);
+      const rowsForSubmission = mappedRows.map((row) => ({ ...row }));
+      if (packageDocuments) {
+        const uploadedByPath = new Map<string, { cid: string; ipfsUrl: string; sha3Hash: string }>();
+        for (const row of rowsForSubmission) {
+          const match = matchPackageDocument(row.document_file?.trim() || `${row.student_id}.pdf`, packageDocumentList);
+          if (match.status !== "MATCHED") {
+            throw new Error(`Không thể ghép file cho ${row.student_id}: ${row.document_file || "chưa khai báo tên file"}`);
+          }
+          const key = match.document.path.toLowerCase();
+          let uploaded = uploadedByPath.get(key);
+          if (!uploaded) {
+            uploaded = await ipfsApi.uploadFile(match.document.file);
+            uploadedByPath.set(key, uploaded);
+          }
+          row.document_file = match.document.path;
+          row.ipfs_cid = uploaded.cid;
+          row.file_url = uploaded.ipfsUrl;
+          row.document_sha3 = uploaded.sha3Hash;
+        }
+      }
+      setUploadingDocuments(false);
+      const result = await operationsApi.createBatch(fileName || `Lô ${new Date().toLocaleDateString("vi-VN")}`, rowsForSubmission, mode);
       setSelected(result);
       resetImport();
       await load();
@@ -245,6 +319,7 @@ export default function AdminBatchesPage() {
       toast.error(err instanceof Error ? err.message : "Không thể tạo lô cấp phát");
     } finally {
       setSubmitting(false);
+      setUploadingDocuments(false);
     }
   }
 
@@ -253,19 +328,10 @@ export default function AdminBatchesPage() {
       toast.error("Hãy kiểm tra và hoàn thiện dữ liệu bắt buộc trước khi cấp phát");
       return;
     }
-    // Check for warnings (missing ipfs_cid)
+    // Existing Excel/CSV imports still support a pre-uploaded CID. FULL mode must not issue without it.
     const rowsWithWarnings = mappedRowsWithStatus.filter(item => item.warnings.length > 0);
     if (rowsWithWarnings.length > 0 && mode === "FULL") {
-      toast((t) => (
-        <div className="flex flex-col gap-2">
-          <p className="font-semibold">⚠ {rowsWithWarnings.length} dòng chưa có file văn bằng (ipfs_cid)</p>
-          <p className="text-xs text-gray-500">Văn bằng sẽ được đăng lên Blockchain nhưng chưa có file đính kèm. Bạn có thể upload file sau.</p>
-          <div className="flex gap-2 mt-1">
-            <button onClick={() => { toast.dismiss(t.id); setShowConfirmBatch(true); }} className="px-3 py-1 bg-teal-600 text-white rounded-lg text-xs font-bold">Tiếp tục</button>
-            <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 bg-gray-200 rounded-lg text-xs font-bold">Hủy</button>
-          </div>
-        </div>
-      ), { duration: 8000 });
+      toast.error(`${rowsWithWarnings.length} dòng chưa có CID/file văn bằng. FULL mode yêu cầu tài liệu trước khi phát hành.`);
       return;
     }
     setShowConfirmBatch(true);
@@ -313,7 +379,7 @@ export default function AdminBatchesPage() {
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>Cấp bằng hàng loạt</h1>
-          <p className={styles._4}>Import CSV hoặc Excel, xem trước dữ liệu chi tiết và phát hành văn bằng.</p>
+          <p className={styles._4}>Import CSV/Excel hoặc một gói ZIP gồm data.xlsx và thư mục documents/.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Tooltip content="Tải file mẫu CSV cơ bản" position="bottom">
@@ -322,8 +388,8 @@ export default function AdminBatchesPage() {
           <Tooltip content="Tải file mẫu Excel định dạng sẵn" position="bottom">
             <button type="button" onClick={downloadExcelTemplate} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 transition-all">Tải template Excel</button>
           </Tooltip>
-          <Tooltip content="Tải lên file danh sách sinh viên (.csv, .xlsx, .xls)" position="bottom">
-            <label className={styles._5}>+ Chọn file<input className="hidden" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onFile} /></label>
+          <Tooltip content="Tải lên CSV, Excel hoặc ZIP gồm data.xlsx và documents/" position="bottom">
+            <label className={styles._5}>+ Chọn file<input className="hidden" type="file" accept=".zip,.csv,.xlsx,.xls,application/zip,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onFile} /></label>
           </Tooltip>
         </div>
       </div>
@@ -471,7 +537,7 @@ export default function AdminBatchesPage() {
                   onClick={requestConfirm}
                   className={`${styles._5} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {submitting ? "Đang phát hành..." : mode === "FULL" ? `Xác nhận phát hành ${mappedRows.length} bằng` : `Xác nhận tạo ${mappedRows.length} DRAFT`}
+                  {submitting ? (uploadingDocuments ? "Đang đưa file lên IPFS..." : "Đang xử lý lô...") : mode === "FULL" ? `Xác nhận phát hành ${mappedRows.length} bằng` : `Xác nhận tạo ${mappedRows.length} DRAFT`}
                 </button>
               </div>
             </div>
