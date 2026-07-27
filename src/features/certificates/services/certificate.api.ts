@@ -50,6 +50,8 @@ export interface CreateCertificatePayload {
   registryNumber?: string;
   ipfs_cid?: string;
   file_url?: string;
+  document_file?: string;
+  document_sha3?: string;
 }
 
 export interface OnlineCertificateDto {

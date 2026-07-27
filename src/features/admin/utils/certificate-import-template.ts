@@ -25,6 +25,8 @@ export const certificateImportFields: CertificateImportField[] = [
   { key: "issueDate", label: "Ngày cấp", sample: "2025-06-15", width: 14, guide: "Định dạng YYYY-MM-DD, ví dụ 2025-06-15." },
   { key: "serialNumber", label: "Số hiệu", sample: "BK-2025-001", width: 18, guide: "Số hiệu in trên văn bằng." },
   { key: "registryNumber", label: "Số vào sổ", sample: "001", width: 14, guide: "Số vào sổ cấp phát." },
+  { key: "ipfs_cid", label: "IPFS CID (file văn bằng)", aliases: ["ipfsCid", "CID", "Mã IPFS"], sample: "bafkreihdwdcefgh...", width: 30, guide: "Mã CID từ IPFS của file văn bằng. Để trống nếu chưa có file." },
+  { key: "document_file", label: "Tên file văn bằng", aliases: ["documentFile", "file", "file văn bằng", "tên file"], sample: "SV001.pdf", width: 24, guide: "Tên file văn bằng trong gói ZIP (nếu để trống hệ thống sẽ tự động ghép theo Mã SV)." },
 ];
 
 const templateRows = [

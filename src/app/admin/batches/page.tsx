@@ -2,15 +2,27 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
+import * as XLSX from "xlsx";
 import styles from "./page.module.css";
 import { operationsApi, type IssuanceBatch } from "@/features/admin/services/operations.api";
-import { toCsv } from "@/features/admin/utils/csv";
+import { parseCsv, toCsv } from "@/features/admin/utils/csv";
+import {
+  certificateImportFields,
+  createCertificateTemplateCsv,
+  createCertificateTemplateHtmlExcel,
+} from "@/features/admin/utils/certificate-import-template";
 import type { CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
 import { ocrApi } from "@/features/ocr/services/api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import { ipfsApi } from "@/features/ipfs/services/ipfs.api";
+import {
+  type BatchDocument,
+  type DocumentMatch,
+  matchPackageDocument,
+  parseZipPackageEntries,
+} from "@/features/admin/utils/batch-package";
 
 function downloadFile(content: Blob, filename: string) {
   const url = URL.createObjectURL(content);
@@ -21,22 +33,69 @@ function downloadFile(content: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-const REQUIRED_BATCH_FIELDS: Array<{ key: string; label: string }> = [
-  { key: "student_id", label: "Sinh viên" },
-  { key: "student_fullName", label: "Tên sinh viên" },
-  { key: "certificate_title", label: "Tên văn bằng" },
-  { key: "dob", label: "Ngày sinh" },
-  { key: "placeOfBirth", label: "Nơi sinh" },
-  { key: "gender", label: "Giới tính" },
-  { key: "ethnicity", label: "Dân tộc" },
-  { key: "schoolName", label: "Trường" },
-  { key: "examCohort", label: "Niên khóa" },
-  { key: "examBoard", label: "Hội đồng thi" },
-  { key: "issueLocation", label: "Nơi cấp" },
-  { key: "issueDate", label: "Ngày cấp" },
-  { key: "serialNumber", label: "Số hiệu văn bằng" },
-  { key: "registryNumber", label: "Số vào sổ" },
-];
+function downloadCsvTemplate() {
+  downloadFile(new Blob(["\uFEFF" + createCertificateTemplateCsv()], { type: "text/csv;charset=utf-8" }), "certificate-import-template.csv");
+}
+
+function downloadExcelTemplate() {
+  const htmlContent = createCertificateTemplateHtmlExcel();
+  downloadFile(
+    new Blob(["\uFEFF" + htmlContent], { type: "application/vnd.ms-excel;charset=utf-8" }),
+    "certificate-import-template.xls"
+  );
+}
+
+const FIELD_COL_MAP: Record<string, string> = {
+  "id sinh viên": "student_id",
+  "mã sinh viên": "student_id",
+  "student_id": "student_id",
+  "tên văn bằng": "certificate_title",
+  "certificate_title": "certificate_title",
+  "tên sinh viên": "student_fullName",
+  "họ tên": "student_fullName",
+  "student_fullName": "student_fullName",
+  "fullName": "student_fullName",
+  "ngày sinh": "dob",
+  "nơi sinh": "placeOfBirth",
+  "giới tính": "gender",
+  "dân tộc": "ethnicity",
+  "trường": "schoolName",
+  "tên trường": "schoolName",
+  "niên khóa": "examCohort",
+  "khóa": "examCohort",
+  "năm tn": "examCohort",
+  "hội đồng thi": "examBoard",
+  "nơi cấp": "issueLocation",
+  "ngày cấp": "issueDate",
+  "số hiệu": "serialNumber",
+  "số hiệu văn bằng": "serialNumber",
+  "số vào sổ": "registryNumber",
+  "ipfs cid": "ipfs_cid",
+  "cid": "ipfs_cid",
+  "mã ipfs": "ipfs_cid",
+  "tên file văn bằng": "document_file",
+  "file văn bằng": "document_file",
+  "tên file": "document_file",
+};
+
+function autoMapHeaders(headers: string[]): Record<string, string> {
+  const mapping: Record<string, string> = {};
+  for (const field of certificateImportFields) {
+    mapping[field.key] = "";
+  }
+  for (const header of headers) {
+    const h = header.toLowerCase().trim();
+    const labelMatch = certificateImportFields.find((f) => f.label.toLowerCase() === h);
+    if (labelMatch) { mapping[labelMatch.key] = header; continue; }
+    const aliasMatch = certificateImportFields.find((f) => (f.aliases || []).some((a) => a.toLowerCase() === h));
+    if (aliasMatch) { mapping[aliasMatch.key] = header; continue; }
+    const keyMatch = certificateImportFields.find((f) => f.key.toLowerCase() === h);
+    if (keyMatch) { mapping[keyMatch.key] = header; continue; }
+    const colMatch = FIELD_COL_MAP[h];
+    if (colMatch) { mapping[colMatch] = header; }
+  }
+  return mapping;
+}
 
 const EMPTY_RECORD: Record<string, string> = {
   student_id: "",
@@ -53,12 +112,15 @@ const EMPTY_RECORD: Record<string, string> = {
   issueDate: "",
   serialNumber: "",
   registryNumber: "",
+  ipfs_cid: "",
+  document_file: "",
 };
 
 export default function AdminBatchesPage() {
   const { user } = useAuth();
   const isIssuer = user?.role === "issuer";
   const [mode, setMode] = useState<"DRAFT_ONLY" | "FULL">(isIssuer ? "FULL" : "DRAFT_ONLY");
+  const [inputTab, setInputTab] = useState<"ZIP_PACKAGE" | "OCR" | "MANUAL">("ZIP_PACKAGE");
   const [batches, setBatches] = useState<IssuanceBatch[]>([]);
   const [selected, setSelected] = useState<IssuanceBatch | null>(null);
   const [showConfirmBatch, setShowConfirmBatch] = useState(false);
@@ -67,8 +129,13 @@ export default function AdminBatchesPage() {
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
 
-  // Initialize with 1 editable record so the UI Form is always visible by default
+  // Source rows state
   const [sourceRows, setSourceRows] = useState<Record<string, string>[]>([{ ...EMPTY_RECORD }]);
+
+  // Attached files & documents mapping for ZIP / Direct Drag-and-Drop Mode
+  const [packageDocuments, setPackageDocuments] = useState<BatchDocument[]>([]);
+  const [uploadingIpfs, setUploadingIpfs] = useState(false);
+  const [ipfsProgress, setIpfsProgress] = useState({ current: 0, total: 0 });
 
   // OCR state
   const [scanningOcr, setScanningOcr] = useState(false);
@@ -100,13 +167,119 @@ export default function AdminBatchesPage() {
     studentApi.list().then(setStudents).catch(() => {});
   }, [load]);
 
+  async function processPackageFiles(files: File[]) {
+    try {
+      toast.loading("Đang đọc gói dữ liệu & tài liệu...", { id: "pkg-parse" });
+      let excelFile: File | null = null;
+      const documents: BatchDocument[] = [];
+
+      // Case A: Đính kèm 1 file ZIP
+      const zipFile = files.find((f) => f.name.toLowerCase().endsWith(".zip"));
+      if (zipFile) {
+        const zipBuffer = await zipFile.arrayBuffer();
+        const entriesMap = await parseZipPackageEntries(zipBuffer);
+        entriesMap.forEach((file, pathKey) => {
+          const ext = file.name.substring(file.name.lastIndexOf(".") + 1).toLowerCase();
+          if (["xlsx", "xls", "csv"].includes(ext) && !excelFile) {
+            excelFile = file;
+          } else if (["pdf", "png", "jpg", "jpeg", "webp"].includes(ext)) {
+            documents.push({ name: file.name, path: pathKey, file });
+          }
+        });
+        setFileName(`Gói ZIP: ${zipFile.name}`);
+      } else {
+        // Case B: Kéo thả trực tiếp 1 file Excel + các file PDF/Ảnh cùng lúc
+        files.forEach((file) => {
+          const ext = file.name.substring(file.name.lastIndexOf(".") + 1).toLowerCase();
+          if (["xlsx", "xls", "csv"].includes(ext) && !excelFile) {
+            excelFile = file;
+          } else if (["pdf", "png", "jpg", "jpeg", "webp"].includes(ext)) {
+            documents.push({ name: file.name, path: file.name.toLowerCase(), file });
+          }
+        });
+        setFileName(excelFile ? `Gói nạp: ${(excelFile as File).name}` : `Danh sách (${documents.length} file tài liệu)`);
+      }
+
+      if (!excelFile) {
+        toast.dismiss("pkg-parse");
+        toast.error("Vui lòng đính kèm ít nhất 1 file Excel (.xlsx, .xls) hoặc .csv chứa danh sách sinh viên");
+        return;
+      }
+
+      // Parse Excel file
+      const arrayBuffer = await (excelFile as File).arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const aoa: unknown[][] = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+
+      if (aoa.length < 2) {
+        toast.dismiss("pkg-parse");
+        toast.error("File Excel không chứa dữ liệu");
+        return;
+      }
+
+      const headers = (aoa[0] as string[]).map((h) => String(h ?? "").trim()).filter(Boolean);
+      const mapping = autoMapHeaders(headers);
+      const dataRows = aoa.slice(1).filter((r) => r?.some((c: any) => String(c ?? "").trim()));
+
+      const mapped: Record<string, string>[] = dataRows.map((r: any) => {
+        const row: Record<string, string> = {};
+        certificateImportFields.forEach((f) => {
+          const colName = mapping[f.key];
+          const idx = colName ? headers.indexOf(colName) : -1;
+          row[f.key] = idx >= 0 ? String(r[idx] ?? "").trim() : "";
+        });
+        // Default certificate_title if empty
+        if (!row.certificate_title) row.certificate_title = "BẰNG TỐT NGHIỆP";
+        return row;
+      });
+
+      if (!mapped.length) {
+        toast.dismiss("pkg-parse");
+        toast.error("File Excel không chứa dữ liệu hợp lệ");
+        return;
+      }
+
+      setSourceRows(mapped);
+      setPackageDocuments(documents);
+      setActiveRecordIndex(0);
+      toast.dismiss("pkg-parse");
+
+      toast.success(
+        documents.length > 0
+          ? `Đã nạp ${mapped.length} bản ghi Excel & ${documents.length} file tài liệu (Tự động ghép Smart Auto-Match theo Mã SV)!`
+          : `Đã nạp thành công ${mapped.length} bản ghi từ Excel!`
+      );
+    } catch (err: any) {
+      toast.dismiss("pkg-parse");
+      toast.error(err.message || "Không thể nạp gói file dữ liệu");
+    }
+  }
+
+  // Handle Drag-and-drop Package (ZIP or Excel + PDFs)
+  function handlePackageDrop(e: React.DragEvent) {
+    e.preventDefault();
+    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    const files = Array.from(e.dataTransfer.files);
+    void processPackageFiles(files);
+  }
+
+  // Handle Input Package Files Change
+  async function onPackageFilesChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = event.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    await processPackageFiles(files);
+    event.target.value = "";
+  }
+
   // Handle Drag-and-drop OCR scan
-  const handleOcrDrop = useCallback((e: React.DragEvent) => {
+  function handleOcrDrop(e: React.DragEvent) {
     e.preventDefault();
     if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
     const files = Array.from(e.dataTransfer.files);
     void processOcrFiles(files);
-  }, [ocrLang]);
+  }
 
   // Handle OCR Batch Files Upload
   async function onOcrFiles(event: React.ChangeEvent<HTMLInputElement>) {
@@ -158,6 +331,8 @@ export default function AdminBatchesPage() {
           serialNumber: d.serial_number || "",
           registryNumber: d.registry_number || "",
           file_url: base64List[idx] || "",
+          ipfs_cid: "",
+          document_file: "",
         };
       });
 
@@ -216,28 +391,49 @@ export default function AdminBatchesPage() {
     setActiveRecordIndex((prev) => Math.max(0, prev - 1));
   };
 
-  // Require ALL 14 fields in the batch form
+  // Validate only core fields; rest are warnings; FULL mode needs CID
   const mappedRowsWithStatus = useMemo(() => {
     return sourceRows
       .map((source, originalIndex) => {
         const record = source as unknown as CreateCertificatePayload;
-        const missingFields = REQUIRED_BATCH_FIELDS
-          .filter(({ key }) => !source[key]?.trim())
-          .map(({ label }) => label);
+        const docMatch: DocumentMatch = packageDocuments.length > 0
+          ? matchPackageDocument(record, packageDocuments)
+          : { status: "MISSING_FILE" };
 
-        const isValid = missingFields.length === 0;
+        const hasRequired = !!(record.student_id?.trim() && record.certificate_title?.trim());
+        const hasDoc = packageDocuments.length === 0 || docMatch.status === "MATCHED";
+        const isValid = hasRequired && hasDoc;
+
+        const missingRequired = [];
+        if (!record.student_id?.trim()) missingRequired.push("ID sinh viên");
+        if (!record.certificate_title?.trim()) missingRequired.push("Tên văn bằng");
+
+        const warnings: string[] = [];
+        if (!record.student_fullName?.trim()) warnings.push("Thiếu tên SV");
+        if (!record.dob?.trim()) warnings.push("Thiếu ngày sinh");
+        if (!record.serialNumber?.trim()) warnings.push("Thiếu số hiệu");
+        if (!record.registryNumber?.trim()) warnings.push("Thiếu số vào sổ");
+        if (packageDocuments.length > 0) {
+          if (docMatch.status === "MISSING_FILE") warnings.push("Không tìm thấy file đính kèm");
+          if (docMatch.status === "DUPLICATE_FILE") warnings.push("File đính kèm bị trùng tên");
+        }
+        if (!packageDocuments.length && !record.ipfs_cid?.trim()) {
+          warnings.push("Chưa có file IPFS CID");
+        }
 
         return {
           originalIndex: originalIndex + 1,
           record,
           isValid,
-          missingFields,
+          missingFields: missingRequired,
+          warnings,
+          docMatch,
         };
       })
       .filter(({ record }) =>
-        Object.values(record).some((val) => typeof val === "string" && val.trim() !== "")
+        !!(record.student_id?.trim() || record.certificate_title?.trim() || record.student_fullName?.trim())
       );
-  }, [sourceRows]);
+  }, [sourceRows, packageDocuments]);
 
   const mappedRows = useMemo(() => mappedRowsWithStatus.map((item) => item.record), [mappedRowsWithStatus]);
   const validRowsCount = useMemo(() => mappedRowsWithStatus.filter((item) => item.isValid).length, [mappedRowsWithStatus]);
@@ -264,16 +460,71 @@ export default function AdminBatchesPage() {
   function resetImport() {
     setFileName("");
     setSourceRows([{ ...EMPTY_RECORD }]);
+    setPackageDocuments([]);
     setSearchKeyword("");
     setActiveRecordIndex(0);
     setPreviewTab("ALL");
+  }
+
+  // Upload attached documents to IPFS before issuing batch
+  async function uploadDocumentsToIpfsIfNeeded(): Promise<CreateCertificatePayload[]> {
+    if (packageDocuments.length === 0) return mappedRows;
+
+    setUploadingIpfs(true);
+    const updatedRows = [...mappedRows];
+    let uploadCount = 0;
+    const itemsToUpload = mappedRowsWithStatus.filter(
+      (item) => !item.record.ipfs_cid && item.docMatch.status === "MATCHED" && item.docMatch.document
+    );
+
+    setIpfsProgress({ current: 0, total: itemsToUpload.length });
+
+    try {
+      toast.loading(`Đang tải ${itemsToUpload.length} file tài liệu văn bằng lên IPFS...`, { id: "ipfs-upload" });
+
+      for (let i = 0; i < itemsToUpload.length; i++) {
+        const item = itemsToUpload[i];
+        const doc = item.docMatch.document!;
+        setIpfsProgress({ current: i + 1, total: itemsToUpload.length });
+
+        const res = await ipfsApi.uploadFile(doc.file);
+        const sourceIndex = item.originalIndex - 1;
+        if (updatedRows[sourceIndex]) {
+          updatedRows[sourceIndex] = {
+            ...updatedRows[sourceIndex],
+            ipfs_cid: res.cid,
+            file_url: res.ipfsUrl,
+            document_file: doc.name,
+            document_sha3: res.sha3Hash,
+          };
+        }
+        uploadCount++;
+      }
+
+      toast.dismiss("ipfs-upload");
+      if (uploadCount > 0) {
+        toast.success(`Đã đính kèm và tải lên IPFS thành công ${uploadCount} file văn bằng!`);
+      }
+      return updatedRows;
+    } catch (err: any) {
+      toast.dismiss("ipfs-upload");
+      toast.error(err.message || "Tải file lên IPFS thất bại");
+      throw err;
+    } finally {
+      setUploadingIpfs(false);
+    }
   }
 
   async function executeBatch() {
     setShowConfirmBatch(false);
     setSubmitting(true);
     try {
-      const result = await operationsApi.createBatch(fileName || `Lô cấp phát ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, mode);
+      const finalRows = await uploadDocumentsToIpfsIfNeeded();
+      const result = await operationsApi.createBatch(
+        fileName || `Lô cấp phát ${new Date().toLocaleDateString("vi-VN")}`,
+        finalRows,
+        mode
+      );
       setSelected(result);
       resetImport();
       await load();
@@ -291,8 +542,19 @@ export default function AdminBatchesPage() {
 
   function requestConfirm() {
     if (!mappedRows.length || invalidRowsCount > 0) {
-      toast.error("Vui lòng điền đầy đủ tất cả các trường thông tin bắt buộc (*) trước khi cấp phát lô");
+      toast.error("Vui lòng điền đầy đủ ID sinh viên và Tên văn bằng trước khi cấp phát lô");
       return;
+    }
+    if (mode === "FULL") {
+      const rowsMissingCid = mappedRowsWithStatus.filter(
+        (item) => !item.record.ipfs_cid?.trim() && item.docMatch?.status !== "MATCHED"
+      );
+      if (rowsMissingCid.length > 0) {
+        toast.error(
+          `${rowsMissingCid.length} dòng chưa có file văn bằng (IPFS CID). Vui lòng upload ZIP có PDF đính kèm hoặc thêm CID thủ công trước khi phát hành Blockchain.`
+        );
+        return;
+      }
     }
     setShowConfirmBatch(true);
   }
@@ -331,48 +593,185 @@ export default function AdminBatchesPage() {
         cancelLabel="Hủy"
         variant="warning"
         icon="warning"
-        loading={submitting}
+        loading={submitting || uploadingIpfs}
         onConfirm={() => void executeBatch()}
       />
 
-      {/* Header aligned with Cấp bằng mới */}
+      {/* Header Aligned */}
       <div>
-        <h1 className={styles._2}>Cấp phát văn bằng theo lô & OCR</h1>
-        <p className={styles._3}>Quét danh sách ảnh văn bằng, trích xuất thông tin OCR, nhập đầy đủ thông tin và lưu nháp DRAFT trước khi phát hành.</p>
+        <h1 className={styles._2}>Cấp phát văn bằng theo lô (CIP/Hybrid)</h1>
+        <p className={styles._3}>Hỗ trợ kéo thả Gói ZIP (Excel + PDFs Smart Auto-Match), Import Excel/CSV, Quét OCR ảnh văn bằng hoặc Nhập tay. File PDF đính kèm tự động upload lên IPFS trước khi phát hành.</p>
       </div>
 
-      {/* OCR Drag-and-Drop Dropzone Panel matching Cấp bằng mới */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Tải lên ảnh văn bằng (Quét OCR hàng loạt)</div>
-          <select
-            value={ocrLang}
-            onChange={(e) => setOcrLang(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="vie">Ngôn ngữ: Tiếng Việt</option>
-            <option value="eng">Ngôn ngữ: English</option>
-          </select>
-        </div>
-
-        <label
-          className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors flex flex-col items-center gap-3"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleOcrDrop}
+      {/* Input Mode Selector Switcher */}
+      <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit">
+        <button
+          type="button"
+          onClick={() => setInputTab("ZIP_PACKAGE")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            inputTab === "ZIP_PACKAGE"
+              ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+              : "text-gray-500 hover:text-gray-900 dark:text-gray-400"
+          }`}
         >
-          <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả danh sách ảnh văn bằng vào đây</div>
-          <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn nhiều ảnh cùng lúc (JPEG, PNG, WebP, TIFF)</div>
-          <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" multiple onChange={onOcrFiles} className="hidden" disabled={scanningOcr} />
-        </label>
+          <span>📦 Gói ZIP / Excel + PDFs</span>
+          <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px]">Smart Match</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setInputTab("OCR")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            inputTab === "OCR"
+              ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+              : "text-gray-500 hover:text-gray-900 dark:text-gray-400"
+          }`}
+        >
+          <span>🔍 Quét OCR Ảnh văn bằng</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setInputTab("MANUAL")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            inputTab === "MANUAL"
+              ? "bg-white dark:bg-gray-900 text-primary shadow-sm"
+              : "text-gray-500 hover:text-gray-900 dark:text-gray-400"
+          }`}
+        >
+          <span>📝 Nhập tay / Form</span>
+        </button>
       </div>
+
+      {/* Mode 1: Drag-and-Drop Package (ZIP or Excel + PDFs) */}
+      {inputTab === "ZIP_PACKAGE" && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Nạp gói dữ liệu (Excel + File văn bằng PDF/Ảnh)</div>
+              <p className="text-[11px] text-gray-500">Kéo thả 1 file ZIP hoặc chọn file Excel VÀ các file PDF cùng lúc. Tên file PDF trùng với Mã SV sẽ được tự động ghép nối (Smart Auto-Match).</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={downloadCsvTemplate} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 transition-all">📥 Tải template CSV</button>
+              <button type="button" onClick={downloadExcelTemplate} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 transition-all">📥 Tải template Excel</button>
+            </div>
+          </div>
+
+          <label
+            className="relative border-2 border-dashed border-primary/40 dark:border-primary/30 rounded-2xl p-8 text-center cursor-pointer hover:border-primary transition-colors flex flex-col items-center gap-3 bg-primary/5 dark:bg-primary/10"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handlePackageDrop}
+          >
+            <svg className="w-12 h-12 text-primary/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div className="text-sm font-bold text-gray-800 dark:text-gray-200">Kéo thả File ZIP hoặc File Excel + các File PDF văn bằng vào đây</div>
+            <div className="text-xs text-gray-400">Tự động nhận diện file Excel dữ liệu & match file PDF theo Mã sinh viên (VD: SV001.pdf)</div>
+            <input type="file" multiple accept=".zip,.xlsx,.xls,.csv,.pdf,.png,.jpg,.jpeg,.webp" onChange={onPackageFilesChange} className="hidden" />
+          </label>
+
+          {/* Standalone CSV/Excel import (no ZIP) */}
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <span className="text-[11px] text-gray-400">Hoặc nhập file riêng lẻ:</span>
+            <label className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-bold cursor-pointer hover:bg-primary/20 transition-all">
+              + Chọn file Excel/CSV
+              <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                toast.loading("Đang đọc file...", { id: "xls-parse" });
+                try {
+                  let rows: Record<string, string>[];
+                  let headers: string[];
+                  if (file.name.toLowerCase().endsWith(".csv")) {
+                    const parsed = parseCsv(await file.text());
+                    headers = parsed.headers;
+                    rows = parsed.rows.map((r: Record<string, string>) => {
+                      const row: any = {};
+                      certificateImportFields.forEach((f) => { row[f.key] = r[f.key] || r[f.label] || ""; });
+                      return row;
+                    });
+                  } else {
+                    const buf = await file.arrayBuffer();
+                    const wb = XLSX.read(buf, { type: "array" });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const aoa: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                    const hdrRow = aoa.find((r) => r?.some((c: any) => String(c ?? "").trim()));
+                    if (!hdrRow) { toast.dismiss("xls-parse"); toast.error("File không có dữ liệu"); return; }
+                    headers = (hdrRow as string[]).map((h) => String(h ?? "").trim()).filter(Boolean);
+                    const mapping = autoMapHeaders(headers);
+                    const dataRows = aoa.slice(aoa.indexOf(hdrRow) + 1).filter((r) => r?.some((c: any) => String(c ?? "").trim()));
+                    rows = dataRows.map((r: any) => {
+                      const row: Record<string, string> = {};
+                      certificateImportFields.forEach((f) => {
+                        const colName = mapping[f.key];
+                        const idx = colName ? headers.indexOf(colName) : -1;
+                        row[f.key] = idx >= 0 ? String(r[idx] ?? "").trim() : "";
+                      });
+                      return row;
+                    });
+                  }
+                  if (!rows.length) { toast.dismiss("xls-parse"); toast.error("File không có dữ liệu"); return; }
+                  setFileName(file.name.replace(/\.(csv|xlsx|xls)$/i, ""));
+                  setSourceRows(rows);
+                  toast.dismiss("xls-parse");
+                  toast.success(`Đã nạp ${rows.length} bản ghi từ file!`);
+                } catch (err: any) {
+                  toast.dismiss("xls-parse");
+                  toast.error(err.message || "Đọc file thất bại");
+                }
+              }} />
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* Mode 2: OCR Batch Scanning */}
+      {inputTab === "OCR" && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Tải lên ảnh văn bằng (Quét OCR hàng loạt)</div>
+            <select
+              value={ocrLang}
+              onChange={(e) => setOcrLang(e.target.value)}
+              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="vie">Ngôn ngữ: Tiếng Việt</option>
+              <option value="eng">Ngôn ngữ: English</option>
+            </select>
+          </div>
+
+          <label
+            className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors flex flex-col items-center gap-3"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleOcrDrop}
+          >
+            <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả danh sách ảnh văn bằng vào đây</div>
+            <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn nhiều ảnh cùng lúc (JPEG, PNG, WebP, TIFF)</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" multiple onChange={onOcrFiles} className="hidden" disabled={scanningOcr} />
+          </label>
+        </div>
+      )}
+
+      {/* Mode 3: Manual Entry */}
+      {inputTab === "MANUAL" && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Nhập tay / Form thủ công</div>
+          <p className="text-[11px] text-gray-500">Sử dụng form bên dưới để thêm/sửa từng văn bằng một. Bấm "+ Thêm văn bằng" để bắt đầu.</p>
+        </div>
+      )}
 
       {scanningOcr && (
         <div className="rounded-2xl border border-teal-200 bg-teal-50/80 p-4 text-xs font-bold text-teal-800 flex items-center gap-3 animate-pulse">
           <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
           Đang trích xuất OCR văn bằng... Vui lòng chờ trong giây lát.
+        </div>
+      )}
+
+      {uploadingIpfs && (
+        <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-xs font-bold text-primary flex items-center gap-3 animate-pulse">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          Đang tải file văn bằng lên IPFS ({ipfsProgress.current} / {ipfsProgress.total})... Vui lòng chờ trong giây lát.
         </div>
       )}
 
@@ -387,7 +786,7 @@ export default function AdminBatchesPage() {
               </div>
               <div>
                 <h2 className="text-sm font-bold text-gray-900 dark:text-white">{fileName || "Lô văn bằng mới"}</h2>
-                <p className="text-xs text-gray-500">Đang nhập dữ liệu cho {sourceRows.length} văn bằng (Tất cả thông tin là bắt buộc)</p>
+                <p className="text-xs text-gray-500">{sourceRows.length} văn bằng · Bắt buộc: ID sinh viên + Tên văn bằng</p>
               </div>
             </div>
 
@@ -438,15 +837,16 @@ export default function AdminBatchesPage() {
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wide mr-1">Văn bằng:</span>
             {sourceRows.map((row, idx) => {
               const title = row.student_fullName || row.student_id || `Văn bằng #${idx + 1}`;
-              const isValid = REQUIRED_BATCH_FIELDS.every(({ key }) => !!row[key]?.trim());
+              const isValid = !!(row.student_id?.trim() && row.certificate_title?.trim());
               return (
                 <div key={idx} className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
                     onClick={() => setActiveRecordIndex(idx)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeRecordIndex === idx
-                      ? "bg-primary text-white shadow-sm"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      activeRecordIndex === idx
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
                     }`}
                   >
                     <span>#{idx + 1} {title}</span>
@@ -468,16 +868,16 @@ export default function AdminBatchesPage() {
           </div>
         </div>
 
-        {/* Form Editor Card for Active Record (ALL 14 LABELS ARE REQUIRED *) */}
+        {/* Form Editor Card for Active Record */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Thông tin văn bằng #{activeRecordIndex + 1} / {sourceRows.length} (Tất cả thông tin là bắt buộc)
+              Thông tin văn bằng #{activeRecordIndex + 1} / {sourceRows.length}
+              <span className="ml-2 font-normal text-amber-500">* Bắt buộc · Khác tùy chọn</span>
             </span>
           </div>
 
-          <div className={styles._28}>
-            <div>
+          <div>
               <label className={styles._29}>Sinh viên *</label>
               {students.length > 0 ? (
                 <select
@@ -508,7 +908,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Tên sinh viên *</label>
+              <label className={styles._29}>Tên sinh viên</label>
               <input
                 type="text"
                 className={styles._30}
@@ -530,7 +930,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Ngày sinh *</label>
+              <label className={styles._29}>Ngày sinh</label>
               <input
                 type="text"
                 className={styles._30}
@@ -541,7 +941,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Nơi sinh *</label>
+              <label className={styles._29}>Nơi sinh</label>
               <input
                 type="text"
                 className={styles._30}
@@ -552,7 +952,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Giới tính *</label>
+              <label className={styles._29}>Giới tính</label>
               <input
                 type="text"
                 className={styles._30}
@@ -563,7 +963,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Dân tộc *</label>
+              <label className={styles._29}>Dân tộc</label>
               <input
                 type="text"
                 className={styles._30}
@@ -574,7 +974,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Trường *</label>
+              <label className={styles._29}>Trường</label>
               <input
                 type="text"
                 className={styles._30}
@@ -585,7 +985,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Niên khóa *</label>
+              <label className={styles._29}>Niên khóa</label>
               <input
                 type="text"
                 className={styles._30}
@@ -596,7 +996,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Hội đồng thi *</label>
+              <label className={styles._29}>Hội đồng thi</label>
               <input
                 type="text"
                 className={styles._30}
@@ -607,7 +1007,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Nơi cấp *</label>
+              <label className={styles._29}>Nơi cấp</label>
               <input
                 type="text"
                 className={styles._30}
@@ -618,7 +1018,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Ngày cấp *</label>
+              <label className={styles._29}>Ngày cấp</label>
               <input
                 type="text"
                 className={styles._30}
@@ -629,7 +1029,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Số hiệu văn bằng *</label>
+              <label className={styles._29}>Số hiệu văn bằng</label>
               <input
                 type="text"
                 className={styles._30}
@@ -640,7 +1040,7 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>Số vào sổ *</label>
+              <label className={styles._29}>Số vào sổ</label>
               <input
                 type="text"
                 className={styles._30}
@@ -649,15 +1049,36 @@ export default function AdminBatchesPage() {
                 onChange={(e) => handleFieldEdit("registryNumber", e.target.value)}
               />
             </div>
-          </div>
-        </div>
 
-        {/* Lô Cấp Phát Scanned Data Overview Data Grid (All 14 labels required) */}
+            <div>
+              <label className={styles._29}>File văn bằng (Smart Match / ZIP)</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="Tự động theo Mã SV (VD: SV001.pdf)"
+                value={activeRecord.document_file || ""}
+                onChange={(e) => handleFieldEdit("document_file", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={styles._29}>IPFS CID (Nếu có sẵn)</label>
+              <input
+                type="text"
+                className={styles._30}
+                placeholder="Mã IPFS CID..."
+                value={activeRecord.ipfs_cid || ""}
+                onChange={(e) => handleFieldEdit("ipfs_cid", e.target.value)}
+              />
+            </div>
+          </div>
+
+        {/* Lô Cấp Phát Scanned Data Overview Data Grid */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
             <div>
               <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Bảng tổng quan dữ liệu cấp phát lô</h3>
-              <p className="text-[11px] text-gray-500">Xem lại và chỉnh sửa trực tiếp trên từng dòng (Tất cả thông tin là bắt buộc)</p>
+              <p className="text-[11px] text-gray-500">Bắt buộc: ID sinh viên + Tên văn bằng · Các trường còn lại tùy chọn · Smart Match file tự động</p>
             </div>
 
             {/* Filter Tabs & Search */}
@@ -705,13 +1126,10 @@ export default function AdminBatchesPage() {
                 <tr className="text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider">
                   <th className="py-3.5 px-3 w-12 text-center">STT</th>
                   <th className="py-3.5 px-3">Sinh viên *</th>
-                  <th className="py-3.5 px-3">Tên sinh viên *</th>
-                  <th className="py-3.5 px-3">Tên văn bằng *</th>
-                  <th className="py-3.5 px-3">Ngày sinh *</th>
-                  <th className="py-3.5 px-3">Nơi sinh *</th>
-                  <th className="py-3.5 px-3">Trường *</th>
-                  <th className="py-3.5 px-3">Số hiệu *</th>
-                  <th className="py-3.5 px-3">Số vào sổ *</th>
+                  <th className="py-3.5 px-3">Tên</th>
+                  <th className="py-3.5 px-3">Văn bằng *</th>
+                  <th className="py-3.5 px-3">Số hiệu</th>
+                  <th className="py-3.5 px-3">File/IPFS CID</th>
                   <th className="py-3.5 px-3 text-center">Trạng thái</th>
                   <th className="py-3.5 px-3 text-center">Thao tác</th>
                 </tr>
@@ -753,58 +1171,48 @@ export default function AdminBatchesPage() {
                     <td className="p-1">
                       <input
                         type="text"
-                        value={item.record.dob || ""}
-                        placeholder="Ngày sinh..."
-                        onChange={(e) => handleTableRowEdit(item.originalIndex, "dob", e.target.value)}
-                        className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
-                      />
-                    </td>
-                    <td className="p-1">
-                      <input
-                        type="text"
-                        value={item.record.placeOfBirth || ""}
-                        placeholder="Nơi sinh..."
-                        onChange={(e) => handleTableRowEdit(item.originalIndex, "placeOfBirth", e.target.value)}
-                        className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
-                      />
-                    </td>
-                    <td className="p-1">
-                      <input
-                        type="text"
-                        value={item.record.schoolName || ""}
-                        placeholder="Trường..."
-                        onChange={(e) => handleTableRowEdit(item.originalIndex, "schoolName", e.target.value)}
-                        className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
-                      />
-                    </td>
-                    <td className="p-1">
-                      <input
-                        type="text"
                         value={item.record.serialNumber || ""}
                         placeholder="Số hiệu..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "serialNumber", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded font-mono text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
                     </td>
-                    <td className="p-1">
-                      <input
-                        type="text"
-                        value={item.record.registryNumber || ""}
-                        placeholder="Số vào sổ..."
-                        onChange={(e) => handleTableRowEdit(item.originalIndex, "registryNumber", e.target.value)}
-                        className="w-full bg-transparent px-2 py-1.5 rounded font-mono text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
-                      />
+                    <td className="p-3 max-w-[140px]">
+                      <div className="flex flex-col gap-0.5">
+                        {item.record.ipfs_cid ? (
+                          <span className="text-[11px] font-mono text-emerald-600 font-bold truncate" title={item.record.ipfs_cid}>✓ CID: {item.record.ipfs_cid.slice(0, 14)}...</span>
+                        ) : item.docMatch?.status === "MATCHED" && item.docMatch.document ? (
+                          <span className="text-[11px] font-medium text-primary truncate" title={item.docMatch.document.path}>
+                            📄 {item.docMatch.document.name}
+                          </span>
+                        ) : item.record.document_file ? (
+                          <span className="text-[11px] text-amber-500 truncate">{item.record.document_file}</span>
+                        ) : (
+                          <span className="text-[11px] text-gray-400 italic">—</span>
+                        )}
+                        {item.record.document_file && !item.record.ipfs_cid && item.docMatch?.status !== "MATCHED" && (
+                          <span className="text-[10px] text-amber-500">⚠ chưa upload IPFS</span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-center">
-                      {item.isValid ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                          ✓ Sẵn sàng
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold" title={`Thiếu: ${item.missingFields.join(", ")}`}>
-                          ⚠ Thiếu {item.missingFields.length} thông tin
-                        </span>
-                      )}
+                      <div className="flex flex-col items-center gap-0.5">
+                        {item.isValid ? (
+                          item.warnings.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-[11px] font-bold" title={item.warnings.join("; ")}>
+                              ⚠ {item.warnings[0]}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
+                              ✓ Sẵn sàng
+                            </span>
+                          )
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold">
+                            ⚠ {item.missingFields.join(", ")}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-center">
                       <button
@@ -819,8 +1227,8 @@ export default function AdminBatchesPage() {
                 ))}
                 {filteredPreviewRows.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="p-8 text-center text-xs text-gray-400">
-                      {searchKeyword ? "Không tìm thấy kết quả phù hợp." : "Chưa có dữ liệu. Vui lòng nhập dữ liệu hoặc quét OCR ảnh văn bằng."}
+                    <td colSpan={8} className="p-8 text-center text-xs text-gray-400">
+                      {searchKeyword ? "Không tìm thấy kết quả phù hợp." : "Chưa có dữ liệu. Vui lòng chọn gói ZIP, thả file Excel + PDFs hoặc quét OCR ảnh văn bằng."}
                     </td>
                   </tr>
                 )}
@@ -831,15 +1239,22 @@ export default function AdminBatchesPage() {
           {/* Execution Footer Bar */}
           <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4 mt-4">
             <div className="text-xs text-gray-500">
-              {validRowsCount} / {mappedRows.length} văn bằng hợp lệ (Đầy đủ tất cả trường thông tin)
+              <span className="font-semibold text-gray-700">{validRowsCount}/{mappedRows.length}</span> dòng hợp lệ
+              {packageDocuments.length > 0 && (
+                <span className="ml-2 text-primary"> · 📄 {packageDocuments.length} file đính kèm (Smart Match)</span>
+              )}
             </div>
             <button
               type="button"
-              disabled={submitting || mappedRows.length === 0 || invalidRowsCount > 0}
+              disabled={submitting || uploadingIpfs || mappedRows.length === 0 || invalidRowsCount > 0}
               onClick={requestConfirm}
               className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md transition-all disabled:opacity-50"
             >
-              {submitting ? "Đang xử lý..." : mode === "FULL" ? `Xác nhận phát hành ${mappedRows.length} văn bằng` : `Xác nhận tạo ${mappedRows.length} DRAFT`}
+              {submitting || uploadingIpfs
+                ? "Đang xử lý..."
+                : mode === "FULL"
+                ? `Xác nhận phát hành ${mappedRows.length} văn bằng`
+                : `Xác nhận tạo ${mappedRows.length} DRAFT`}
             </button>
           </div>
         </div>
