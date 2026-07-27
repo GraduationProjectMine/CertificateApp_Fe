@@ -10,10 +10,12 @@ import QRCodeBox from "@/components/credential/QRCodeBox";
 import ShareDialog from "@/features/certificates/components/ShareDialog";
 import Loading from "@/components/common/Loading";
 import ErrorMessage from "@/components/common/ErrorMessage";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function StudentCertificateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cert, setCert] = useState<StudentCertificate | null>(null);
@@ -26,7 +28,7 @@ export default function StudentCertificateDetailPage() {
         const dto = await certificateApi.get(params.id as string);
         setCert(mapCertificateDtoToStudentCert(dto));
       } catch (err: any) {
-        setError(err.message || "Không tìm thấy văn bằng.");
+        setError(err.message || t("student.certificates.not_found"));
       }
       setLoading(false);
     };
@@ -36,7 +38,7 @@ export default function StudentCertificateDetailPage() {
   if (loading) {
     return (
       <div className={styles._1}>
-        <Loading message="Đang tải thông tin văn bằng..." />
+        <Loading message={t("student.certificates.loading_detail")} />
       </div>
     );
   }
@@ -59,8 +61,8 @@ export default function StudentCertificateDetailPage() {
         <button onClick={() => router.push("/student/certificates")} className={styles._3}>
           <svg className={styles._4} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Danh sách văn bằng
+            </svg>
+            {t("student.certificates.list")}
         </button>
       </div>
 
@@ -71,7 +73,7 @@ export default function StudentCertificateDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p className={styles._8}>Văn bằng đã bị thu hồi</p>
+              <p className={styles._8}>{t("student.certificates.revoked_message")}</p>
             </div>
           </div>
         )}
@@ -93,10 +95,10 @@ export default function StudentCertificateDetailPage() {
             )}
             <div>
               <h1 className={styles._14}>{cert.credentialTitle}</h1>
-              <p className={styles._15}>Mã văn bằng: {cert.credentialCode}</p>
+              <p className={styles._15}>{t("student.certificates.credential_code")}: {cert.credentialCode}</p>
             </div>
             <span className={`${styles._0} ${isRevoked ? styles._16 : styles._17}`}>
-              {isRevoked ? "Đã thu hồi" : "Hợp lệ"}
+              {isRevoked ? t("common.revoked") : t("common.valid")}
             </span>
           </div>
 
@@ -111,10 +113,10 @@ export default function StudentCertificateDetailPage() {
                 <p className={styles._23}>{cert.studentName}</p>
               </div>
               <div className={styles._24}>
-                <p className={styles._25}>Mã SV: {cert.studentCode}</p>
+                <p className={styles._25}>{t("student.certificates.student_code")}: {cert.studentCode}</p>
                 <p className={styles._25}>{cert.major}</p>
                 {cert.classification && (
-                  <p className={styles._25}>Xếp loại: {cert.classification}</p>
+                  <p className={styles._25}>{t("student.certificates.classification")}: {cert.classification}</p>
                 )}
               </div>
             </div>
@@ -122,26 +124,26 @@ export default function StudentCertificateDetailPage() {
               <QRCodeBox
                 value={`${typeof window !== "undefined" ? window.location.origin : ""}/public/certificate/${cert.credentialCode}`}
                 size={140}
-                title="Quét để xác minh"
+                title={t("student.certificates.scan_to_verify")}
               />
             </div>
           </div>
 
           <dl className={styles._27}>
             <div className={styles._28}>
-              <dt className={styles._29}>Trường cấp</dt>
+              <dt className={styles._29}>{t("student.certificates.issuer")}</dt>
               <dd className={styles._30}>{cert.issuerName}</dd>
             </div>
             <div className={styles._28}>
-              <dt className={styles._29}>Ngày cấp</dt>
+              <dt className={styles._29}>{t("student.certificates.issue_date")}</dt>
               <dd className={styles._30}>{cert.issueDate}</dd>
             </div>
             <div className={styles._28}>
-              <dt className={styles._29}>Số hiệu văn bằng</dt>
+              <dt className={styles._29}>{t("student.certificates.serial_number")}</dt>
               <dd className={styles._30}>{cert.serialNumber}</dd>
             </div>
             <div className={styles._28}>
-              <dt className={styles._29}>Ngành</dt>
+              <dt className={styles._29}>{t("student.certificates.major")}</dt>
               <dd className={styles._30}>{cert.major}</dd>
             </div>
             {cert.gpa && (
@@ -151,11 +153,11 @@ export default function StudentCertificateDetailPage() {
               </div>
             )}
             <div className={styles._28}>
-              <dt className={styles._29}>Xếp loại</dt>
+              <dt className={styles._29}>{t("student.certificates.classification")}</dt>
               <dd className={styles._30}>{cert.classification}</dd>
             </div>
             <div className={styles._28}>
-              <dt className={styles._29}>Mã sinh viên</dt>
+              <dt className={styles._29}>{t("student.certificates.student_code")}</dt>
               <dd className={styles._30}>{cert.studentCode}</dd>
             </div>
           </dl>
@@ -175,13 +177,13 @@ export default function StudentCertificateDetailPage() {
         </div>
 
         <div className={styles._32}>
-          <h3 className={styles._33}>Thao tác</h3>
+          <h3 className={styles._33}>{t("common.actions")}</h3>
           <div className={styles._34}>
             <button onClick={() => setShowShare(true)} className={styles._35}>
               <svg className={styles._36} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              Chia sẻ văn bằng
+              {t("student.certificates.share_certificate")}
             </button>
             <button
               onClick={() => {
@@ -193,15 +195,14 @@ export default function StudentCertificateDetailPage() {
               <svg className={styles._36} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
-              Sao chép link xác minh
+              {t("student.certificates.copy_verify_link")}
             </button>
           </div>
         </div>
 
         <div className={styles._37}>
           <p className={styles._38}>
-            Thông tin trên được xác thực bằng công nghệ blockchain và lưu trữ trên IPFS.
-            Dữ liệu không thể bị chỉnh sửa sau khi đã ghi nhận.
+            {t("student.certificates.blockchain_verify_note")}
           </p>
         </div>
       </div>

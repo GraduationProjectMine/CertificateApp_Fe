@@ -5,11 +5,13 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { issuerApi, type IssuerProfile } from "@/features/issuer/services/issuer.api";
 import toast from "react-hot-toast";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const emptyProfile = { organization_name: "", contact_email: "", logo_url: "" };
 
 export default function AdminSettingsPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const canEdit = user?.role === "issuer";
   const [profile, setProfile] = useState<IssuerProfile | null>(null);
   const [form, setForm] = useState(emptyProfile);
@@ -27,7 +29,7 @@ export default function AdminSettingsPage() {
           logo_url: data.logo_url || "",
         });
       })
-      .catch((err) => setProfileError(err instanceof Error ? err.message : "Không thể tải thông tin tổ chức"))
+      .catch((err) => setProfileError(err instanceof Error ? err.message : t("admin.settings.load_failed")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -48,9 +50,9 @@ export default function AdminSettingsPage() {
         contact_email: updated.contact_email,
         logo_url: updated.logo_url || "",
       });
-      toast.success("Đã cập nhật thông tin tổ chức");
+      toast.success(t("admin.settings.update_success"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Cập nhật tổ chức thất bại";
+      const message = err instanceof Error ? err.message : t("admin.settings.update_failed");
       setProfileError(message);
       toast.error(message);
     } finally {
@@ -60,22 +62,22 @@ export default function AdminSettingsPage() {
 
   return (
     <div className={styles._1}>
-      <div><h1 className={styles._2}>Thông tin tổ chức</h1><p className={styles._3}>{canEdit ? "Cập nhật hồ sơ tổ chức phát hành" : "Bạn đang xem hồ sơ tổ chức ở chế độ chỉ đọc"}</p></div>
+      <div><h1 className={styles._2}>{t("admin.settings.title")}</h1><p className={styles._3}>{canEdit ? t("admin.settings.edit_desc") : t("admin.settings.readonly_desc")}</p></div>
 
       <form onSubmit={handleSave} className={styles._4}>
         <div className="flex items-center justify-between gap-4">
-          <h2 className={styles._5}>Hồ sơ tổ chức</h2>
-          {profile && <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${profile.is_verified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>{profile.is_verified ? "Đã xác minh" : "Chưa xác minh"}</span>}
+          <h2 className={styles._5}>{t("admin.settings.profile")}</h2>
+          {profile && <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${profile.is_verified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>{profile.is_verified ? t("admin.settings.verified") : t("admin.settings.unverified")}</span>}
         </div>
-        {loading ? <p className={styles._6}>Đang tải thông tin tổ chức...</p> : <>
+        {loading ? <p className={styles._6}>{t("admin.settings.loading_profile")}</p> : <>
           <div className={styles._17}>
-            <Field label="Tên tổ chức"><input required minLength={2} disabled={!canEdit} value={form.organization_name} onChange={(e) => setForm({ ...form, organization_name: e.target.value })} className={styles._19} /></Field>
-            <Field label="Email liên hệ"><input required type="email" disabled={!canEdit} value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} className={styles._19} /></Field>
-            <Field label="URL logo"><input type="url" disabled={!canEdit} value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="https://.../logo.png" className={styles._19} /></Field>
-            <Field label="Địa chỉ ví tổ chức"><input readOnly value={profile?.wallet_address || "Chưa thiết lập"} className={styles._19} /></Field>
+            <Field label={t("admin.settings.org_name")}><input required minLength={2} disabled={!canEdit} value={form.organization_name} onChange={(e) => setForm({ ...form, organization_name: e.target.value })} className={styles._19} /></Field>
+            <Field label={t("admin.settings.org_email")}><input required type="email" disabled={!canEdit} value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} className={styles._19} /></Field>
+            <Field label={t("admin.settings.logo_url")}><input type="url" disabled={!canEdit} value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="https://.../logo.png" className={styles._19} /></Field>
+            <Field label={t("admin.settings.wallet_address")}><input readOnly value={profile?.wallet_address || t("admin.settings.not_set")} className={styles._19} /></Field>
           </div>
           {profileError && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{profileError}</p>}
-          {canEdit && <button disabled={saving} className={styles._20}>{saving ? "Đang lưu..." : "Lưu thông tin"}</button>}
+          {canEdit && <button disabled={saving} className={styles._20}>{saving ? t("common.saving") : t("admin.settings.save_info")}</button>}
         </>}
       </form>
     </div>

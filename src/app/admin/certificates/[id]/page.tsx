@@ -5,6 +5,7 @@ import Link from "next/link";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Draft", className: "bg-slate-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400" },
@@ -14,6 +15,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
 };
 
 export default function CertificateDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
@@ -79,46 +81,46 @@ export default function CertificateDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">Đang tải...</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-sm">{t("common.loading")}</div>;
   }
 
   if (error || !cert) {
     return (
       <div className="p-8 text-center">
         <p className="text-red-500 text-sm mb-4">{error || "Certificate not found"}</p>
-        <Link href="/admin/certificates" className="text-primary text-sm underline">Quay lại danh sách</Link>
+        <Link href="/admin/certificates" className="text-primary text-sm underline">{t("common.back_to_list")}</Link>
       </div>
     );
   }
 
   const statusStyle = STATUS_MAP[cert.status] || STATUS_MAP.DRAFT;
   const fields = [
-    { label: "Mã văn bằng", value: cert.certificate_id },
-    { label: "Sinh viên", value: cert.student_fullName },
-    { label: "Tên văn bằng", value: cert.certificate_title },
-    { label: "Tổ chức", value: cert.organization_name },
-    { label: "Ngày sinh", value: cert.dob },
-    { label: "Nơi sinh", value: cert.placeOfBirth },
-    { label: "Giới tính", value: cert.gender },
-    { label: "Dân tộc", value: cert.ethnicity },
-    { label: "Trường", value: cert.schoolName },
-    { label: "Niên khóa", value: cert.examCohort },
-    { label: "Hội đồng thi", value: cert.examBoard },
-    { label: "Nơi cấp", value: cert.issueLocation },
-    { label: "Ngày cấp", value: cert.issueDate },
-    { label: "Số hiệu", value: cert.serialNumber },
-    { label: "Số vào sổ", value: cert.registryNumber },
+    { label: t("admin.certificates.code"), value: cert.certificate_id },
+    { label: t("admin.certificates.student_name"), value: cert.student_fullName },
+    { label: t("admin.certificates.name"), value: cert.certificate_title },
+    { label: t("admin.certificates.organization"), value: cert.organization_name },
+    { label: t("admin.certificates.dob"), value: cert.dob },
+    { label: t("admin.certificates.place_of_birth"), value: cert.placeOfBirth },
+    { label: t("admin.certificates.gender"), value: cert.gender },
+    { label: t("admin.certificates.ethnicity"), value: cert.ethnicity },
+    { label: t("admin.certificates.school"), value: cert.schoolName },
+    { label: t("admin.certificates.exam_cohort"), value: cert.examCohort },
+    { label: t("admin.certificates.exam_board"), value: cert.examBoard },
+    { label: t("admin.certificates.issue_location"), value: cert.issueLocation },
+    { label: t("admin.certificates.issue_date"), value: cert.issueDate },
+    { label: t("admin.certificates.serial_number"), value: cert.serialNumber },
+    { label: t("admin.certificates.registry_number"), value: cert.registryNumber },
     { label: "IPFS CID", value: cert.ipfs_cid, mono: true },
     { label: "Tx Hash", value: cert.tx_hash, mono: true },
-    { label: "Ngày phát hành", value: cert.issuedAt ? new Date(cert.issuedAt).toLocaleString("vi-VN") : "-" },
+    { label: t("admin.certificates.issued_at"), value: cert.issuedAt ? new Date(cert.issuedAt).toLocaleString("vi-VN") : "-" },
   ];
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/admin/certificates" className="text-xs text-primary hover:underline">&larr; Quay lại danh sách</Link>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mt-1">Chi tiết Văn bằng</h1>
+          <Link href="/admin/certificates" className="text-xs text-primary hover:underline">&larr; {t("common.back_to_list")}</Link>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mt-1">{t("admin.certificates.detail")}</h1>
         </div>
         <span className={`px-3 py-1 rounded-md text-xs font-bold border ${statusStyle.className}`}>
           {statusStyle.label}
@@ -147,7 +149,7 @@ export default function CertificateDetailPage() {
             disabled={actionLoading}
             className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
           >
-            {actionLoading ? "Đang xử lý..." : "Gửi duyệt (PENDING)"}
+            {actionLoading ? t("common.processing") : t("admin.certificates.submit_for_review")}
           </button>
         )}
         {cert.status === "PENDING" && user?.role === "issuer" && (
@@ -156,7 +158,7 @@ export default function CertificateDetailPage() {
             disabled={actionLoading}
             className="px-5 py-2.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-xl transition-all"
           >
-            {actionLoading ? "Đang xử lý..." : "Duyệt & Phát hành (IPFS + Blockchain)"}
+            {actionLoading ? t("common.processing") : t("admin.certificates.approve_and_issue")}
           </button>
         )}
         {(cert.status === "DRAFT" || cert.status === "PENDING") && (
@@ -165,7 +167,7 @@ export default function CertificateDetailPage() {
             disabled={actionLoading}
             className="px-5 py-2.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 disabled:opacity-50 rounded-xl transition-all"
           >
-            Xóa
+            {t("common.delete")}
           </button>
         )}
       </div>

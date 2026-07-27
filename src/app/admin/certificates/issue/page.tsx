@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 type FormData = {
   student_id: string;
@@ -46,6 +47,7 @@ const initialForm: FormData = {
 };
 
 export default function IssueCertificatePage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [step, setStep] = useState<"info" | "confirm" | "result">("info");
   const [formData, setFormData] = useState<FormData>(initialForm);
@@ -59,7 +61,7 @@ export default function IssueCertificatePage() {
   useEffect(() => {
     studentApi.list()
       .then(setStudents)
-      .catch((err) => setStudentsError(err instanceof Error ? err.message : "Không thể tải danh sách sinh viên"))
+      .catch((err) => setStudentsError(err instanceof Error ? err.message : t("admin.certificates.load_students_failed")))
       .finally(() => setStudentsLoading(false));
   }, []);
 
@@ -79,7 +81,7 @@ export default function IssueCertificatePage() {
     const f = e.target.files?.[0];
     if (!f) return;
     const allowed = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
-    if (!allowed.includes(f.type)) { setOcrError("Chỉ hỗ trợ JPEG, PNG, WebP, TIFF"); return; }
+    if (!allowed.includes(f.type)) { setOcrError(t("admin.certificates.ocr_format_error")); return; }
     setOcrFile(f);
     setOcrError("");
     setOcrPreview(URL.createObjectURL(f));
@@ -90,7 +92,7 @@ export default function IssueCertificatePage() {
     const f = e.dataTransfer.files?.[0];
     if (!f) return;
     const allowed = ["image/jpeg", "image/png", "image/webp", "image/tiff"];
-    if (!allowed.includes(f.type)) { setOcrError("Chỉ hỗ trợ JPEG, PNG, WebP, TIFF"); return; }
+    if (!allowed.includes(f.type)) { setOcrError(t("admin.certificates.ocr_format_error")); return; }
     setOcrFile(f);
     setOcrError("");
     setOcrPreview(URL.createObjectURL(f));
@@ -135,7 +137,7 @@ export default function IssueCertificatePage() {
       };
       reader.readAsDataURL(ocrFile);
     } catch (err) {
-      setOcrError(err instanceof Error ? err.message : "OCR thất bại");
+      setOcrError(err instanceof Error ? err.message : t("admin.certificates.ocr_failed"));
     } finally {
       setOcrScanning(false);
     }
@@ -143,7 +145,7 @@ export default function IssueCertificatePage() {
 
   const handleSubmit = async () => {
     if (!formData.student_id || !formData.certificate_title) {
-      setError("Vui lòng nhập mã sinh viên và tên văn bằng");
+      setError(t("admin.certificates.issue_validation_error"));
       return;
     }
     setSubmitting(true);
@@ -169,7 +171,7 @@ export default function IssueCertificatePage() {
       setResult({ id: created.certificate_id, status: created.status });
       setStep("result");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Tạo văn bằng thất bại");
+      setError(err instanceof Error ? err.message : t("admin.certificates.create_failed"));
     } finally {
       setSubmitting(false);
     }
@@ -180,23 +182,23 @@ export default function IssueCertificatePage() {
       <div className={styles._1}>
         <div className="max-w-lg mx-auto text-center space-y-6 py-12">
           <div className="text-5xl">🎓</div>
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">Tạo văn bằng thành công!</h2>
+          <h2 className="text-xl font-black text-gray-900 dark:text-white">{t("admin.certificates.create_success")}</h2>
           <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-6 space-y-2 text-left">
             <div className="flex justify-between text-xs">
-              <span className="text-gray-500 dark:text-gray-400">Mã văn bằng:</span>
+              <span className="text-gray-500 dark:text-gray-400">{t("admin.certificates.code")}:</span>
               <span className="font-mono text-gray-900 dark:text-white">{result.id}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-500 dark:text-gray-400">Trạng thái:</span>
+              <span className="text-gray-500 dark:text-gray-400">{t("common.status")}:</span>
               <span className="text-amber-600 font-bold">{result.status}</span>
             </div>
           </div>
           <div className="flex gap-3 justify-center">
             <button onClick={() => router.push(`/admin/certificates/${result.id}`)} className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all">
-              Xem chi tiết
+              {t("common.detail")}
             </button>
             <button onClick={() => { setStep("info"); setFormData(initialForm); setResult(null); }} className="px-5 py-2.5 text-xs font-bold text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-300 rounded-xl transition-all">
-              Tạo tiếp
+              {t("admin.certificates.create_another")}
             </button>
           </div>
         </div>
@@ -207,8 +209,8 @@ export default function IssueCertificatePage() {
   return (
     <div className={styles._1}>
       <div>
-        <h1 className={styles._2}>Cấp phát văn bằng mới</h1>
-        <p className={styles._3}>Nhập thông tin văn bằng và lưu nháp trước khi gửi duyệt.</p>
+        <h1 className={styles._2}>{t("admin.certificates.issue_new")}</h1>
+        <p className={styles._3}>{t("admin.certificates.issue_description")}</p>
       </div>
 
       {/* Input mode tabs */}
@@ -220,7 +222,7 @@ export default function IssueCertificatePage() {
               : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
-          Nhập tay
+          {t("admin.certificates.manual_input")}
         </button>
         <button
           onClick={() => setInputMode("ocr")}
@@ -232,7 +234,7 @@ export default function IssueCertificatePage() {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
           </svg>
-          Quét OCR
+          {t("admin.certificates.ocr_scan")}
         </button>
       </div>
 
@@ -240,13 +242,13 @@ export default function IssueCertificatePage() {
       {inputMode === "ocr" && (
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="text-sm font-bold text-gray-900 dark:text-white">Chọn ảnh bằng</div>
+            <div className="text-sm font-bold text-gray-900 dark:text-white">{t("admin.certificates.select_image")}</div>
             <select
               value={ocrLang}
               onChange={(e) => setOcrLang(e.target.value)}
               className="flex-1 max-w-[160px] px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="vie">Tiếng Việt</option>
+              <option value="vie">{t("admin.certificates.vietnamese")}</option>
               <option value="eng">English</option>
             </select>
           </div>
@@ -263,12 +265,12 @@ export default function IssueCertificatePage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      Đang xử lý...
+                      {t("common.processing")}
                     </span>
-                  ) : "Quét văn bằng"}
+                  ) : t("admin.certificates.scan_diploma")}
                 </button>
                 <button onClick={() => { setOcrFile(null); setOcrPreview(null); setOcrError(""); }} className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
-                  Làm lại
+                  {t("common.reset")}
                 </button>
               </div>
             </div>
@@ -281,8 +283,8 @@ export default function IssueCertificatePage() {
               <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả ảnh vào đây</div>
-              <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn file (JPEG, PNG, WebP, TIFF)</div>
+              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.certificates.drag_drop_image")}</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500">{t("admin.certificates.click_to_select")}</div>
               {ocrError && <div className="text-[11px] text-red-500">{ocrError}</div>}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" onChange={handleOcrFileSelect} className="hidden" />
             </label>
@@ -293,9 +295,9 @@ export default function IssueCertificatePage() {
       {/* Form */}
       <div className={styles._28}>
         <div>
-          <label className={styles._29}>Sinh viên *</label>
+          <label className={styles._29}>{t("admin.certificates.student")} *</label>
           {studentsLoading ? (
-            <p className="text-xs text-gray-400">Đang tải danh sách sinh viên...</p>
+            <p className="text-xs text-gray-400">{t("admin.certificates.loading_students")}</p>
           ) : students.length > 0 ? (
             <select
               className={styles._30}
@@ -306,7 +308,7 @@ export default function IssueCertificatePage() {
                 if (s) updateField("student_fullName", s.student_fullName);
               }}
             >
-              <option value="">-- Chọn sinh viên --</option>
+              <option value="">{t("admin.certificates.select_student_placeholder")}</option>
               {students.map((s) => (
                 <option key={s.student_id} value={s.student_id}>
                   {s.student_fullName} ({s.email})
@@ -315,13 +317,13 @@ export default function IssueCertificatePage() {
             </select>
           ) : (
             <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 rounded-lg">
-              {studentsError || "Chưa có sinh viên nào."}{' '}
-              <Link href="/admin/students/create" className="underline">Tạo sinh viên</Link> trước khi cấp bằng.
+              {studentsError || t("admin.certificates.no_students")}{' '}
+              <Link href="/admin/students/create" className="underline">{t("admin.certificates.create_student")}</Link> {t("admin.certificates.before_issuing")}
             </div>
           )}
         </div>
         <div>
-          <label className={styles._29}>Tên sinh viên</label>
+          <label className={styles._29}>{t("admin.certificates.student_name")}</label>
           <input
             type="text"
             className={styles._30}
@@ -330,57 +332,57 @@ export default function IssueCertificatePage() {
           />
         </div>
         <div>
-          <label className={styles._29}>Tên văn bằng *</label>
+          <label className={styles._29}>{t("admin.certificates.name")} *</label>
           <input
             type="text"
             className={styles._30}
-            placeholder="VD: BẰNG CỬ NHÂN KỸ THUẬT"
+            placeholder={t("admin.certificates.certificate_name_placeholder")}
             value={formData.certificate_title}
             onChange={(e) => updateField("certificate_title", e.target.value)}
           />
         </div>
         <div>
-          <label className={styles._29}>Ngày sinh</label>
+          <label className={styles._29}>{t("admin.certificates.dob")}</label>
           <input type="date" className={styles._30} value={formData.dob} onChange={(e) => updateField("dob", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Nơi sinh</label>
+          <label className={styles._29}>{t("admin.certificates.place_of_birth")}</label>
           <input type="text" className={styles._30} value={formData.placeOfBirth} onChange={(e) => updateField("placeOfBirth", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Giới tính</label>
+          <label className={styles._29}>{t("admin.certificates.gender")}</label>
           <input type="text" className={styles._30} value={formData.gender} onChange={(e) => updateField("gender", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Dân tộc</label>
+          <label className={styles._29}>{t("admin.certificates.ethnicity")}</label>
           <input type="text" className={styles._30} value={formData.ethnicity} onChange={(e) => updateField("ethnicity", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Trường</label>
+          <label className={styles._29}>{t("admin.certificates.school")}</label>
           <input type="text" className={styles._30} value={formData.schoolName} onChange={(e) => updateField("schoolName", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Niên khóa</label>
+          <label className={styles._29}>{t("admin.certificates.exam_cohort")}</label>
           <input type="text" className={styles._30} value={formData.examCohort} onChange={(e) => updateField("examCohort", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Hội đồng thi</label>
+          <label className={styles._29}>{t("admin.certificates.exam_board")}</label>
           <input type="text" className={styles._30} value={formData.examBoard} onChange={(e) => updateField("examBoard", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Nơi cấp</label>
+          <label className={styles._29}>{t("admin.certificates.issue_location")}</label>
           <input type="text" className={styles._30} value={formData.issueLocation} onChange={(e) => updateField("issueLocation", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Ngày cấp</label>
+          <label className={styles._29}>{t("admin.certificates.issue_date")}</label>
           <input type="date" className={styles._30} value={formData.issueDate} onChange={(e) => updateField("issueDate", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Số hiệu văn bằng</label>
+          <label className={styles._29}>{t("admin.certificates.serial_number")}</label>
           <input type="text" className={styles._30} value={formData.serialNumber} onChange={(e) => updateField("serialNumber", e.target.value)} />
         </div>
         <div>
-          <label className={styles._29}>Số vào sổ</label>
+          <label className={styles._29}>{t("admin.certificates.registry_number")}</label>
           <input type="text" className={styles._30} value={formData.registryNumber} onChange={(e) => updateField("registryNumber", e.target.value)} />
         </div>
       </div>
@@ -393,13 +395,13 @@ export default function IssueCertificatePage() {
           disabled={submitting}
           className="px-6 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
         >
-          {submitting ? "Đang lưu..." : "Lưu nháp (DRAFT)"}
+          {submitting ? t("common.saving") : t("admin.certificates.save_draft")}
         </button>
         <button
           onClick={() => router.push("/admin/certificates")}
           className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
         >
-          Hủy
+          {t("common.cancel")}
         </button>
       </div>
     </div>

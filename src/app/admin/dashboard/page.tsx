@@ -5,17 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import { certificateApi, type CertificateDto } from "../../../features/certificates/services/certificate.api";
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Vừa xong";
-  if (mins < 60) return `${mins} phút trước`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} giờ trước`;
-  const days = Math.floor(hrs / 24);
-  return `${days} ngày trước`;
-}
+import { useI18n } from "@/features/i18n/I18nContext";
 
 function shortHash(h: string): string {
   return h.length > 10 ? h.slice(0, 6) + "..." + h.slice(-4) : h;
@@ -23,6 +13,18 @@ function shortHash(h: string): string {
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
+
+  function timeAgo(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return t("common.just_now");
+    if (mins < 60) return t("common.minutes_ago", { mins });
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return t("common.hours_ago", { hrs });
+    const days = Math.floor(hrs / 24);
+    return t("common.days_ago", { days });
+  }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<CertificateDto[]>([]);
@@ -55,9 +57,9 @@ export default function AdminDashboardPage() {
 
   const stats = [
     {
-      title: "Tổng số sinh viên",
+      title: t("admin.dashboard.total_students"),
       value: loading ? "..." : String(new Set(certs.map((c) => c.student_id)).size),
-      change: "Dữ liệu sinh viên tổ chức",
+      change: t("admin.dashboard.student_data_org"),
       colorClass: "border-l-primary",
       icon: (
         <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,9 +68,9 @@ export default function AdminDashboardPage() {
       ),
     },
     {
-      title: "Đã cấp bằng",
+      title: t("admin.dashboard.issued_certificates"),
       value: loading ? "..." : String(issuedCount),
-      change: "Xác thực trên Blockchain",
+      change: t("admin.dashboard.blockchain_verified"),
       colorClass: "border-l-emerald-500",
       icon: (
         <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,9 +79,9 @@ export default function AdminDashboardPage() {
       ),
     },
     {
-      title: "Bản nháp / Chờ duyệt",
+      title: t("admin.dashboard.pending_certificates"),
       value: loading ? "..." : String(pendingCount),
-      change: "Cần ký duyệt cấp bằng",
+      change: t("admin.dashboard.pending_certs_desc"),
       colorClass: "border-l-amber-500",
       icon: (
         <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,9 +90,9 @@ export default function AdminDashboardPage() {
       ),
     },
     {
-      title: "Đã thu hồi",
+      title: t("admin.dashboard.revoked_certificates"),
       value: loading ? "..." : String(revokedCount),
-      change: "Văn bằng bị hủy bỏ",
+      change: t("admin.dashboard.revoked_certs_desc"),
       colorClass: "border-l-rose-500",
       icon: (
         <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,9 +107,9 @@ export default function AdminDashboardPage() {
       {/* Header section */}
       <div className={styles._3}>
         <div>
-          <h1 className={styles._4}>Tổng quan Đơn vị Cấp bằng</h1>
+          <h1 className={styles._4}>{t("admin.dashboard.overview")}</h1>
           <p className={styles._5}>
-            Quản lý văn bằng chứng chỉ, danh sách sinh viên và tiến trình cấp phát.
+            {t("admin.dashboard.overview_desc")}
           </p>
         </div>
         <div className={styles._6}>
@@ -115,7 +117,7 @@ export default function AdminDashboardPage() {
             <svg className={styles._8} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
             </svg>
-            Tạo văn bằng mới
+            {t("admin.dashboard.create_certificate")}
           </Link>
         </div>
       </div>
@@ -145,9 +147,9 @@ export default function AdminDashboardPage() {
         {/* Recent Transactions Table */}
         <div className={styles._17}>
           <div className={styles._18}>
-            <h2 className={styles._19}>Giao dịch Cấp bằng Gần đây</h2>
+            <h2 className={styles._19}>{t("admin.dashboard.recent_transactions")}</h2>
             <Link href="/admin/certificates" className={styles._20}>
-              Xem tất cả
+              {t("common.view_all")}
             </Link>
           </div>
 
@@ -155,24 +157,24 @@ export default function AdminDashboardPage() {
             <table className={styles._22}>
               <thead>
                 <tr className={styles._23}>
-                  <th className={styles._24}>Tx Hash</th>
-                  <th className={styles._24}>Sinh viên</th>
-                  <th className={styles._24}>Văn bằng</th>
-                  <th className={styles._24}>Thời gian</th>
-                  <th className={styles._25}>Trạng thái</th>
+                  <th className={styles._24}>{t("admin.dashboard.tx_hash")}</th>
+                  <th className={styles._24}>{t("common.student")}</th>
+                  <th className={styles._24}>{t("common.certificate")}</th>
+                  <th className={styles._24}>{t("common.time")}</th>
+                  <th className={styles._25}>{t("common.status")}</th>
                 </tr>
               </thead>
               <tbody className={styles._26}>
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                      Đang tải dữ liệu...
+                      {t("common.loading")}
                     </td>
                   </tr>
                 ) : recentTx.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                      Chưa có giao dịch cấp bằng nào
+                      {t("admin.dashboard.no_transactions")}
                     </td>
                   </tr>
                 ) : (
@@ -183,7 +185,7 @@ export default function AdminDashboardPage() {
                       <td className={styles._30}>{tx.credentialType}</td>
                       <td className={styles._31}>{tx.time}</td>
                       <td className={styles._32}>
-                        <span className={styles._33}>Thành công</span>
+                        <span className={styles._33}>{t("common.success")}</span>
                       </td>
                     </tr>
                   ))
@@ -196,28 +198,28 @@ export default function AdminDashboardPage() {
         {/* Quick Actions Panel */}
         <div className={styles._34}>
           <div className={styles._35}>
-            <h3 className={styles._36}>Thao tác Nhanh</h3>
+            <h3 className={styles._36}>{t("admin.dashboard.quick_actions")}</h3>
             <div className={styles._37}>
               <Link href="/admin/certificates/issue" className={`group ${styles._38}`}>
-                <span>Cấp văn bằng đơn lẻ</span>
+                <span>{t("admin.dashboard.issue_single")}</span>
                 <svg className={styles._39} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
               <Link href="/admin/students" className={`group ${styles._38}`}>
-                <span>Quản lý danh sách sinh viên</span>
+                <span>{t("admin.dashboard.manage_students")}</span>
                 <svg className={styles._39} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
               <Link href="/admin/templates" className={`group ${styles._38}`}>
-                <span>Quản lý mẫu phôi văn bằng</span>
+                <span>{t("admin.dashboard.manage_templates")}</span>
                 <svg className={styles._39} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
               <Link href="/admin/revocations" className={`group ${styles._38}`}>
-                <span>Yêu cầu thu hồi bằng</span>
+                <span>{t("admin.dashboard.request_revocation")}</span>
                 <svg className={styles._39} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                 </svg>

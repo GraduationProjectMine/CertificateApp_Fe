@@ -50,12 +50,12 @@ export default function RegisterPage() {
     setSuccess("");
 
     if (!form.institutionName || !form.email) {
-      setError("Vui lòng nhập tên trường và email quản trị");
+      setError(t("auth.register.institution_info"));
       return;
     }
 
     if (typeof window === "undefined" || !(window as any).ethereum) {
-      setError("Không tìm thấy MetaMask. Vui lòng cài đặt tiện ích mở rộng MetaMask.");
+      setError(t("auth.login.wallet_not_found"));
       return;
     }
 
@@ -86,14 +86,14 @@ export default function RegisterPage() {
       });
 
       if (result.success) {
-        setSuccess("Đăng ký và đăng nhập thành công!");
+        setSuccess(t("auth.register.success_message"));
         router.push("/admin/dashboard");
       } else {
-        setError(result.error || "Đăng ký MetaMask thất bại");
+        setError(result.error || t("auth.register.metamask_failed"));
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Lỗi kết nối hoặc chữ ký bị từ chối.");
+      setError(err?.message || t("auth.login.signature_rejected"));
     } finally {
       setIsWalletSubmitting(false);
     }
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               {t("auth.register_title")}
             </p>
             <h1 className={styles._13}>
-              Một tài khoản cho toàn bộ quy trình cấp bằng.
+              {t("auth.register.one_account")}
             </h1>
             <p className={styles._14}>
               {t("auth.register_subtitle")}
@@ -129,9 +129,9 @@ export default function RegisterPage() {
 
           <div className={styles._15} data-reveal>
             {[
-              ["01", "Xác thực trường"],
-              ["02", "Tạo ví tổ chức"],
-              ["03", "Deploy contract"],
+              ["01", t("auth.register.institution_verify")],
+              ["02", t("auth.register.create_wallet")],
+              ["03", t("auth.register.deploy_contract")],
             ].map(([step, label]) => (
               <div key={step} className={styles._16}>
                 <span className={styles._17}>{step}</span>
@@ -163,7 +163,7 @@ export default function RegisterPage() {
                 {t("auth.register_title")}
               </p>
               <h2 className={styles._28}>
-                Tạo hồ sơ tổ chức
+                {t("auth.register.create_profile")}
               </h2>
               <p className={styles._29}>
                 {t("auth.register_subtitle")}
@@ -193,7 +193,7 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   required
                   className={styles._35}
-                  placeholder="Trường Đại học Bách Khoa Hà Nội"
+                  placeholder={t("auth.register.institution_name_placeholder")}
                 />
               </label>
 

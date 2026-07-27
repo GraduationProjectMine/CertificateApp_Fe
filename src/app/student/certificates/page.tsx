@@ -5,15 +5,16 @@ import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
-
-const TYPE_OPTIONS = [
-  { value: "all", label: "Tất cả" },
-  { value: "BACHELOR_DEGREE", label: "Bằng cử nhân" },
-  { value: "CERTIFICATE", label: "Chứng chỉ" },
-];
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function StudentCertificatesPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
+  const TYPE_OPTIONS = [
+    { value: "all", label: t("common.all") },
+    { value: "BACHELOR_DEGREE", label: t("common.bachelor_degree") },
+    { value: "CERTIFICATE", label: t("common.certificate") },
+  ];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<StudentCertificate[]>([]);
@@ -44,16 +45,16 @@ export default function StudentCertificatesPage() {
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Văn bằng của tôi</h1>
+          <h1 className={styles._3}>{t("student.certificates.title")}</h1>
           <p className={styles._4}>
-            {loading ? "..." : `${certs.length} văn bằng đã được cấp`}
+            {loading ? "..." : t("student.certificates.issued_count", { count: certs.length })}
           </p>
         </div>
       </div>
 
       <div className={styles._5}>
         <div className={styles._6}>
-          <label className={styles._7}>Loại</label>
+          <label className={styles._7}>{t("common.type")}</label>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -65,15 +66,15 @@ export default function StudentCertificatesPage() {
           </select>
         </div>
         <div className={styles._6}>
-          <label className={styles._7}>Trạng thái</label>
+          <label className={styles._7}>{t("common.status")}</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className={styles._8}
           >
-            <option value="all">Tất cả</option>
-            <option value="valid">Hợp lệ</option>
-            <option value="revoked">Đã thu hồi</option>
+            <option value="all">{t("common.all")}</option>
+            <option value="valid">{t("common.valid")}</option>
+            <option value="revoked">{t("common.revoked")}</option>
           </select>
         </div>
       </div>
@@ -108,7 +109,7 @@ export default function StudentCertificatesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className={styles._12}>Không tìm thấy văn bằng phù hợp</p>
+          <p className={styles._12}>{t("student.certificates.no_matching")}</p>
         </div>
       ) : (
         <div className={styles._13}>
@@ -125,7 +126,7 @@ export default function StudentCertificatesPage() {
                     </svg>
                   </div>
                   <div className={styles._19}>
-                    <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? "Bằng cử nhân" : "Chứng chỉ"}</p>
+                    <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? t("common.bachelor_degree") : t("common.certificate")}</p>
                     <h3 className={styles._21}>{cert.credentialTitle}</h3>
                     <p className={styles._22}>{cert.issuerName} · {cert.issueDate}</p>
                   </div>
@@ -138,7 +139,7 @@ export default function StudentCertificatesPage() {
                     </span>
                   )}
                   <span className={`${styles._0} ${cert.status === "VALID" ? styles._26 : styles._27}`}>
-                    {cert.status === "VALID" ? "Hợp lệ" : "Đã thu hồi"}
+                    {cert.status === "VALID" ? t("common.valid") : t("common.revoked")}
                   </span>
                 </div>
               </div>

@@ -5,12 +5,14 @@ import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<StudentCertificate[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -29,19 +31,19 @@ export default function StudentDashboard() {
 
   const stats = [
     {
-      label: "Tổng văn bằng",
+      label: t("student.dashboard.total_certificates"),
       value: String(total),
       icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
       color: "text-primary bg-primary/10",
     },
     {
-      label: "Đang hợp lệ",
+      label: t("student.dashboard.valid_certificates"),
       value: String(validCount),
       icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
       color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/30",
     },
     {
-      label: "Đã xác thực on-chain",
+      label: t("student.dashboard.onchain_verified"),
       value: String(onChainCount),
       icon: "M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
       color: "text-secondary bg-secondary/10",
@@ -53,8 +55,8 @@ export default function StudentDashboard() {
   return (
     <div className={styles._1}>
       <div className={styles._2}>
-        <h1 className={styles._3}>Bảng điều khiển</h1>
-        <p className={styles._4}>Chào mừng bạn đến với hệ thống quản lý văn bằng số</p>
+        <h1 className={styles._3}>{t("student.dashboard.title")}</h1>
+        <p className={styles._4}>{t("student.dashboard.welcome")}</p>
       </div>
 
       <div className={styles._5}>
@@ -84,10 +86,10 @@ export default function StudentDashboard() {
       </div>
 
       <div className={styles._11}>
-        <h2 className={styles._12}>Văn bằng gần đây</h2>
+        <h2 className={styles._12}>{t("student.dashboard.recent_certificates")}</h2>
         <div className={styles._13}>
           {recent.length === 0 ? (
-            <p className="text-gray-400 dark:text-gray-500 text-sm px-2 py-4">Chưa có văn bằng nào.</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm px-2 py-4">{t("student.dashboard.no_certificates")}</p>
           ) : (
             recent.map((cert) => (
               <Link key={cert.id} href={`/student/certificates/${cert.id}`} className={styles._14}>
@@ -105,13 +107,13 @@ export default function StudentDashboard() {
                     <p className={styles._19}>{cert.issuerName} · {cert.issueDate}</p>
                   </div>
                 </div>
-                <span className={styles._20}>{cert.status === "VALID" ? "Hợp lệ" : "Đã thu hồi"}</span>
+                <span className={styles._20}>{cert.status === "VALID" ? t("common.valid") : t("common.revoked")}</span>
               </Link>
             ))
           )}
         </div>
         <Link href="/student/certificates" className={styles._21}>
-          Xem tất cả văn bằng
+          {t("student.dashboard.view_all_certificates")}
           <svg className={styles._22} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
           </svg>
