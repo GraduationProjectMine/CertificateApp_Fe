@@ -223,10 +223,20 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       "forgot": {
         "email_required": "Vui lòng nhập email tài khoản",
         "email_invalid": "Email không hợp lệ",
-        "success_message": "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn.",
+        "success_message": "Nếu email thuộc hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi trong vài phút.",
         "send_failed": "Không thể gửi yêu cầu đặt lại mật khẩu",
         "error_occurred": "Có lỗi xảy ra. Vui lòng thử lại sau."
-      }
+      },
+      "login_visual_tag": "Bảo mật danh tính học thuật",
+      "login_visual_title": "Truy cập hệ thống cấp phát văn bằng số.",
+      "login_visual_desc": "Quản trị, cấp bằng, xác minh và theo dõi dữ liệu blockchain từ một không gian làm việc thống nhất.",
+      "login_welcome": "Chào mừng trở lại",
+      "login_form_subtitle": "Sử dụng email và mật khẩu đã được cấp trong hệ thống.",
+      "forgot_visual_tag": "Khôi phục quyền truy cập",
+      "forgot_visual_title": "Lấy lại tài khoản quản trị một cách an toàn.",
+      "forgot_visual_desc": "Gửi yêu cầu đặt lại mật khẩu qua email đã đăng ký, sau đó quay lại hệ thống để tiếp tục cấp phát và xác minh văn bằng.",
+      "forgot_form_subtitle": "Nhập email quản trị đã đăng ký. Hệ thống sẽ gửi hướng dẫn khôi phục nếu tài khoản tồn tại.",
+      "no_account_question": "Chưa có tài khoản trường học?"
     },
     "common": {
       "loading": "Đang tải...",
@@ -1609,10 +1619,20 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       "forgot": {
         "email_required": "Please enter your account email",
         "email_invalid": "Invalid email address",
-        "success_message": "Password reset instructions have been sent to your email.",
+        "success_message": "If the email exists in the system, password reset instructions will be sent in a few minutes.",
         "send_failed": "Failed to send password reset request",
         "error_occurred": "An error occurred. Please try again later."
-      }
+      },
+      "login_visual_tag": "Academic Identity Security",
+      "login_visual_title": "Access Digital Credential System.",
+      "login_visual_desc": "Manage, issue, verify and track blockchain data from a unified workspace.",
+      "login_welcome": "Welcome back",
+      "login_form_subtitle": "Use your registered email and password.",
+      "forgot_visual_tag": "Access Recovery",
+      "forgot_visual_title": "Recover admin account securely.",
+      "forgot_visual_desc": "Send password reset request via registered email, then return to system to continue issuing and verifying credentials.",
+      "forgot_form_subtitle": "Enter your registered admin email. We will send recovery instructions if the account exists.",
+      "no_account_question": "Don't have a school account?"
     },
     "common": {
       "loading": "Loading...",
