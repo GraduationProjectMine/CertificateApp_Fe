@@ -4,6 +4,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { operationsApi, type AuditLog, type Paginated } from "@/features/admin/services/operations.api";
 import Pagination from "@/components/common/Pagination";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
+import Button from "@/components/ui/Button";
 
 const actions = ["CREATE_CERTIFICATE", "ISSUE_CERTIFICATE", "CREATE_ISSUANCE_BATCH", "REVOKE_CERTIFICATE", "BLOCKCHAIN_TX_FAILED"];
 const actionLabels: Record<string, string> = {
@@ -43,12 +46,27 @@ export default function AdminAuditLogsPage() {
   return (
     <div className={styles._1}>
       <div><h1 className={styles._2}>Nhật ký hoạt động (Audit Logs)</h1><p className={styles._3}>Dòng thời gian bất biến của thao tác cấp phát, blockchain và thu hồi.</p></div>
-      <form className="grid gap-3 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:grid-cols-4" onSubmit={applyFilters}>
-        <label className="text-xs font-bold text-gray-600 dark:text-gray-300">Hành động<select className="mt-1 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-700" value={action} onChange={(event) => setAction(event.target.value)}><option value="">Tất cả</option>{actions.map((item) => <option key={item} value={item}>{actionLabels[item] || item}</option>)}</select></label>
-        <label className="text-xs font-bold text-gray-600 dark:text-gray-300">Người thực hiện<input className="mt-1 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-700" placeholder="Tên hoặc ID" value={actor} onChange={(event) => setActor(event.target.value)} /></label>
-        <label className="text-xs font-bold text-gray-600 dark:text-gray-300">Đối tượng<input className="mt-1 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-700" placeholder="Mã văn bằng/lô" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-        <button className="self-end rounded-xl bg-teal-600 px-4 py-2.5 text-xs font-bold text-white">Lọc nhật ký</button>
-      </form>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <form onSubmit={applyFilters} className="flex gap-3 items-end">
+          <select className="shrink-0 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-xs outline-none" value={action} onChange={(event) => setAction(event.target.value)}>
+            <option value="">Tất cả hành động</option>
+            {actions.map((item) => <option key={item} value={item}>{actionLabels[item] || item}</option>)}
+          </select>
+          <input
+            className="shrink-0 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 text-xs outline-none w-44"
+            placeholder="Người thực hiện..."
+            value={actor}
+            onChange={(event) => setActor(event.target.value)}
+          />
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Mã văn bằng/lô..."
+          />
+          <Button type="submit" variant="secondary" size="sm">Lọc</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setAction(""); setActor(""); setSearch(""); setPage(1); setApplied({ action: "", actor: "", search: "" }); }}>Xoá</Button>
+        </form>
+      </div>
       {error && <div role="alert" className="rounded-xl bg-red-50 p-4 text-xs font-semibold text-red-600">{error}</div>}
 
       <div className={styles._4}>

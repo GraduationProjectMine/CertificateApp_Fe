@@ -1,0 +1,302 @@
+@reference "../../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+
+._root {
+  @apply flex flex-col h-[calc(100vh-64px)] bg-gray-100 dark:bg-gray-950 font-sans;
+}
+
+._header {
+  @apply flex flex-col bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm shrink-0;
+}
+
+._headerRow1 {
+  @apply flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-gray-100 dark:border-gray-800 overflow-x-auto whitespace-nowrap gap-4;
+}
+
+._headerLeft {
+  @apply flex items-center gap-3 shrink-0;
+}
+
+._titleGroup {
+  @apply flex items-center gap-2 shrink-0;
+}
+
+._titleIcon {
+  @apply text-xl;
+}
+
+._title {
+  @apply text-base font-extrabold text-gray-900 dark:text-white m-0 whitespace-nowrap;
+}
+
+._divider {
+  @apply h-4 w-px bg-gray-200 dark:bg-gray-700 shrink-0;
+}
+
+._selectorGroup {
+  @apply flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 shadow-sm shrink-0;
+}
+
+._selectorLabel {
+  @apply text-xs font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap;
+}
+
+._selector {
+  @apply bg-transparent text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer pr-1 whitespace-nowrap;
+}
+
+._recordGroup {
+  @apply flex items-center gap-2 text-xs shrink-0;
+}
+
+._recordBadge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 text-blue-800 dark:text-blue-300 font-bold shadow-sm whitespace-nowrap;
+}
+
+._fileBadge {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 font-semibold whitespace-nowrap;
+}
+
+._manualHint {
+  @apply text-gray-400 dark:text-gray-500 font-normal text-[11px] whitespace-nowrap;
+}
+
+._zoomGroup {
+  @apply flex items-center gap-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm shrink-0;
+}
+
+._zoomLabel {
+  @apply text-[11px] font-semibold text-gray-500 dark:text-gray-400 min-w-[36px] text-center;
+}
+
+._headerRow2 {
+  @apply flex items-center justify-between px-4 sm:px-8 py-2.5 bg-gray-50/90 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-800 overflow-x-auto whitespace-nowrap gap-4;
+}
+
+._importLabel {
+  @apply px-3.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all active:scale-95 shrink-0;
+}
+
+._actionDivider {
+  @apply h-4 w-px bg-gray-300/80 dark:bg-gray-600/80 shrink-0;
+}
+
+._exportGroup {
+  @apply flex items-center gap-1.5 bg-sky-50 dark:bg-sky-950/20 border border-sky-200/80 dark:border-sky-900/50 p-1 rounded-xl shadow-sm shrink-0;
+}
+
+._issueGroup {
+  @apply flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/50 p-1 rounded-xl shadow-sm shrink-0;
+}
+
+._emptyState {
+  @apply flex-1 flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-950;
+}
+
+._emptyInner {
+  @apply text-center max-w-lg mb-8;
+}
+
+._emptyIcon {
+  @apply text-5xl mb-3;
+}
+
+._emptyTitle {
+  @apply text-2xl font-extrabold text-gray-900 dark:text-white mb-2;
+}
+
+._emptyDesc {
+  @apply text-xs text-gray-500 dark:text-gray-400 m-0;
+}
+
+._templateGrid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl;
+}
+
+._templateCard {
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 cursor-pointer transition-all duration-200 shadow-sm hover:border-blue-500 dark:hover:border-blue-400 hover:-translate-y-0.5 flex flex-col justify-between;
+}
+
+._templateCardHeader {
+  @apply flex items-center justify-between mb-2;
+}
+
+._templateBadge {
+  @apply text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400;
+}
+
+._templateName {
+  @apply text-sm font-bold text-gray-900 dark:text-white m-0 mb-1.5;
+}
+
+._templateDesc {
+  @apply text-xs text-gray-500 dark:text-gray-400 m-0;
+}
+
+._emptyPlaceholder {
+  @apply col-span-full text-center p-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 w-full;
+}
+
+._workspace {
+  @apply flex flex-1 overflow-hidden;
+}
+
+._sidePanel {
+  @apply w-[340px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 p-4 overflow-y-auto flex flex-col;
+}
+
+._sidePanelHeader {
+  @apply mb-3.5 pb-2.5 border-b border-gray-100 dark:border-gray-800;
+}
+
+._templateNameLabel {
+  @apply text-[11px] font-bold text-blue-600 dark:text-blue-400 mb-0.5;
+}
+
+._sidePanelTitle {
+  @apply text-xs font-extrabold text-gray-900 dark:text-white mb-0.5;
+}
+
+._sidePanelDesc {
+  @apply text-[11px] text-gray-500 dark:text-gray-400 m-0;
+}
+
+._sidePanelDesc strong {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+._navCard {
+  @apply mb-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl;
+}
+
+._navCardHeader {
+  @apply flex items-center justify-between mb-1.5;
+}
+
+._navCardTitle {
+  @apply text-[11px] font-bold text-gray-700 dark:text-gray-300;
+}
+
+._navCardCount {
+  @apply text-[10px] font-semibold text-gray-500 dark:text-gray-400;
+}
+
+._navRow {
+  @apply flex items-center gap-1.5;
+}
+
+._navSelect {
+  @apply flex-1 px-2 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 text-[11px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium;
+}
+
+._formGroup {
+  @apply flex-1 flex flex-col gap-3;
+}
+
+._formLabel {
+  @apply block text-[11px] font-bold text-gray-600 dark:text-gray-400 mb-1;
+}
+
+._formInput {
+  @apply w-full px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-900 dark:text-white bg-white dark:bg-gray-800 outline-none box-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all;
+}
+
+._formSelect {
+  @apply w-full px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-900 dark:text-white bg-white dark:bg-gray-800 outline-none box-border mb-1;
+}
+
+._noFieldsNotice {
+  @apply p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-lg text-[11px] text-amber-800 dark:text-amber-400;
+}
+
+._canvasWrap {
+  @apply flex-1 flex items-center justify-center overflow-auto p-4 sm:p-6 bg-gray-100 dark:bg-gray-950;
+}
+
+._canvas {
+  @apply relative shadow-lg dark:shadow-black/40 rounded overflow-hidden flex-shrink-0;
+}
+
+._overlay {
+  @apply fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[9999] p-4;
+}
+
+._modal {
+  @apply bg-white dark:bg-gray-900 rounded-2xl max-w-[650px] w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl dark:shadow-2xl dark:shadow-black/50 border border-gray-200 dark:border-gray-800;
+}
+
+._modalResultTitle {
+  @apply text-xl font-extrabold text-gray-900 dark:text-white m-0;
+}
+
+._modalResultDesc {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
+}
+
+._detailBox {
+  @apply bg-gray-50 dark:bg-gray-800/40 rounded-xl p-4 border border-gray-200 dark:border-gray-800 flex flex-col gap-3 text-xs;
+}
+
+._detailRow {
+  @apply flex flex-col gap-0.5;
+}
+
+._detailRowLabel {
+  @apply font-bold text-gray-600 dark:text-gray-400;
+}
+
+._detailRowValue {
+  @apply text-gray-900 dark:text-white;
+}
+
+._detailRowCode {
+  @apply bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-[11px] text-gray-900 dark:text-white;
+}
+
+._detailLink {
+  @apply text-blue-600 dark:text-blue-400 break-all font-semibold underline;
+}
+
+._txHashBox {
+  @apply bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 px-2 py-1.5 rounded-md text-[11px] break-all block;
+}
+
+._batchTable {
+  @apply w-full text-xs border-collapse;
+}
+
+._batchThead {
+  @apply bg-gray-100 dark:bg-gray-800 text-left;
+}
+
+._batchTh {
+  @apply px-3 py-2;
+}
+
+._batchTr {
+  @apply border-t border-gray-100 dark:border-gray-800;
+}
+
+._batchTd {
+  @apply px-3 py-2;
+}
+
+._batchSuccess {
+  @apply text-green-600 dark:text-green-400 font-bold;
+}
+
+._batchFail {
+  @apply text-red-600 dark:text-red-400 font-bold;
+}
+
+._batchLink {
+  @apply text-blue-600 dark:text-blue-400 underline;
+}
+
+._batchError {
+  @apply text-red-600 dark:text-red-400;
+}
+
+._resultTableScroll {
+  @apply overflow-x-auto max-h-[300px] border border-gray-200 dark:border-gray-800 rounded-lg mb-4;
+}

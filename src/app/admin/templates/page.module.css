@@ -16,10 +16,6 @@
  @apply text-xs text-gray-500 mt-1;
 }
 
-._5 {
- @apply w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-all select-none;
-}
-
 ._6 {
  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
 }

@@ -7,7 +7,10 @@ import type { CertificateDto } from "@/features/certificates/services/certificat
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import { ActionLink, ActionButton } from "@/components/common/TableActions";
+import Button from "@/components/ui/Button";
 import Pagination from "@/components/common/Pagination";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -146,23 +149,21 @@ export default function AdminCertificatesPage() {
         </button>
       </div>
 
-      <div className={styles._6}>
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo mã văn bằng, tên sinh viên, số hiệu..."
-          className={styles._7}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <div className={styles._8}>
-          <select className={styles._9} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          onChange={setSearchQuery}
+          placeholder="Tìm kiếm theo mã văn bằng, tên sinh viên, số hiệu..."
+        >
+          <select className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="">Tất cả trạng thái</option>
             <option value="DRAFT">Draft</option>
             <option value="PENDING">Pending Blockchain</option>
             <option value="ISSUED">Issued</option>
             <option value="REVOKED">Revoked</option>
           </select>
-        </div>
+          <Button variant="secondary" size="sm" onClick={fetchData} disabled={loading}>Tải lại</Button>
+        </SearchInput>
       </div>
 
       {isIssuer && selectedIds.size > 0 && (
@@ -211,7 +212,7 @@ export default function AdminCertificatesPage() {
           ) : error ? (
             <div className="p-8 text-center text-red-500 text-xs">{error}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không có văn bằng nào.</div>
+            <EmptyState icon="📭" title="Không có văn bằng nào" description={searchQuery ? "Thử tìm kiếm với từ khóa khác" : undefined} />
           ) : (
             <>
               <table className={styles._12}>

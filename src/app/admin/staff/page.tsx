@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { staffApi, type StaffDto } from "@/features/staff/services/staff.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
@@ -7,6 +7,9 @@ import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
+import Button from "@/components/ui/Button";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,6 +20,7 @@ export default function StaffListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
   const [lockingId, setLockingId] = useState("");
   const [lockTarget, setLockTarget] = useState<StaffDto | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -41,6 +45,18 @@ export default function StaffListPage() {
   useEffect(() => {
     fetchStaff();
   }, [fetchStaff]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return staff;
+    const q = search.toLowerCase().trim();
+    return staff.filter((s) =>
+      s.name.toLowerCase().includes(q) ||
+      s.email.toLowerCase().includes(q) ||
+      s.staff_id.toLowerCase().includes(q)
+    );
+  }, [staff, search]);
+
+  useEffect(() => { setCurrentPage(1); }, [search]);
 
   const handleLock = async () => {
     if (!canManageStaff || !lockTarget) return;
@@ -157,17 +173,22 @@ export default function StaffListPage() {
         </div>
       )}
 
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Tìm kiếm theo tên, email, ID..."
+        >
+          <Button variant="secondary" size="sm" onClick={fetchStaff} disabled={loading}>Tải lại</Button>
+        </SearchInput>
+      </div>
+
       {loading ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Đang tải danh sách nhân viên...</div>
-      ) : staff.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p>Chưa có nhân viên nào.</p>
-          {canManageStaff && (
-            <button onClick={() => setShowCreate(true)} className="text-primary underline text-xs mt-2 inline-block">
-              Tạo nhân viên đầu tiên
-            </button>
-          )}
-        </div>
+      ) : staff.length === 0 && !search ? (
+        <EmptyState icon="👥" title="Chưa có nhân viên nào" action={canManageStaff ? <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>Tạo nhân viên đầu tiên</Button> : undefined} />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon="🔍" title="Không tìm thấy kết quả" />
       ) : (
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden">
           <table className="w-full text-xs">
@@ -181,7 +202,7 @@ export default function StaffListPage() {
               </tr>
             </thead>
             <tbody>
-              {staff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((s) => (
+              {filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((s) => (
                 <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{s.email}</td>
@@ -223,8 +244,8 @@ export default function StaffListPage() {
           </table>
           <Pagination
             currentPage={currentPage}
-            totalPages={Math.ceil(staff.length / ITEMS_PER_PAGE)}
-            totalItems={staff.length}
+            totalPages={Math.ceil(filtered.length / ITEMS_PER_PAGE)}
+            totalItems={filtered.length}
             itemsPerPage={ITEMS_PER_PAGE}
             onPageChange={setCurrentPage}
           />

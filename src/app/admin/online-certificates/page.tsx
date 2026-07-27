@@ -1,9 +1,12 @@
 "use client";
 
+import styles from "./page.module.css";
 import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
 import { certificateApi, type OnlineCertificateDto } from "@/features/certificates/services/certificate.api";
 import Pagination from "@/components/common/Pagination";
+import Button from "@/components/ui/Button";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -55,227 +58,147 @@ export default function AdminOnlineCertificatesPage() {
   }, [filtered, currentPage]);
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1400, margin: "0 auto" }}>
+    <div className={styles._container}>
       {/* Header Banner */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
+      <div className={styles._headerRow}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 900, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>
+          <div className={styles._headerTitleWrap}>
+            <h1 className={styles._title}>
               Văn bằng số (Online Certificates)
             </h1>
-            <span style={{ background: "#e8f5e9", color: "#09561eff", border: "1px solid #bfdbfe", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+            <span className={styles._countBadge}>
               {certificates.length} văn bằng
             </span>
           </div>
-          <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+          <p className={styles._subtitle}>
             Danh sách văn bằng phát hành trực tiếp từ mẫu và nạp dữ liệu online, được lưu tại bảng <code>online_certificates</code>, Pinata IPFS &amp; Blockchain.
           </p>
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
-          <Link
-            href="/admin/templates/generator"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "#10766Eff",
-              color: "#fff",
-              padding: "10px 18px",
-              borderRadius: 12,
-              fontWeight: 700,
-              fontSize: 13,
-              textDecoration: "none",
-              boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
-              transition: "all 0.2s"
-            }}
-          >
-            <span>+ Tạo văn bằng số mới</span>
-          </Link>
+          <Button href="/admin/templates/generator" variant="primary" size="sm">
+            + Tạo văn bằng số mới
+          </Button>
         </div>
       </div>
 
       {/* Stats Counter Bar */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Tổng văn bằng số</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a" }}>{certificates.length}</div>
+      <div className={styles._statsGrid}>
+        <div className={styles._statCard}>
+          <div className={styles._statLabel}>Tổng văn bằng số</div>
+          <div className={styles._statValue}>{certificates.length}</div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã ghi Blockchain</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#16a34a" }}>
+        <div className={styles._statCard}>
+          <div className={styles._statLabel} style={{ color: "#16a34a" }}>Đã ghi Blockchain</div>
+          <div className={styles._statValueGreen}>
             {certificates.filter(c => !!c.tx_hash).length}
           </div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#0284c7", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã lưu IPFS JSON</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#0284c7" }}>
+        <div className={styles._statCard}>
+          <div className={styles._statLabel} style={{ color: "#0284c7" }}>Đã lưu IPFS JSON</div>
+          <div className={styles._statValueBlue}>
             {certificates.filter(c => !!c.ipfs_cid).length}
           </div>
         </div>
       </div>
 
       {/* Control / Search Panel */}
-      <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: 16, borderRadius: 16, marginBottom: 20, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên văn bằng, sinh viên, số hiệu, số vào sổ, Tx Hash..."
-            style={{
-              width: "100%",
-              padding: "10px 14px 10px 38px",
-              borderRadius: 10,
-              border: "1px solid #cbd5e1",
-              fontSize: 13,
-              outline: "none",
-              background: "#f8fafc"
-            }}
-          />
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: 14 }}>🔍</span>
-        </div>
-
-        <button
-          onClick={fetchData}
-          style={{
-            padding: "10px 16px",
-            background: "#f1f5f9",
-            color: "#334155",
-            border: "1px solid #cbd5e1",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer"
-          }}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Tìm theo tên văn bằng, sinh viên, số hiệu, số vào sổ, Tx Hash..."
         >
-          🔄 Tải lại
-        </button>
+          <Button variant="secondary" size="sm" onClick={fetchData} disabled={loading}>Tải lại</Button>
+        </SearchInput>
       </div>
 
       {/* Main Data Table */}
-      <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+      <div className={styles._tableWrap}>
         {loading ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#64748b", fontSize: 14 }}>
+          <div className={styles._loading}>
             ⏳ Đang tải danh sách văn bằng số...
           </div>
         ) : error ? (
-          <div style={{ padding: 32, textAlign: "center", color: "#dc2626", fontSize: 14 }}>
+          <div className={styles._error}>
             ⚠️ {error}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#64748b" }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#334155" }}>Không tìm thấy văn bằng số nào</div>
-            <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>
-              {searchQuery ? "Thử tìm kiếm với từ khóa khác" : "Hãy tạo văn bằng số đầu tiên trong mục Tạo & Xuất bằng"}
-            </p>
-          </div>
+          <EmptyState
+            icon="📭"
+            title="Không tìm thấy văn bằng số nào"
+            description={searchQuery ? "Thử tìm kiếm với từ khóa khác" : "Hãy tạo văn bằng số đầu tiên trong mục Tạo & Xuất bằng"}
+          />
         ) : (
           <>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+            <div className={styles._tableScroll}>
+              <table className={styles._table}>
                 <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 700 }}>
-                    <th style={{ padding: "14px 16px" }}>Mã &amp; Tên văn bằng</th>
-                    <th style={{ padding: "14px 16px" }}>Sinh viên / Người nhận</th>
-                    <th style={{ padding: "14px 16px" }}>Số hiệu / Số sổ</th>
-                    <th style={{ padding: "14px 16px" }}>IPFS (JSON)</th>
-                    <th style={{ padding: "14px 16px" }}>Blockchain Hash</th>
-                    <th style={{ padding: "14px 16px" }}>Ngày cấp</th>
-                    <th style={{ padding: "14px 16px", textAlign: "right" }}>Hành động</th>
+                  <tr className={styles._thead}>
+                    <th className={styles._th}>Mã &amp; Tên văn bằng</th>
+                    <th className={styles._th}>Sinh viên / Người nhận</th>
+                    <th className={styles._th}>Số hiệu / Số sổ</th>
+                    <th className={styles._th}>IPFS (JSON)</th>
+                    <th className={styles._th}>Blockchain Hash</th>
+                    <th className={styles._th}>Ngày cấp</th>
+                    <th className={styles._thRight}>Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((cert) => (
-                    <tr key={cert.certificate_id} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}>
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#0f172a" }}>{cert.certificate_title}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace", marginTop: 2 }}>ID: {cert.certificate_id}</div>
+                    <tr key={cert.certificate_id} className={styles._tr}>
+                      <td className={styles._td}>
+                        <div className={styles._certTitle}>{cert.certificate_title}</div>
+                        <div className={styles._certId}>ID: {cert.certificate_id}</div>
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#334155" }}>{cert.student_fullName}</div>
-                        {cert.student_id && <div style={{ fontSize: 11, color: "#64748b" }}>SV: {cert.student_id}</div>}
+                      <td className={styles._td}>
+                        <div className={styles._studentName}>{cert.student_fullName}</div>
+                        {cert.student_id && <div className={styles._studentId}>SV: {cert.student_id}</div>}
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
-                        <div><strong style={{ color: "#475569" }}>SH:</strong> {cert.serialNumber || "—"}</div>
-                        <div><strong style={{ color: "#475569" }}>Sổ:</strong> {cert.registryNumber || "—"}</div>
+                      <td className={styles._td}>
+                        <div><strong className={styles._metaLabel}>SH:</strong> {cert.serialNumber || "—"}</div>
+                        <div><strong className={styles._metaLabel}>Sổ:</strong> {cert.registryNumber || "—"}</div>
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
+                      <td className={styles._td}>
                         {cert.ipfs_cid ? (
                           <a
                             href={`https://gateway.pinata.cloud/ipfs/${cert.ipfs_cid}`}
                             target="_blank"
                             rel="noreferrer"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                              background: "#f0f9ff",
-                              color: "#0284c7",
-                              border: "1px solid #bae6fd",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              textDecoration: "none"
-                            }}
+                            className={styles._ipfsBadge}
                           >
                             🌐 IPFS Gateway
                           </a>
                         ) : (
-                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa lưu</span>
+                          <span className={styles._naText}>Chưa lưu</span>
                         )}
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
+                      <td className={styles._td}>
                         {cert.tx_hash ? (
-                          <span
-                            title={cert.tx_hash}
-                            style={{
-                              display: "inline-block",
-                              background: "#f0fdf4",
-                              color: "#16a34a",
-                              border: "1px solid #bbf7d0",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              fontFamily: "monospace"
-                            }}
-                          >
+                          <span title={cert.tx_hash} className={styles._txBadge}>
                             ✓ {cert.tx_hash.slice(0, 10)}...{cert.tx_hash.slice(-6)}
                           </span>
                         ) : (
-                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa ghi</span>
+                          <span className={styles._naText}>Chưa ghi</span>
                         )}
                       </td>
 
-                      <td style={{ padding: "14px 16px", color: "#64748b", fontSize: 12 }}>
-                        {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
+                      <td className={styles._td}>
+                        <span className={styles._dateText}>
+                          {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
+                        </span>
                       </td>
 
-                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                        <button
-                          onClick={() => setSelectedCert(cert)}
-                          style={{
-                            background: "#f1f5f9",
-                            color: "#2563eb",
-                            border: "1px solid #cbd5e1",
-                            padding: "6px 12px",
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer"
-                          }}
-                        >
+                      <td className={styles._td} style={{ textAlign: "right" }}>
+                        <Button onClick={() => setSelectedCert(cert)} variant="ghost" size="sm">
                           Chi tiết
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -295,101 +218,75 @@ export default function AdminOnlineCertificatesPage() {
 
       {/* Detail Modal */}
       {selectedCert && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 20, maxWidth: 600, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, borderBottom: "1px solid #f1f5f9", paddingBottom: 12 }}>
+        <div className={styles._overlay}>
+          <div className={styles._modal}>
+            <div className={styles._modalHeader}>
               <div>
-                <span style={{ background: "#eff6ff", color: "#2563eb", fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>Văn bằng số</span>
-                <h2 style={{ fontSize: 18, fontWeight: 900, color: "#0f172a", margin: "4px 0 0 0" }}>{selectedCert.certificate_title}</h2>
+                <span className={styles._modalBadge}>Văn bằng số</span>
+                <h2 className={styles._modalTitle}>{selectedCert.certificate_title}</h2>
               </div>
-              <button onClick={() => setSelectedCert(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>✕</button>
+              <button onClick={() => setSelectedCert(null)} className={styles._modalClose} type="button">✕</button>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13 }}>
-              <div style={{ background: "#f8fafc", padding: 14, borderRadius: 12, border: "1px solid #e2e8f0" }}>
-                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700, marginBottom: 2 }}>MÃ VĂN BẰNG (ID)</div>
-                <code style={{ fontSize: 12, color: "#0f172a", wordBreak: "break-all" }}>{selectedCert.certificate_id}</code>
+              <div className={styles._detailCard}>
+                <div className={styles._detailLabel}>MÃ VĂN BẰNG (ID)</div>
+                <code className={styles._detailValue}>{selectedCert.certificate_id}</code>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SINH VIÊN</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.student_fullName}</div>
+              <div className={styles._detailGrid2}>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>SINH VIÊN</div>
+                  <div className={styles._detailValueName}>{selectedCert.student_fullName}</div>
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>MÃ SINH VIÊN</div>
-                  <div style={{ fontWeight: 700, color: "#334155", marginTop: 2 }}>{selectedCert.student_id || "Không gắn thẻ"}</div>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>MÃ SINH VIÊN</div>
+                  <div className={styles._detailValueName}>{selectedCert.student_id || "Không gắn thẻ"}</div>
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SỐ HIỆU (SERIAL)</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.serialNumber || "—"}</div>
+              <div className={styles._detailGrid2}>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>SỐ HIỆU (SERIAL)</div>
+                  <div className={styles._detailValueName}>{selectedCert.serialNumber || "—"}</div>
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SỐ VÀO SỔ</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.registryNumber || "—"}</div>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>SỐ VÀO SỔ</div>
+                  <div className={styles._detailValueName}>{selectedCert.registryNumber || "—"}</div>
                 </div>
               </div>
 
               {selectedCert.ipfs_cid && (
-                <div style={{ background: "#f0f9ff", padding: 12, borderRadius: 10, border: "1px solid #bae6fd" }}>
-                  <div style={{ color: "#0369a1", fontSize: 11, fontWeight: 700 }}>IPFS CID &amp; GATEWAY</div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: "#0c4a6e", wordBreak: "break-all", margin: "4px 0 8px 0" }}>{selectedCert.ipfs_cid}</div>
+                <div className={styles._ipfsCard}>
+                  <div className={styles._ipfsCardLabel}>IPFS CID &amp; GATEWAY</div>
+                  <div className={styles._ipfsCardCid}>{selectedCert.ipfs_cid}</div>
                   <a
                     href={`https://gateway.pinata.cloud/ipfs/${selectedCert.ipfs_cid}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontSize: 12, fontWeight: 800, color: "#0284c7", textDecoration: "none" }}
+                    className={styles._ipfsCardLink}
                   >
-                    🔗 Mở JSON gốc trên Pinata IPFS Gateway →
+                    Mở JSON gốc trên Pinata IPFS Gateway →
                   </a>
                 </div>
               )}
 
               {selectedCert.tx_hash && (
-                <div style={{ background: "#f0fdf4", padding: 12, borderRadius: 10, border: "1px solid #bbf7d0" }}>
-                  <div style={{ color: "#15803d", fontSize: 11, fontWeight: 700 }}>BLOCKCHAIN TRANSACTION HASH</div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: "#14532d", wordBreak: "break-all", marginTop: 4 }}>{selectedCert.tx_hash}</div>
+                <div className={styles._txCard}>
+                  <div className={styles._txCardLabel}>BLOCKCHAIN TRANSACTION HASH</div>
+                  <div className={styles._txCardValue}>{selectedCert.tx_hash}</div>
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                <Link
-                  href="/public/verify"
-                  target="_blank"
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    background: "#2563eb",
-                    color: "#fff",
-                    padding: "10px",
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    textDecoration: "none"
-                  }}
-                >
-                  🔍 Mở trang xác minh công khai
-                </Link>
-                <button
-                  onClick={() => setSelectedCert(null)}
-                  style={{
-                    background: "#f1f5f9",
-                    color: "#334155",
-                    border: "1px solid #cbd5e1",
-                    padding: "10px 18px",
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: "pointer"
-                  }}
-                >
+              <div className={styles._modalActions}>
+                <Button href="/public/verify" variant="primary" size="sm">
+                    Mở trang xác minh công khai
+                </Button>
+                <Button onClick={() => setSelectedCert(null)} variant="secondary" size="sm">
                   Đóng
-                </button>
+                </Button>
               </div>
             </div>
           </div>

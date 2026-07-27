@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./page.module.css";
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -9,6 +10,7 @@ import type { CertificateTemplate, TemplateField, DesignData } from "@/features/
 import { certificateApi, type CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { QRCodeSVG } from "qrcode.react";
+import Button from "@/components/ui/Button";
 
 const ALL_BINDING_LABELS: Record<string, string> = {
   student_id: "Mã sinh viên",
@@ -401,30 +403,30 @@ export default function CertificateGeneratorPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500 text-xs">Đang tải danh sách mẫu...</div>;
+    return <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-xs">Đang tải danh sách mẫu...</div>;
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
+    <div className={styles._root}>
       {/* Header Toolbar - 2-Row Layout */}
-      <div className="flex flex-col bg-white border-b border-slate-200 shadow-2xs shrink-0">
+      <div className={styles._header}>
         {/* Row 1: Title, Template Selector, Record Badge & Zoom Controls */}
-        <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 overflow-x-auto whitespace-nowrap gap-4">
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xl">🎓</span>
-              <h1 className="text-base font-extrabold text-slate-900 m-0 whitespace-nowrap">Tạo & Xuất bằng PDF</h1>
+        <div className={styles._headerRow1}>
+          <div className={styles._headerLeft}>
+            <div className={styles._titleGroup}>
+              <span className={styles._titleIcon}>🎓</span>
+              <h1 className={styles._title}>Tạo & Xuất bằng PDF</h1>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-200 shrink-0" />
+            <div className={styles._divider} />
 
             {/* Template Selector Dropdown */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs shrink-0">
-              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Chọn mẫu:</span>
+            <div className={styles._selectorGroup}>
+              <span className={styles._selectorLabel}>Chọn mẫu:</span>
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleSelectTemplate(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1 whitespace-nowrap"
+                className={styles._selector}
               >
                 <option value="">-- Chọn mẫu văn bằng --</option>
                 {templates.map((t) => (
@@ -437,18 +439,18 @@ export default function CertificateGeneratorPage() {
 
             {selectedTemplate && (
               <>
-                <div className="h-4 w-[1px] bg-slate-200 shrink-0" />
+                <div className={styles._divider} />
                 {/* Record Status Badge in Top Bar */}
-                <div className="flex items-center gap-2 text-xs shrink-0">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 font-bold shadow-2xs whitespace-nowrap">
-                    📄 Bản ghi: <strong className="text-blue-600">{activeRowIndex + 1}</strong> / {records.length}
+                <div className={styles._recordGroup}>
+                  <span className={styles._recordBadge}>
+                    📄 Bản ghi: <strong className="text-blue-600 dark:text-blue-400">{activeRowIndex + 1}</strong> / {records.length}
                   </span>
                   {importedFileName ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold whitespace-nowrap">
+                    <span className={styles._fileBadge}>
                       📁 {importedFileName}
                     </span>
                   ) : (
-                    <span className="text-slate-400 font-normal text-[11px] whitespace-nowrap">(Dữ liệu nhập tay)</span>
+                    <span className={styles._manualHint}>(Dữ liệu nhập tay)</span>
                   )}
                 </div>
               </>
@@ -457,82 +459,83 @@ export default function CertificateGeneratorPage() {
 
           {selectedTemplate && (
             /* Zoom Controls */
-            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-1 shadow-2xs shrink-0">
-              <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="px-2 py-0.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition-colors" title="Thu nhỏ">−</button>
-              <span className="text-[11px] font-semibold text-slate-600 min-w-[36px] text-center">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} className="px-2 py-0.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition-colors" title="Phóng to">+</button>
+            <div className={styles._zoomGroup}>
+              <Button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} variant="ghost" size="sm" title="Thu nhỏ">−</Button>
+              <span className={styles._zoomLabel}>{Math.round(zoom * 100)}%</span>
+              <Button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} variant="ghost" size="sm" title="Phóng to">+</Button>
             </div>
           )}
         </div>
 
         {/* Row 2: Pure Action Bar for Import, Export & Blockchain Issue (Evenly Spread) */}
         {selectedTemplate && (
-          <div className="flex items-center justify-between px-8 py-2.5 bg-slate-50/90 border-t border-slate-100 overflow-x-auto whitespace-nowrap gap-4">
+          <div className={styles._headerRow2}>
             {/* Group 1: Import Data */}
-            <label className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 shrink-0">
+            <label className={styles._importLabel}>
               <span>📥</span>
               <span>{importing ? "Đang nạp..." : "Import CSV/Excel"}</span>
               <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} className="hidden" />
             </label>
 
-            <div className="h-4 w-[1px] bg-slate-300/80 shrink-0" />
+            <div className={styles._actionDivider} />
 
             {/* Group 2: PDF Export Group */}
-            <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200/80 p-1 rounded-xl shadow-2xs shrink-0">
-              <button
+            <div className={styles._exportGroup}>
+              <Button
                 onClick={exportSinglePdf}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-                className="px-3 py-1 text-xs font-bold text-sky-700 bg-white hover:bg-sky-100/80 border border-sky-200/70 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                variant="secondary"
+                size="sm"
                 title="Xuất 1 file PDF cho bản ghi hiện tại"
               >
                 <span>📄</span>
                 <span>{exportingSingle ? "Đang xuất..." : "Xuất PDF bản ghi"}</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={exportBatchZip}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-                className="px-3 py-1 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                variant="primary"
+                size="sm"
                 title="Xuất tất cả PDF thành file ZIP"
               >
                 <span>📦</span>
                 <span>{exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất ZIP tất cả (${records.length})`}</span>
-              </button>
+              </Button>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-300/80 shrink-0" />
+            <div className={styles._actionDivider} />
 
             {/* Group 3: Blockchain Issue Group */}
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 p-1 rounded-xl shadow-2xs shrink-0">
-              <button
+            <div className={styles._issueGroup}>
+              <Button
                 onClick={handleIssueSingle}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-                className="px-3 py-1 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-100/80 border border-emerald-200/70 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                variant="secondary"
+                size="sm"
                 title="Đăng ký bản ghi này lên IPFS & Blockchain"
               >
                 <span>🚀</span>
                 <span>{issuingSingle ? "Đang phát hành..." : "Phát hành bản ghi"}</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleIssueBatch}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-                className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                variant="primary"
+                size="sm"
                 title="Đăng ký tất cả bản ghi lên IPFS & Blockchain"
               >
                 <span>🚀</span>
                 <span>{issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length})`}</span>
-              </button>
+              </Button>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-300/80 shrink-0" />
+            <div className={styles._actionDivider} />
 
             {/* Change Template Action */}
-            <button
-              onClick={handleCancel}
-              className="px-3.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition-all inline-flex items-center gap-1.5 active:scale-95 shadow-2xs shrink-0"
-            >
+            <Button onClick={handleCancel} variant="danger" size="sm">
               <span>✕</span>
               <span>Đổi mẫu</span>
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -540,135 +543,98 @@ export default function CertificateGeneratorPage() {
       {/* Main Content Workspace */}
       {!selectedTemplate ? (
         /* Empty / Initial Template Selection Screen */
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, background: "#f8fafc" }}>
-          <div style={{ textAlign: "center", maxWidth: 600, marginBottom: 32 }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>🎓</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>Vui lòng chọn mẫu văn bằng</h2>
-            <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+        <div className={styles._emptyState}>
+          <div className={styles._emptyInner}>
+            <div className={styles._emptyIcon}>🎓</div>
+            <h2 className={styles._emptyTitle}>Vui lòng chọn mẫu văn bằng</h2>
+            <p className={styles._emptyDesc}>
               Hãy chọn 1 mẫu văn bằng bên dưới để hiển thị phôi thiết kế, nạp dữ liệu nhập tay hoặc file Excel và xuất PDF / Phát hành IPFS & Blockchain.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, width: "100%", maxWidth: 800 }}>
+          <div className={styles._templateGrid}>
             {templates.map((t) => (
               <div
                 key={t.id}
                 onClick={() => handleSelectTemplate(t.id)}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 16,
-                  padding: 20,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#3b82f6";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#e2e8f0";
-                  e.currentTarget.style.transform = "none";
-                }}
+                className={styles._templateCard}
               >
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#eff6ff", color: "#2563eb" }}>
+                  <div className={styles._templateCardHeader}>
+                    <span className={styles._templateBadge}>
                       {t.is_default ? "Mẫu mặc định" : "Mẫu đã tạo"}
                     </span>
                   </div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: "0 0 6px 0" }}>{t.name}</h3>
-                  <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{t.description || "Không có mô tả"}</p>
+                  <h3 className={styles._templateName}>{t.name}</h3>
+                  <p className={styles._templateDesc}>{t.description || "Không có mô tả"}</p>
                 </div>
 
-                <button
-                  style={{
-                    marginTop: 16,
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    background: "#3b82f6",
-                    color: "#fff",
-                    border: "none",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
+                <Button variant="primary" size="sm" className="w-full">
                   Chọn mẫu này →
-                </button>
+                </Button>
               </div>
             ))}
 
             {templates.length === 0 && (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 32, background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", width: "100%" }}>
-                <p style={{ fontSize: 13, color: "#64748b" }}>Chưa có mẫu văn bằng nào. Hãy tạo mẫu trong mục <strong>Mẫu văn bằng</strong> trước.</p>
+              <div className={styles._emptyPlaceholder}>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Chưa có mẫu văn bằng nào. Hãy tạo mẫu trong mục <strong>Mẫu văn bằng</strong> trước.</p>
               </div>
             )}
           </div>
         </div>
       ) : (
         /* Loaded Template Workspace */
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <div className={styles._workspace}>
           {/* Dynamic Input Side Panel */}
-          <div style={{ width: 340, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-            <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid #f1f5f9" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", marginBottom: 2 }}>Mẫu: {selectedTemplate.name}</div>
-              <h2 style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>Nhập dữ liệu theo mẫu</h2>
-              <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>
-                Hiển thị <strong style={{ color: "#2563eb" }}>{boundFields.length} nhãn động</strong> thuộc mẫu này.
+          <div className={styles._sidePanel}>
+            <div className={styles._sidePanelHeader}>
+              <div className={styles._templateNameLabel}>Mẫu: {selectedTemplate.name}</div>
+              <h2 className={styles._sidePanelTitle}>Nhập dữ liệu theo mẫu</h2>
+              <p className={styles._sidePanelDesc}>
+                Hiển thị <strong>{boundFields.length} nhãn động</strong> thuộc mẫu này.
               </p>
             </div>
 
             {/* Record Navigator */}
-            <div style={{ marginBottom: 16, background: "#f8fafc", border: "1px solid #e2e8f0", padding: 10, borderRadius: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#334155" }}>
+            <div className={styles._navCard}>
+              <div className={styles._navCardHeader}>
+                <span className={styles._navCardTitle}>
                   {importedFileName ? `📁 ${importedFileName}` : "Bản ghi nhập tay"}
                   {importedFileName && (
-                    <button
+                    <Button
                       onClick={() => {
                         setRecords([{}]);
                         setActiveRowIndex(0);
                         setImportedFileName("");
                       }}
+                      variant="ghost"
+                      size="sm"
                       title="Xóa dữ liệu nạp từ file"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#ef4444",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        marginLeft: 6,
-                      }}
+                      className="!text-red-500 !p-0 !ml-1.5"
                     >
                       [Xóa file]
-                    </button>
+                    </Button>
                   )}
                 </span>
-                <span style={{ fontSize: 10, fontWeight: 600, color: "#64748b" }}>
+                <span className={styles._navCardCount}>
                   Dòng {activeRowIndex + 1} / {records.length}
                 </span>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <button
+              <div className={styles._navRow}>
+                <Button
                   onClick={() => setActiveRowIndex((i) => Math.max(0, i - 1))}
                   disabled={activeRowIndex <= 0}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                  variant="secondary"
+                  size="sm"
                 >
                   ◄ Trước
-                </button>
+                </Button>
 
                 <select
                   value={activeRowIndex}
                   onChange={(e) => setActiveRowIndex(Number(e.target.value))}
-                  style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#fff", fontWeight: 500 }}
+                  className={styles._navSelect}
                 >
                   {records.map((r, i) => (
                     <option key={i} value={i}>
@@ -677,23 +643,24 @@ export default function CertificateGeneratorPage() {
                   ))}
                 </select>
 
-                <button
+                <Button
                   onClick={() => setActiveRowIndex((i) => Math.min(records.length - 1, i + 1))}
                   disabled={activeRowIndex >= records.length - 1}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex >= records.length - 1 ? 0.4 : 1 }}
+                  variant="secondary"
+                  size="sm"
                 >
                   Sau ►
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Dynamic Input Form (Only for bound fields in the active template) */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className={styles._formGroup}>
               {boundFields.map(({ key, label }) => {
                 if (key === "student_id" && students.length > 0) {
                   return (
                     <div key={key}>
-                      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                      <label className={styles._formLabel}>
                         {label} (Chọn hoặc Nhập tay)
                       </label>
                       <select
@@ -706,7 +673,7 @@ export default function CertificateGeneratorPage() {
                             handleUpdateActiveField("student_fullName", st.student_fullName);
                           }
                         }}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box", marginBottom: 4 }}
+                        className={styles._formSelect}
                       >
                         <option value="">-- Chọn sinh viên có sẵn --</option>
                         {students.map((st) => (
@@ -719,7 +686,7 @@ export default function CertificateGeneratorPage() {
                         type="text"
                         value={activeRecord[key] || ""}
                         onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+                        className={styles._formInput}
                         placeholder="Hoặc nhập mã SV mới..."
                       />
                     </div>
@@ -728,14 +695,14 @@ export default function CertificateGeneratorPage() {
 
                 return (
                   <div key={key}>
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                    <label className={styles._formLabel}>
                       {label}
                     </label>
                     <input
                       type="text"
                       value={activeRecord[key] || ""}
                       onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+                      className={styles._formInput}
                       placeholder={`Nhập ${label.toLowerCase()}...`}
                     />
                   </div>
@@ -743,7 +710,7 @@ export default function CertificateGeneratorPage() {
               })}
 
               {boundFields.length === 0 && (
-                <div style={{ padding: 16, background: "#fffbe6", border: "1px solid #ffe58f", borderRadius: 8, fontSize: 11, color: "#873800" }}>
+                <div className={styles._noFieldsNotice}>
                   Mẫu này chưa có trường động nào. Hãy vào mục <strong>Mẫu văn bằng</strong> để thêm các trường động (binding).
                 </div>
               )}
@@ -751,20 +718,16 @@ export default function CertificateGeneratorPage() {
           </div>
 
           {/* Center Live Canvas Workspace */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "#f1f5f9" }}>
+          <div className={styles._canvasWrap}>
             <div
               ref={canvasRef}
+              className={styles._canvas}
               style={{
-                position: "relative",
                 width: activeDesign.page.width,
                 height: activeDesign.page.height,
                 background: activeDesign.page.bgColor || "#ffffff",
                 transform: `scale(${zoom})`,
                 transformOrigin: "center center",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.06)",
-                borderRadius: 4,
-                overflow: "hidden",
-                flexShrink: 0,
               }}
             >
               {activeDesign.decorations?.map((dec, i) => {
@@ -816,42 +779,42 @@ export default function CertificateGeneratorPage() {
 
       {/* Result Modal for Direct Single / Batch Issuance */}
       {issueResult && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 16, maxWidth: 650, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
+        <div className={styles._overlay}>
+          <div className={styles._modal}>
             {issueResult.type === "SINGLE" ? (
               <div>
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                   <div style={{ fontSize: 44, marginBottom: 8 }}>🎉</div>
-                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>Cấp phát văn bằng thành công!</h2>
-                  <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Văn bằng số đã được lưu vào bảng <strong>online_certificates</strong>, tệp JSON lên IPFS và ghi vĩnh viễn lên Blockchain.</p>
+                  <h2 className={styles._modalResultTitle}>Cấp phát văn bằng thành công!</h2>
+                  <p className={styles._modalResultDesc}>Văn bằng số đã được lưu vào bảng <strong>online_certificates</strong>, tệp JSON lên IPFS và ghi vĩnh viễn lên Blockchain.</p>
                 </div>
 
-                <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>Mã văn bằng (ID): </span>
-                    <code style={{ background: "#e2e8f0", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>{issueResult.data.certificate_id}</code>
+                <div className={styles._detailBox}>
+                  <div className={styles._detailRow}>
+                    <span className={styles._detailRowLabel}>Mã văn bằng (ID): </span>
+                    <code className={styles._detailRowCode}>{issueResult.data.certificate_id}</code>
                   </div>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>Sinh viên: </span>
-                    <strong>{issueResult.data.student_fullName}</strong> ({issueResult.data.student_id})
+                  <div className={styles._detailRow}>
+                    <span className={styles._detailRowLabel}>Sinh viên: </span>
+                    <strong className={styles._detailRowValue}>{issueResult.data.student_fullName}</strong> ({issueResult.data.student_id})
                   </div>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>Tên văn bằng: </span>
-                    {issueResult.data.certificate_title}
+                  <div className={styles._detailRow}>
+                    <span className={styles._detailRowLabel}>Tên văn bằng: </span>
+                    <span className={styles._detailRowValue}>{issueResult.data.certificate_title}</span>
                   </div>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>IPFS CID (JSON Metadata): </span>
+                  <div className={styles._detailRow}>
+                    <span className={styles._detailRowLabel}>IPFS CID (JSON Metadata): </span>
                     <div style={{ marginTop: 4 }}>
-                      <a href={issueResult.data.file_url || `https://gateway.pinata.cloud/ipfs/${issueResult.data.ipfs_cid}`} target="_blank" rel="noreferrer" style={{ color: "#2563eb", wordBreak: "break-all", fontWeight: 600, textDecoration: "underline" }}>
+                      <a href={issueResult.data.file_url || `https://gateway.pinata.cloud/ipfs/${issueResult.data.ipfs_cid}`} target="_blank" rel="noreferrer" className={styles._detailLink}>
                         🔗 {issueResult.data.ipfs_cid}
                       </a>
                     </div>
                   </div>
                   {issueResult.data.tx_hash && (
-                    <div>
-                      <span style={{ fontWeight: 700, color: "#475569" }}>Blockchain Tx Hash: </span>
+                    <div className={styles._detailRow}>
+                      <span className={styles._detailRowLabel}>Blockchain Tx Hash: </span>
                       <div style={{ marginTop: 4 }}>
-                        <code style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 8px", borderRadius: 6, fontSize: 11, wordBreak: "break-all", display: "block" }}>
+                        <code className={styles._txHashBox}>
                           ⚡ {issueResult.data.tx_hash}
                         </code>
                       </div>
@@ -859,49 +822,49 @@ export default function CertificateGeneratorPage() {
                   )}
                 </div>
 
-                <button onClick={() => setIssueResult(null)} style={{ marginTop: 20, width: "100%", padding: "10px", borderRadius: 8, background: "#0f172a", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>
+                <Button onClick={() => setIssueResult(null)} variant="primary" size="md" className="w-full mt-5">
                   Đóng thông báo
-                </button>
+                </Button>
               </div>
             ) : (
               <div>
                 <div style={{ textAlign: "center", marginBottom: 16 }}>
                   <div style={{ fontSize: 44, marginBottom: 8 }}>📦</div>
-                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>Kết quả cấp phát lô văn bằng</h2>
-                  <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
+                  <h2 className={styles._modalResultTitle}>Kết quả cấp phát lô văn bằng</h2>
+                  <p className={styles._modalResultDesc}>
                     Đã xử lý <strong>{issueResult.data.total}</strong> bản ghi (Thành công: <strong style={{ color: "#16a34a" }}>{issueResult.data.successCount}</strong>, Thất bại: <strong style={{ color: "#dc2626" }}>{issueResult.data.failCount}</strong>).
                   </p>
                 </div>
 
-                <div style={{ overflowX: "auto", maxHeight: 300, border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
-                  <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                <div className={styles._resultTableScroll}>
+                  <table className={styles._batchTable}>
                     <thead>
-                      <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
-                        <th style={{ padding: "8px 12px" }}>STT</th>
-                        <th style={{ padding: "8px 12px" }}>Sinh viên</th>
-                        <th style={{ padding: "8px 12px" }}>Trạng thái</th>
-                        <th style={{ padding: "8px 12px" }}>IPFS CID / Ghi chú</th>
+                      <tr className={styles._batchThead}>
+                        <th className={styles._batchTh}>STT</th>
+                        <th className={styles._batchTh}>Sinh viên</th>
+                        <th className={styles._batchTh}>Trạng thái</th>
+                        <th className={styles._batchTh}>IPFS CID / Ghi chú</th>
                       </tr>
                     </thead>
                     <tbody>
                       {issueResult.data.results.map((r: any) => (
-                        <tr key={r.index} style={{ borderTop: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "8px 12px" }}>{r.index}</td>
-                          <td style={{ padding: "8px 12px", fontWeight: 600 }}>{r.student_fullName}</td>
-                          <td style={{ padding: "8px 12px" }}>
+                        <tr key={r.index} className={styles._batchTr}>
+                          <td className={styles._batchTd}>{r.index}</td>
+                          <td className={styles._batchTd} style={{ fontWeight: 600 }}>{r.student_fullName}</td>
+                          <td className={styles._batchTd}>
                             {r.status === "SUCCESS" ? (
-                              <span style={{ color: "#16a34a", fontWeight: 700 }}>✓ Thành công</span>
+                              <span className={styles._batchSuccess}>✓ Thành công</span>
                             ) : (
-                              <span style={{ color: "#dc2626", fontWeight: 700 }}>✕ Thất bại</span>
+                              <span className={styles._batchFail}>✕ Thất bại</span>
                             )}
                           </td>
-                          <td style={{ padding: "8px 12px" }}>
+                          <td className={styles._batchTd}>
                             {r.status === "SUCCESS" ? (
-                              <a href={r.file_url || `https://gateway.pinata.cloud/ipfs/${r.cid}`} target="_blank" rel="noreferrer" style={{ color: "#2563eb", textDecoration: "underline" }}>
+                              <a href={r.file_url || `https://gateway.pinata.cloud/ipfs/${r.cid}`} target="_blank" rel="noreferrer" className={styles._batchLink}>
                                 {r.cid?.slice(0, 16)}...
                               </a>
                             ) : (
-                              <span style={{ color: "#dc2626" }}>{r.error}</span>
+                              <span className={styles._batchError}>{r.error}</span>
                             )}
                           </td>
                         </tr>
@@ -910,9 +873,9 @@ export default function CertificateGeneratorPage() {
                   </table>
                 </div>
 
-                <button onClick={() => setIssueResult(null)} style={{ width: "100%", padding: "10px", borderRadius: 8, background: "#0f172a", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>
+                <Button onClick={() => setIssueResult(null)} variant="primary" size="md" className="w-full">
                   Đóng thông báo
-                </button>
+                </Button>
               </div>
             )}
           </div>

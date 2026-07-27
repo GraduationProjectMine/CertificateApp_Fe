@@ -7,6 +7,9 @@ import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
+import Button from "@/components/ui/Button";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -198,19 +201,19 @@ export default function AdminStudentsPage() {
         </div>
       </div>
 
-      <div className={styles._8}>
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo tên, email, ID..."
-          className={styles._9}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+          onChange={setSearch}
+          placeholder="Tìm kiếm theo tên, email, ID..."
+        >
+          <Button variant="secondary" size="sm" onClick={refresh} disabled={loading}>Tải lại</Button>
+        </SearchInput>
       </div>
 
       {error && (
         <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600 dark:bg-red-950/20">
-          {error} <button onClick={() => void refresh()} className="ml-2 underline">Thử lại</button>
+          {error}
         </div>
       )}
 
@@ -224,7 +227,7 @@ export default function AdminStudentsPage() {
               <button onClick={() => setShowCreate(true)} className="text-primary underline">Tạo sinh viên đầu tiên</button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không tìm thấy kết quả.</div>
+            <EmptyState icon="🔍" title="Không tìm thấy kết quả" />
           ) : (
             <>
               <table className={styles._14}>
