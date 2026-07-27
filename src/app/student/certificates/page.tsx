@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -6,6 +6,9 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
 import { useI18n } from "@/features/i18n/I18nContext";
+import Pagination from "@/components/common/Pagination";
+
+const ITEMS_PER_PAGE = 6;
 
 export default function StudentCertificatesPage() {
   const { user } = useAuth();
@@ -20,6 +23,7 @@ export default function StudentCertificatesPage() {
   const [certs, setCerts] = useState<StudentCertificate[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -40,6 +44,16 @@ export default function StudentCertificatesPage() {
       return true;
     });
   }, [certs, filterType, filterStatus]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, filterStatus]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCerts = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className={styles._1}>
@@ -112,39 +126,49 @@ export default function StudentCertificatesPage() {
           <p className={styles._12}>{t("student.certificates.no_matching")}</p>
         </div>
       ) : (
-        <div className={styles._13}>
-          {filtered.map((cert) => (
-            <Link key={cert.id} href={`/student/certificates/${cert.id}`} className={styles._14}>
-              <div className={styles._15}>
-                <div className={styles._16}>
-                  <div className={styles._17}>
-                    <svg className={styles._18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={cert.type === "BACHELOR_DEGREE"
-                        ? "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                        : "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"}
-                      />
-                    </svg>
+        <div className="space-y-4">
+          <div className={styles._13}>
+            {paginatedCerts.map((cert) => (
+              <Link key={cert.id} href={`/student/certificates/${cert.id}`} className={styles._14}>
+                <div className={styles._15}>
+                  <div className={styles._16}>
+                    <div className={styles._17}>
+                      <svg className={styles._18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={cert.type === "BACHELOR_DEGREE"
+                          ? "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                          : "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"}
+                        />
+                      </svg>
+                    </div>
+                    <div className={styles._19}>
+                      <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? t("common.bachelor_degree") : t("common.certificate")}</p>
+                      <h3 className={styles._21}>{cert.credentialTitle}</h3>
+                      <p className={styles._22}>{cert.issuerName} · {cert.issueDate}</p>
+                    </div>
                   </div>
-                  <div className={styles._19}>
-                    <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? t("common.bachelor_degree") : t("common.certificate")}</p>
-                    <h3 className={styles._21}>{cert.credentialTitle}</h3>
-                    <p className={styles._22}>{cert.issuerName} · {cert.issueDate}</p>
-                  </div>
-                </div>
-                <div className={styles._23}>
-                  {cert.onChain && (
-                    <span className={styles._24}>
-                      <span className={styles._25} />
-                      On-chain
+                  <div className={styles._23}>
+                    {cert.onChain && (
+                      <span className={styles._24}>
+                        <span className={styles._25} />
+                        On-chain
+                      </span>
+                    )}
+                    <span className={`${styles._0} ${cert.status === "VALID" ? styles._26 : styles._27}`}>
+                      {cert.status === "VALID" ? t("common.valid") : t("common.revoked")}
                     </span>
-                  )}
-                  <span className={`${styles._0} ${cert.status === "VALID" ? styles._26 : styles._27}`}>
-                    {cert.status === "VALID" ? t("common.valid") : t("common.revoked")}
-                  </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
     </div>

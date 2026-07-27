@@ -58,7 +58,8 @@ export default function StaffListPage() {
     );
   }, [staff, search]);
 
-  useEffect(() => { setCurrentPage(1); }, [search]);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  useEffect(() => { setCurrentPage(1); }, [search, itemsPerPage]);
 
   const handleLock = async () => {
     if (!canManageStaff || !lockTarget) return;
@@ -204,7 +205,7 @@ export default function StaffListPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((s) => (
+              {filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((s) => (
                 <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{s.email}</td>
@@ -220,10 +221,10 @@ export default function StaffListPage() {
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                       s.isActive
-                        ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border border-green-200/50'
-                        : 'bg-amber-50 dark:bg-amber-950/20 text-warning border border-amber-250/50'
+                        ? 'bg-green-500/10 text-green-500'
+                        : 'bg-red-500/10 text-red-500'
                     }`}>
-                      {s.isActive ? 'ACTIVE' : 'INACTIVE'}
+                      {s.isActive ? t("admin.staff.status_active") : t("admin.staff.status_inactive")}
                     </span>
                   </td>
                   {canManageStaff && (
@@ -246,10 +247,14 @@ export default function StaffListPage() {
           </table>
           <Pagination
             currentPage={currentPage}
-            totalPages={Math.ceil(filtered.length / ITEMS_PER_PAGE)}
+            totalPages={Math.ceil(filtered.length / itemsPerPage)}
             totalItems={filtered.length}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
+            onItemsPerPageChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(1);
+            }}
           />
         </div>
       )}

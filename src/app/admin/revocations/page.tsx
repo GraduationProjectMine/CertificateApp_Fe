@@ -17,6 +17,7 @@ export default function AdminRevocationsPage() {
   const [revoked, setRevoked] = useState<CertificateDto[]>([]);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selected, setSelected] = useState<CertificateDto | null>(null);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [reason, setReason] = useState("");
@@ -109,7 +110,7 @@ export default function AdminRevocationsPage() {
               </tr>
             </thead>
             <tbody className={styles._20}>
-              {revoked.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((certificate) => (
+              {revoked.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((certificate) => (
                 <tr className={styles._21} key={certificate.certificate_id}>
                   <td className={styles._22}>{certificate.serialNumber || certificate.registryNumber}<span className={styles._27}>REVOKED</span></td>
                   <td className={styles._23}>{certificate.student_fullName}</td>
@@ -124,10 +125,14 @@ export default function AdminRevocationsPage() {
           </table>
           <Pagination
             currentPage={currentPage}
-            totalPages={Math.ceil(revoked.length / ITEMS_PER_PAGE)}
+            totalPages={Math.ceil(revoked.length / itemsPerPage)}
             totalItems={revoked.length}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
+            onItemsPerPageChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(1);
+            }}
           />
         </div>
       </section>

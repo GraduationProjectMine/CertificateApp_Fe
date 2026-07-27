@@ -23,6 +23,7 @@ export default function AdminAuditLogsPage() {
 
   const [data, setData] = useState<Paginated<AuditLog>>({ items: [], total: 0, page: 1, limit: 10, totalPages: 0 });
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [action, setAction] = useState("");
   const [actor, setActor] = useState("");
   const [search, setSearch] = useState("");
@@ -34,10 +35,10 @@ export default function AdminAuditLogsPage() {
     try {
       setLoading(true);
       setError("");
-      setData(await operationsApi.auditLogs({ page, limit: 10, ...applied }));
+      setData(await operationsApi.auditLogs({ page, limit, ...applied }));
     } catch (err) { setError(err instanceof Error ? err.message : t("admin.audit_logs.load_failed")); }
     finally { setLoading(false); }
-  }, [page, applied]);
+  }, [page, limit, applied, t]);
   useEffect(() => { void load(); }, [load]);
 
   function applyFilters(event: React.FormEvent) {
@@ -96,8 +97,12 @@ export default function AdminAuditLogsPage() {
           currentPage={page}
           totalPages={data.totalPages}
           totalItems={data.total}
-          itemsPerPage={10}
+          itemsPerPage={limit}
           onPageChange={setPage}
+          onItemsPerPageChange={(size) => {
+            setLimit(size);
+            setPage(1);
+          }}
         />
       </div>
     </div>

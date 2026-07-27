@@ -118,12 +118,14 @@ export default function AdminCertificatesPage() {
     );
   });
 
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterStatus]);
+  }, [searchQuery, filterStatus, itemsPerPage]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginatedCerts = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedCerts = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const pendingCount = filtered.filter((c) => c.status === "PENDING").length;
 
@@ -292,8 +294,12 @@ export default function AdminCertificatesPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={filtered.length}
-                itemsPerPage={ITEMS_PER_PAGE}
+                itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
+                onItemsPerPageChange={(size) => {
+                  setItemsPerPage(size);
+                  setCurrentPage(1);
+                }}
               />
             </>
           )}

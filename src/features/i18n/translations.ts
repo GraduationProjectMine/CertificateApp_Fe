@@ -327,7 +327,11 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       "try_different_search": "Thử tìm kiếm với từ khóa khác",
       "type": "Loại",
       "valid": "Hợp lệ",
-      "view_edit": "Xem / Sửa"
+      "view_edit": "Xem / Sửa",
+      "showing_records": "Hiển thị {start} - {end} trong tổng số {total} bản ghi",
+      "prev_page": "◄ Trước",
+      "next_page": "Sau ►",
+      "per_page": "trang"
     },
     "admin": {
       "brand": "ADMIN CỔNG",
@@ -1709,7 +1713,11 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       "try_different_search": "Try searching with different keywords",
       "type": "Type",
       "valid": "Valid",
-      "view_edit": "View / Edit"
+      "view_edit": "View / Edit",
+      "showing_records": "Showing {start} - {end} of {total} records",
+      "prev_page": "◄ Prev",
+      "next_page": "Next ►",
+      "per_page": "page"
     },
     "admin": {
       "brand": "ADMIN PORTAL",

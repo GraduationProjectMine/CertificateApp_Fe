@@ -105,12 +105,14 @@ export default function AdminStudentsPage() {
     );
   });
 
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, itemsPerPage]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className={styles._1}>
@@ -284,8 +286,12 @@ export default function AdminStudentsPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={filtered.length}
-                itemsPerPage={ITEMS_PER_PAGE}
+                itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
+                onItemsPerPageChange={(size) => {
+                  setItemsPerPage(size);
+                  setCurrentPage(1);
+                }}
               />
             </>
           )}
