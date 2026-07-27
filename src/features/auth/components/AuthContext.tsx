@@ -78,27 +78,66 @@ function beUserToAppUser(data: {
   };
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('auth_user');
-    if (token && savedUser && isTokenValid(token)) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.warn('Unable to restore the stored authentication user.', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('auth_user');
+    async function initAuth() {
+      const token = localStorage.getItem('token');
+      const savedUserStr = localStorage.getItem('auth_user');
+
+      let savedUser: User | null = null;
+      if (savedUserStr) {
+        try {
+          savedUser = JSON.parse(savedUserStr);
+        } catch {
+          savedUser = null;
+        }
       }
-    } else if (token || savedUser) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('auth_user');
+
+      if (token && savedUser && isTokenValid(token)) {
+        setUser(savedUser);
+        setIsLoading(false);
+        return;
+      }
+
+      // If token is missing/expired or savedUser exists, try to silently refresh token via HTTP-only cookie
+      if (token || savedUser) {
+        try {
+          const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            const newToken = refreshData.accessToken;
+            localStorage.setItem('token', newToken);
+            if (savedUser) {
+              setUser(savedUser);
+            }
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_user');
+            setUser(null);
+          }
+        } catch {
+          localStorage.removeItem('token');
+          localStorage.removeItem('auth_user');
+          setUser(null);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
     }
-    setIsLoading(false);
+
+    initAuth();
   }, []);
 
   const saveSession = (token: string, user: User) => {

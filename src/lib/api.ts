@@ -12,6 +12,22 @@ function onRefreshed(token: string) {
   refreshSubscribers = [];
 }
 
+async function safeParseJson(res: Response) {
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`API Endpoint Error (${res.status}): ${res.statusText || 'Invalid response format'}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 export async function request<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   
@@ -39,7 +55,7 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
   const res = await fetch(`${API_URL}${path}`, fetchOptions);
   
   // Handle 401 Unauthorized for silent JWT refresh
-  if (res.status === 401 && path !== '/auth/login' && path !== '/auth/refresh') {
+  if (res.status === 401 && !path.startsWith('/auth/')) {
     if (!isRefreshing) {
       isRefreshing = true;
       try {
@@ -49,13 +65,22 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
         });
         
         if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
+          const refreshData = await safeParseJson(refreshRes);
           const newToken = refreshData.accessToken;
           if (typeof window !== 'undefined') {
             localStorage.setItem('token', newToken);
           }
           isRefreshing = false;
           onRefreshed(newToken);
+
+          // Retry the original request with the new access token
+          headers['Authorization'] = `Bearer ${newToken}`;
+          const retryRes = await fetch(`${API_URL}${path}`, { ...fetchOptions, headers });
+          const retryData = await safeParseJson(retryRes);
+          if (!retryRes.ok) {
+            throw new Error(retryData?.message || retryData?.error || 'Retry failed');
+          }
+          return retryData;
         } else {
           isRefreshing = false;
           if (typeof window !== 'undefined') {
@@ -82,9 +107,9 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
         fetch(`${API_URL}${path}`, { ...fetchOptions, headers })
           .then((retryRes) => {
             if (!retryRes.ok) {
-              retryRes.json().then(data => reject(new Error(data.message || data.error || 'Retry failed')));
+              safeParseJson(retryRes).then(data => reject(new Error(data?.message || data?.error || 'Retry failed'))).catch(reject);
             } else {
-              resolve(retryRes.json());
+              safeParseJson(retryRes).then(resolve).catch(reject);
             }
           })
           .catch(reject);
@@ -92,7 +117,7 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
     });
   }
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
+  const data = await safeParseJson(res);
+  if (!res.ok) throw new Error(data?.message || data?.error || 'Request failed');
   return data;
 }
