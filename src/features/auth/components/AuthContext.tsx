@@ -79,6 +79,7 @@ function beUserToAppUser(data: {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function initAuth() {
       const token = localStorage.getItem('token');
       const savedUserStr = localStorage.getItem('auth_user');
+      const loginTimeStr = localStorage.getItem('auth_login_time');
 
       let savedUser: User | null = null;
       if (savedUserStr) {
@@ -97,6 +99,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch {
           savedUser = null;
         }
+      }
+
+      let loginTime = loginTimeStr ? parseInt(loginTimeStr, 10) : NaN;
+
+      if (token && isNaN(loginTime)) {
+        loginTime = Date.now();
+        localStorage.setItem('auth_login_time', loginTime.toString());
+      }
+
+      // Check if session has exceeded 1 hour
+      if (!isNaN(loginTime) && Date.now() - loginTime >= SESSION_TIMEOUT_MS) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_login_time');
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
 
       if (token && savedUser && isTokenValid(token)) {
@@ -123,11 +142,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             localStorage.removeItem('token');
             localStorage.removeItem('auth_user');
+            localStorage.removeItem('auth_login_time');
             setUser(null);
           }
         } catch {
           localStorage.removeItem('token');
           localStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_login_time');
           setUser(null);
         } finally {
           setIsLoading(false);
@@ -143,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const saveSession = (token: string, user: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('auth_user', JSON.stringify(user));
+    localStorage.setItem('auth_login_time', Date.now().toString());
     setUser(user);
   };
 
@@ -195,12 +217,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_login_time');
       setUser(null);
       // Tear down the protected tree atomically. Unlike pathname-based state,
       // this also completes correctly when logout starts while already on `/`.
       window.location.replace('/');
     }
   }, []);
+
+  // 1-Hour Session Expiry Timer and Visibility/Focus Listener
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSessionExpiry = () => {
+      const loginTimeStr = localStorage.getItem('auth_login_time');
+      if (!loginTimeStr) return;
+      const loginTime = parseInt(loginTimeStr, 10);
+      if (isNaN(loginTime) || Date.now() - loginTime >= SESSION_TIMEOUT_MS) {
+        logout();
+      }
+    };
+
+    checkSessionExpiry();
+
+    const loginTimeStr = localStorage.getItem('auth_login_time');
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (loginTimeStr) {
+      const loginTime = parseInt(loginTimeStr, 10);
+      if (!isNaN(loginTime)) {
+        const timeElapsed = Date.now() - loginTime;
+        const remainingTime = Math.max(0, SESSION_TIMEOUT_MS - timeElapsed);
+        timeoutId = setTimeout(() => {
+          logout();
+        }, remainingTime);
+      }
+    }
+
+    const intervalId = setInterval(checkSessionExpiry, 10000);
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkSessionExpiry();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [user, logout]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithMetaMask, registerWithMetaMask, logout }}>

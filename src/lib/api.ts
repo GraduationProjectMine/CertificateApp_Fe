@@ -56,6 +56,20 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
   
   // Handle 401 Unauthorized for silent JWT refresh
   if (res.status === 401 && !path.startsWith('/auth/')) {
+    if (typeof window !== 'undefined') {
+      const loginTimeStr = localStorage.getItem('auth_login_time');
+      if (loginTimeStr) {
+        const loginTime = parseInt(loginTimeStr, 10);
+        if (!isNaN(loginTime) && Date.now() - loginTime >= 60 * 60 * 1000) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_login_time');
+          window.location.href = '/auth/login';
+          throw new Error('Session expired (1 hour limit)');
+        }
+      }
+    }
+
     if (!isRefreshing) {
       isRefreshing = true;
       try {
@@ -86,6 +100,7 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
           if (typeof window !== 'undefined') {
             localStorage.removeItem('token');
             localStorage.removeItem('auth_user');
+            localStorage.removeItem('auth_login_time');
             window.location.href = '/auth/login';
           }
           throw new Error('Session expired');
@@ -95,6 +110,7 @@ export async function request<T = any>(path: string, options: RequestInit = {}):
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
           localStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_login_time');
           window.location.href = '/auth/login';
         }
         throw err;

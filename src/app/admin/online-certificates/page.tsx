@@ -3,12 +3,16 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { certificateApi, type OnlineCertificateDto } from "@/features/certificates/services/certificate.api";
+import Pagination from "@/components/common/Pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminOnlineCertificatesPage() {
   const [certificates, setCertificates] = useState<OnlineCertificateDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedCert, setSelectedCert] = useState<OnlineCertificateDto | null>(null);
 
   const fetchData = async () => {
@@ -41,17 +45,25 @@ export default function AdminOnlineCertificatesPage() {
     );
   }, [certificates, searchQuery]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = useMemo(() => {
+    return filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [filtered, currentPage]);
+
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1400, margin: "0 auto" }}>
       {/* Header Banner */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <span style={{ fontSize: 24 }}>💻</span>
             <h1 style={{ fontSize: 24, fontWeight: 900, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>
               Văn bằng số (Online Certificates)
             </h1>
-            <span style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: "#e8f5e9", color: "#09561eff", border: "1px solid #bfdbfe", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
               {certificates.length} văn bằng
             </span>
           </div>
@@ -67,18 +79,18 @@ export default function AdminOnlineCertificatesPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              background: "#10766Eff",
               color: "#fff",
               padding: "10px 18px",
               borderRadius: 12,
               fontWeight: 700,
               fontSize: 13,
               textDecoration: "none",
-              boxShadow: "0 4px 12px rgba(37,99,235,0.2)",
+              boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
               transition: "all 0.2s"
             }}
           >
-            <span>✨ Tạo văn bằng số mới</span>
+            <span>+ Tạo văn bằng số mới</span>
           </Link>
         </div>
       </div>
@@ -162,113 +174,122 @@ export default function AdminOnlineCertificatesPage() {
             </p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 700 }}>
-                  <th style={{ padding: "14px 16px" }}>Mã &amp; Tên văn bằng</th>
-                  <th style={{ padding: "14px 16px" }}>Sinh viên / Người nhận</th>
-                  <th style={{ padding: "14px 16px" }}>Số hiệu / Số sổ</th>
-                  <th style={{ padding: "14px 16px" }}>IPFS (JSON)</th>
-                  <th style={{ padding: "14px 16px" }}>Blockchain Hash</th>
-                  <th style={{ padding: "14px 16px" }}>Ngày cấp</th>
-                  <th style={{ padding: "14px 16px", textAlign: "right" }}>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((cert) => (
-                  <tr key={cert.certificate_id} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}>
-                    <td style={{ padding: "14px 16px" }}>
-                      <div style={{ fontWeight: 700, color: "#0f172a" }}>{cert.certificate_title}</div>
-                      <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace", marginTop: 2 }}>ID: {cert.certificate_id}</div>
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      <div style={{ fontWeight: 700, color: "#334155" }}>{cert.student_fullName}</div>
-                      {cert.student_id && <div style={{ fontSize: 11, color: "#64748b" }}>SV: {cert.student_id}</div>}
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      <div><strong style={{ color: "#475569" }}>SH:</strong> {cert.serialNumber || "—"}</div>
-                      <div><strong style={{ color: "#475569" }}>Sổ:</strong> {cert.registryNumber || "—"}</div>
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      {cert.ipfs_cid ? (
-                        <a
-                          href={`https://gateway.pinata.cloud/ipfs/${cert.ipfs_cid}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            background: "#f0f9ff",
-                            color: "#0284c7",
-                            border: "1px solid #bae6fd",
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 700,
-                            textDecoration: "none"
-                          }}
-                        >
-                          🌐 IPFS Gateway
-                        </a>
-                      ) : (
-                        <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa lưu</span>
-                      )}
-                    </td>
-
-                    <td style={{ padding: "14px 16px" }}>
-                      {cert.tx_hash ? (
-                        <span
-                          title={cert.tx_hash}
-                          style={{
-                            display: "inline-block",
-                            background: "#f0fdf4",
-                            color: "#16a34a",
-                            border: "1px solid #bbf7d0",
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 700,
-                            fontFamily: "monospace"
-                          }}
-                        >
-                          ✓ {cert.tx_hash.slice(0, 10)}...{cert.tx_hash.slice(-6)}
-                        </span>
-                      ) : (
-                        <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa ghi</span>
-                      )}
-                    </td>
-
-                    <td style={{ padding: "14px 16px", color: "#64748b", fontSize: 12 }}>
-                      {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
-                    </td>
-
-                    <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                      <button
-                        onClick={() => setSelectedCert(cert)}
-                        style={{
-                          background: "#f1f5f9",
-                          color: "#2563eb",
-                          border: "1px solid #cbd5e1",
-                          padding: "6px 12px",
-                          borderRadius: 8,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Chi tiết
-                      </button>
-                    </td>
+          <>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 700 }}>
+                    <th style={{ padding: "14px 16px" }}>Mã &amp; Tên văn bằng</th>
+                    <th style={{ padding: "14px 16px" }}>Sinh viên / Người nhận</th>
+                    <th style={{ padding: "14px 16px" }}>Số hiệu / Số sổ</th>
+                    <th style={{ padding: "14px 16px" }}>IPFS (JSON)</th>
+                    <th style={{ padding: "14px 16px" }}>Blockchain Hash</th>
+                    <th style={{ padding: "14px 16px" }}>Ngày cấp</th>
+                    <th style={{ padding: "14px 16px", textAlign: "right" }}>Hành động</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginated.map((cert) => (
+                    <tr key={cert.certificate_id} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}>
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ fontWeight: 700, color: "#0f172a" }}>{cert.certificate_title}</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace", marginTop: 2 }}>ID: {cert.certificate_id}</div>
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ fontWeight: 700, color: "#334155" }}>{cert.student_fullName}</div>
+                        {cert.student_id && <div style={{ fontSize: 11, color: "#64748b" }}>SV: {cert.student_id}</div>}
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        <div><strong style={{ color: "#475569" }}>SH:</strong> {cert.serialNumber || "—"}</div>
+                        <div><strong style={{ color: "#475569" }}>Sổ:</strong> {cert.registryNumber || "—"}</div>
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        {cert.ipfs_cid ? (
+                          <a
+                            href={`https://gateway.pinata.cloud/ipfs/${cert.ipfs_cid}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              background: "#f0f9ff",
+                              color: "#0284c7",
+                              border: "1px solid #bae6fd",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              textDecoration: "none"
+                            }}
+                          >
+                            🌐 IPFS Gateway
+                          </a>
+                        ) : (
+                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa lưu</span>
+                        )}
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        {cert.tx_hash ? (
+                          <span
+                            title={cert.tx_hash}
+                            style={{
+                              display: "inline-block",
+                              background: "#f0fdf4",
+                              color: "#16a34a",
+                              border: "1px solid #bbf7d0",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              fontFamily: "monospace"
+                            }}
+                          >
+                            ✓ {cert.tx_hash.slice(0, 10)}...{cert.tx_hash.slice(-6)}
+                          </span>
+                        ) : (
+                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa ghi</span>
+                        )}
+                      </td>
+
+                      <td style={{ padding: "14px 16px", color: "#64748b", fontSize: 12 }}>
+                        {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
+                      </td>
+
+                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                        <button
+                          onClick={() => setSelectedCert(cert)}
+                          style={{
+                            background: "#f1f5f9",
+                            color: "#2563eb",
+                            border: "1px solid #cbd5e1",
+                            padding: "6px 12px",
+                            borderRadius: 8,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Chi tiết
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filtered.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
       </div>
 

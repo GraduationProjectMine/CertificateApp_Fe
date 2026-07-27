@@ -406,86 +406,132 @@ export default function CertificateGeneratorPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
-      {/* Header Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#fff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <h1 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>Tạo & Xuất bằng PDF</h1>
-          
-          {/* Template Selector Dropdown */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>Chọn mẫu:</span>
-            <select
-              value={selectedTemplateId}
-              onChange={(e) => handleSelectTemplate(e.target.value)}
-              style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, fontWeight: 600, color: "#1e293b", background: "#fff" }}
-            >
-              <option value="">-- Chọn mẫu văn bằng --</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} {t.is_default ? "(Mặc định)" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {selectedTemplate && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            {/* Zoom controls */}
-            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f1f5f9", borderRadius: 8, padding: "2px" }}>
-              <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>−</button>
-              <span style={{ fontSize: 11, color: "#64748b", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>+</button>
+      {/* Header Toolbar - 2-Row Layout */}
+      <div className="flex flex-col bg-white border-b border-slate-200 shadow-2xs shrink-0">
+        {/* Row 1: Title, Template Selector, Record Badge & Zoom Controls */}
+        <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 overflow-x-auto whitespace-nowrap gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xl">🎓</span>
+              <h1 className="text-base font-extrabold text-slate-900 m-0 whitespace-nowrap">Tạo & Xuất bằng PDF</h1>
             </div>
 
-            {/* Import File Button */}
-            <label style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#334155", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-              📥 {importing ? "Đang nạp file..." : "Import CSV/Excel"}
-              <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} style={{ display: "none" }} />
+            <div className="h-4 w-[1px] bg-slate-200 shrink-0" />
+
+            {/* Template Selector Dropdown */}
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs shrink-0">
+              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Chọn mẫu:</span>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => handleSelectTemplate(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1 whitespace-nowrap"
+              >
+                <option value="">-- Chọn mẫu văn bằng --</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} {t.is_default ? "(Mặc định)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedTemplate && (
+              <>
+                <div className="h-4 w-[1px] bg-slate-200 shrink-0" />
+                {/* Record Status Badge in Top Bar */}
+                <div className="flex items-center gap-2 text-xs shrink-0">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 font-bold shadow-2xs whitespace-nowrap">
+                    📄 Bản ghi: <strong className="text-blue-600">{activeRowIndex + 1}</strong> / {records.length}
+                  </span>
+                  {importedFileName ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold whitespace-nowrap">
+                      📁 {importedFileName}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 font-normal text-[11px] whitespace-nowrap">(Dữ liệu nhập tay)</span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {selectedTemplate && (
+            /* Zoom Controls */
+            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-1 shadow-2xs shrink-0">
+              <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="px-2 py-0.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition-colors" title="Thu nhỏ">−</button>
+              <span className="text-[11px] font-semibold text-slate-600 min-w-[36px] text-center">{Math.round(zoom * 100)}%</span>
+              <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} className="px-2 py-0.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition-colors" title="Phóng to">+</button>
+            </div>
+          )}
+        </div>
+
+        {/* Row 2: Pure Action Bar for Import, Export & Blockchain Issue (Evenly Spread) */}
+        {selectedTemplate && (
+          <div className="flex items-center justify-between px-8 py-2.5 bg-slate-50/90 border-t border-slate-100 overflow-x-auto whitespace-nowrap gap-4">
+            {/* Group 1: Import Data */}
+            <label className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 shrink-0">
+              <span>📥</span>
+              <span>{importing ? "Đang nạp..." : "Import CSV/Excel"}</span>
+              <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} className="hidden" />
             </label>
 
-            {/* Export Single PDF */}
-            <button
-              onClick={exportSinglePdf}
-              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#059669", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
-            >
-              📄 {exportingSingle ? "Đang xuất..." : "Xuất PDF bản ghi này"}
-            </button>
+            <div className="h-4 w-[1px] bg-slate-300/80 shrink-0" />
 
-            {/* Export Batch ZIP */}
-            <button
-              onClick={exportBatchZip}
-              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#2563eb", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
-            >
-              📦 {exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất tất cả PDF (${records.length})`}
-            </button>
+            {/* Group 2: PDF Export Group */}
+            <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200/80 p-1 rounded-xl shadow-2xs shrink-0">
+              <button
+                onClick={exportSinglePdf}
+                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
+                className="px-3 py-1 text-xs font-bold text-sky-700 bg-white hover:bg-sky-100/80 border border-sky-200/70 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                title="Xuất 1 file PDF cho bản ghi hiện tại"
+              >
+                <span>📄</span>
+                <span>{exportingSingle ? "Đang xuất..." : "Xuất PDF bản ghi"}</span>
+              </button>
+              <button
+                onClick={exportBatchZip}
+                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
+                className="px-3 py-1 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                title="Xuất tất cả PDF thành file ZIP"
+              >
+                <span>📦</span>
+                <span>{exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất ZIP tất cả (${records.length})`}</span>
+              </button>
+            </div>
 
-            {/* Issue Single Certificate (JSON to IPFS & Blockchain) */}
-            <button
-              onClick={handleIssueSingle}
-              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "#059669", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
-            >
-              🚀 {issuingSingle ? "Đang phát hành..." : "Phát hành bản ghi này (IPFS/Chain)"}
-            </button>
+            <div className="h-4 w-[1px] bg-slate-300/80 shrink-0" />
 
-            {/* Issue Batch Certificates (JSON to IPFS & Blockchain) */}
-            <button
-              onClick={handleIssueBatch}
-              disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "#2563eb", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
-            >
-              🚀 {issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length} bằng)`}
-            </button>
+            {/* Group 3: Blockchain Issue Group */}
+            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 p-1 rounded-xl shadow-2xs shrink-0">
+              <button
+                onClick={handleIssueSingle}
+                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
+                className="px-3 py-1 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-100/80 border border-emerald-200/70 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                title="Đăng ký bản ghi này lên IPFS & Blockchain"
+              >
+                <span>🚀</span>
+                <span>{issuingSingle ? "Đang phát hành..." : "Phát hành bản ghi"}</span>
+              </button>
+              <button
+                onClick={handleIssueBatch}
+                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
+                className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
+                title="Đăng ký tất cả bản ghi lên IPFS & Blockchain"
+              >
+                <span>🚀</span>
+                <span>{issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length})`}</span>
+              </button>
+            </div>
 
-            {/* Cancel & Clear Data button */}
+            <div className="h-4 w-[1px] bg-slate-300/80 shrink-0" />
+
+            {/* Change Template Action */}
             <button
               onClick={handleCancel}
-              style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", color: "#e11d48", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}
+              className="px-3.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition-all inline-flex items-center gap-1.5 active:scale-95 shadow-2xs shrink-0"
             >
-              ✕ Đổi mẫu
+              <span>✕</span>
+              <span>Đổi mẫu</span>
             </button>
           </div>
         )}

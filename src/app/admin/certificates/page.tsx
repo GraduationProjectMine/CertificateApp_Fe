@@ -7,6 +7,9 @@ import type { CertificateDto } from "@/features/certificates/services/certificat
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import { ActionLink, ActionButton } from "@/components/common/TableActions";
+import Pagination from "@/components/common/Pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Draft", className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
@@ -20,6 +23,7 @@ export default function AdminCertificatesPage() {
   const { user } = useAuth();
   const isIssuer = user?.role === "issuer";
   const [certificates, setCertificates] = useState<CertificateDto[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -108,6 +112,13 @@ export default function AdminCertificatesPage() {
       (c.serialNumber && c.serialNumber.toLowerCase().includes(q))
     );
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCerts = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const pendingCount = filtered.filter((c) => c.status === "PENDING").length;
 
@@ -202,77 +213,86 @@ export default function AdminCertificatesPage() {
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không có văn bằng nào.</div>
           ) : (
-            <table className={styles._12}>
-              <thead>
-                <tr className={styles._13}>
-                  {isIssuer && (
-                    <th className={styles._14} style={{ width: 36 }}>
-                      <input type="checkbox" checked={selectedIds.size === pendingCount && pendingCount > 0} onChange={toggleSelectAll} className="accent-primary" />
-                    </th>
-                  )}
-                  <th className={styles._14}>Mã văn bằng</th>
-                  <th className={styles._14}>Sinh viên</th>
-                  <th className={styles._14}>Loại bằng</th>
-                  <th className={styles._14}>Ngày cấp</th>
-                  <th className={styles._15}>IPFS Gateway</th>
-                  <th className={styles._15}>Blockchain status</th>
-                  <th className={styles._14}>Trạng thái</th>
-                  <th className={styles._16}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className={styles._17}>
-                {filtered.map((cert) => {
-                  const statusStyle = STATUS_MAP[cert.status] || STATUS_MAP.DRAFT;
-                  const isPending = cert.status === "PENDING";
-                  return (
-                    <tr key={cert.certificate_id} className={`${styles._18} ${isPending && isIssuer ? "cursor-pointer" : ""}`}>
-                      {isIssuer && (
+            <>
+              <table className={styles._12}>
+                <thead>
+                  <tr className={styles._13}>
+                    {isIssuer && (
+                      <th className={styles._14} style={{ width: 36 }}>
+                        <input type="checkbox" checked={selectedIds.size === pendingCount && pendingCount > 0} onChange={toggleSelectAll} className="accent-primary" />
+                      </th>
+                    )}
+                    <th className={styles._14}>Mã văn bằng</th>
+                    <th className={styles._14}>Sinh viên</th>
+                    <th className={styles._14}>Loại bằng</th>
+                    <th className={styles._14}>Ngày cấp</th>
+                    <th className={styles._15}>IPFS Gateway</th>
+                    <th className={styles._15}>Blockchain status</th>
+                    <th className={styles._14}>Trạng thái</th>
+                    <th className={styles._16}>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className={styles._17}>
+                  {paginatedCerts.map((cert) => {
+                    const statusStyle = STATUS_MAP[cert.status] || STATUS_MAP.DRAFT;
+                    const isPending = cert.status === "PENDING";
+                    return (
+                      <tr key={cert.certificate_id} className={`${styles._18} ${isPending && isIssuer ? "cursor-pointer" : ""}`}>
+                        {isIssuer && (
+                          <td className={styles._14}>
+                            {isPending && (
+                              <input type="checkbox" checked={selectedIds.has(cert.certificate_id)} onChange={() => toggleSelect(cert.certificate_id)} className="accent-primary" />
+                            )}
+                          </td>
+                        )}
+                        <td className={styles._19}>{cert.certificate_id.slice(0, 8)}...</td>
+                        <td className={styles._20}>{cert.student_fullName}</td>
+                        <td className={styles._21}>{cert.certificate_title}</td>
                         <td className={styles._14}>
-                          {isPending && (
-                            <input type="checkbox" checked={selectedIds.has(cert.certificate_id)} onChange={() => toggleSelect(cert.certificate_id)} className="accent-primary" />
+                          {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "-"}
+                        </td>
+                        <td className={styles._15}>
+                          {cert.ipfs_cid ? (
+                            <span className={styles._23}>{cert.ipfs_cid.slice(0, 12)}...</span>
+                          ) : (
+                            <span className={styles._24}>-</span>
                           )}
                         </td>
-                      )}
-                      <td className={styles._19}>{cert.certificate_id.slice(0, 8)}...</td>
-                      <td className={styles._20}>{cert.student_fullName}</td>
-                      <td className={styles._21}>{cert.certificate_title}</td>
-                      <td className={styles._14}>
-                        {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "-"}
-                      </td>
-                      <td className={styles._15}>
-                        {cert.ipfs_cid ? (
-                          <span className={styles._23}>{cert.ipfs_cid.slice(0, 12)}...</span>
-                        ) : (
-                          <span className={styles._24}>-</span>
-                        )}
-                      </td>
-                      <td className={styles._15}>
-                        {cert.tx_hash ? (
-                          <span className={styles._25}>ON-CHAIN</span>
-                        ) : (
-                          <span className={styles._26}>OFF-CHAIN</span>
-                        )}
-                      </td>
-                      <td className={styles._14}>
-                        <span className={`${styles._0} ${statusStyle.className}`}>
-                          {statusStyle.label}
-                        </span>
-                      </td>
-                      <td className={styles._27}>
-                        <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
-                          Chi tiết
-                        </ActionLink>
-                        {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
-                          <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
-                            Xóa
-                          </ActionButton>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <td className={styles._15}>
+                          {cert.tx_hash ? (
+                            <span className={styles._25}>ON-CHAIN</span>
+                          ) : (
+                            <span className={styles._26}>OFF-CHAIN</span>
+                          )}
+                        </td>
+                        <td className={styles._14}>
+                          <span className={`${styles._0} ${statusStyle.className}`}>
+                            {statusStyle.label}
+                          </span>
+                        </td>
+                        <td className={styles._27}>
+                          <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
+                            Chi tiết
+                          </ActionLink>
+                          {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
+                            <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
+                              Xóa
+                            </ActionButton>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </div>
       </div>

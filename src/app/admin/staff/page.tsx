@@ -6,11 +6,15 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
+import Pagination from "@/components/common/Pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function StaffListPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [staff, setStaff] = useState<StaffDto[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lockingId, setLockingId] = useState("");
@@ -177,7 +181,7 @@ export default function StaffListPage() {
               </tr>
             </thead>
             <tbody>
-              {staff.map((s) => (
+              {staff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((s) => (
                 <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{s.email}</td>
@@ -217,6 +221,13 @@ export default function StaffListPage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(staff.length / ITEMS_PER_PAGE)}
+            totalItems={staff.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
     </div>
