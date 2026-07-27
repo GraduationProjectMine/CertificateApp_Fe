@@ -6,11 +6,15 @@ import { studentApi, type StudentDto } from "@/features/students/services/studen
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
+import Pagination from "@/components/common/Pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminStudentsPage() {
   const router = useRouter();
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [copiedId, setCopiedId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,6 +99,13 @@ export default function AdminStudentsPage() {
       s.student_id.toLowerCase().includes(q)
     );
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className={styles._1}>
@@ -215,54 +226,63 @@ export default function AdminStudentsPage() {
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không tìm thấy kết quả.</div>
           ) : (
-            <table className={styles._14}>
-              <thead>
-                <tr className={styles._15}>
-                  <th className={styles._16}>ID</th>
-                  <th className={styles._16}>Họ tên</th>
-                  <th className={styles._16}>Email</th>
-                  <th className={styles._16}>Trạng thái</th>
-                  <th className={styles._17}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className={styles._18}>
-                {filtered.map((student) => (
-                  <tr key={student.student_id} className={`${styles._19}`}>
-                    <td className={styles._20}>
-                      <span className="font-mono text-[10px]">{student.student_id.slice(0, 8)}...</span>
-                      <button
-                        onClick={() => handleCopyId(student.student_id)}
-                        className="ml-2 text-[9px] text-primary hover:underline"
-                      >
-                        {copiedId === student.student_id ? "✓ Copied" : "Copy ID"}
-                      </button>
-                    </td>
-                    <td className={styles._21}>{student.student_fullName}</td>
-                    <td className={styles._16}>{student.email}</td>
-                    <td className={styles._16}>
-                      <span className={`${styles._0} ${student.isActive
-                          ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200/50"
-                          : "bg-amber-50 dark:bg-amber-950/20 text-warning border-amber-250/50"
-                        }`}>
-                        {student.isActive ? "ACTIVE" : "INACTIVE"}
-                      </span>
-                    </td>
-                    <td className={styles._25}>
-                      <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
-                        Xem / Sửa
-                      </ActionLink>
-                      {student.isActive ? (
-                        <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>
-                          {lockingId === student.student_id ? "Đang khóa..." : "Khóa"}
-                        </ActionButton>
-                      ) : (
-                        <ActionText>Đã khóa</ActionText>
-                      )}
-                    </td>
+            <>
+              <table className={styles._14}>
+                <thead>
+                  <tr className={styles._15}>
+                    <th className={styles._16}>ID</th>
+                    <th className={styles._16}>Họ tên</th>
+                    <th className={styles._16}>Email</th>
+                    <th className={styles._16}>Trạng thái</th>
+                    <th className={styles._17}>Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className={styles._18}>
+                  {paginated.map((student) => (
+                    <tr key={student.student_id} className={`${styles._19}`}>
+                      <td className={styles._20}>
+                        <span className="font-mono text-[10px]">{student.student_id.slice(0, 8)}...</span>
+                        <button
+                          onClick={() => handleCopyId(student.student_id)}
+                          className="ml-2 text-[9px] text-primary hover:underline"
+                        >
+                          {copiedId === student.student_id ? "✓ Copied" : "Copy ID"}
+                        </button>
+                      </td>
+                      <td className={styles._21}>{student.student_fullName}</td>
+                      <td className={styles._16}>{student.email}</td>
+                      <td className={styles._16}>
+                        <span className={`${styles._0} ${student.isActive
+                            ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200/50"
+                            : "bg-amber-50 dark:bg-amber-950/20 text-warning border-amber-250/50"
+                          }`}>
+                          {student.isActive ? "ACTIVE" : "INACTIVE"}
+                        </span>
+                      </td>
+                      <td className={styles._25}>
+                        <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
+                          Xem / Sửa
+                        </ActionLink>
+                        {student.isActive ? (
+                          <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>
+                            {lockingId === student.student_id ? "Đang khóa..." : "Khóa"}
+                          </ActionButton>
+                        ) : (
+                          <ActionText>Đã khóa</ActionText>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </div>
       </div>
