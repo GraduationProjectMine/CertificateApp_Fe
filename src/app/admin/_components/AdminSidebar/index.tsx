@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
 import type { User } from "@/features/auth/types";
 import Tooltip from "@/components/common/Tooltip";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 interface AdminSidebarProps {
   user: User;
@@ -17,6 +18,7 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ user, open, collapsed, onClose, onToggleCollapse }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <aside
@@ -25,21 +27,19 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
       } ${collapsed ? "md:w-20" : "w-64 md:w-64"}`}
     >
       <div className={`${styles._1} ${collapsed ? "!px-2 justify-between" : "px-5 justify-between"}`}>
-        <Tooltip content="Về trang chủ CertiChain" position="right">
+        <Tooltip content={t("admin.sidebar_tooltip.home")} position="right">
           <Link href="/" className={styles._2}>
-            <div className={styles._3}>
-              C
-            </div>
+            <div className={styles._3}>C</div>
             {!collapsed && (
               <div className={styles._4}>
                 <span className={styles._5}>CertiChain</span>
-                <span className={styles._6}>ADMIN CỔNG</span>
+                <span className={styles._6}>{t("admin.brand")}</span>
               </div>
             )}
           </Link>
         </Tooltip>
 
-        <Tooltip content={collapsed ? "Mở rộng thanh menu" : "Thu gọn thanh menu"} position="right">
+        <Tooltip content={collapsed ? t("admin.sidebar_tooltip.expand") : t("admin.sidebar_tooltip.collapse")} position="right">
           <button
             onClick={onToggleCollapse}
             className={`${styles._7} ${collapsed ? "!p-1" : ""}`}
@@ -74,6 +74,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
             return acc;
           }, '');
           const isActive = item.path === activeItemPath;
+          const label = t("admin.sidebar." + item.title);
           const linkElement = (
             <Link
               key={item.path}
@@ -88,7 +89,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
               <div className={`${styles._22} ${isActive ? "scale-105" : "group-hover:scale-105"}`}>
                 {item.icon}
               </div>
-              {!collapsed && <span className={styles._9}>{item.title}</span>}
+              {!collapsed && <span className={styles._9}>{label}</span>}
               {!collapsed && !isActive && (
                 <span className={styles._10}></span>
               )}
@@ -96,7 +97,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
           );
 
           return collapsed ? (
-            <Tooltip key={item.path} content={item.title} position="right" className="w-full">
+            <Tooltip key={item.path} content={label} position="right" className="w-full">
               {linkElement}
             </Tooltip>
           ) : (
@@ -108,11 +109,9 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
       <div className={styles._11}>
         {!collapsed ? (
           <div className={styles._12}>
-            <div className={styles._13}>Người sử dụng</div>
+            <div className={styles._13}>{t("admin.user_section")}</div>
             <div className={styles._14}>
-              <div className={styles._15}>
-                {user.name.charAt(0)}
-              </div>
+              <div className={styles._15}>{user.name.charAt(0)}</div>
               <div className={styles._16}>
                 <span className={styles._17}>{user.name}</span>
                 <span className={styles._18}>{user.institutionName || ''}</span>
@@ -121,9 +120,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
           </div>
         ) : (
           <div className={styles._19}>
-            <div className={styles._15} title={user.name}>
-              {user.name.charAt(0)}
-            </div>
+            <div className={styles._15} title={user.name}>{user.name.charAt(0)}</div>
           </div>
         )}
       </div>

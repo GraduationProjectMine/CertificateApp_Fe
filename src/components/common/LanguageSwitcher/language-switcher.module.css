@@ -1,0 +1,10 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+
+.toggle {
+  @apply inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/85 dark:bg-white/[0.04] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.08] hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer shrink-0 text-xs font-extrabold;
+}
+
+.label {
+  @apply text-xs font-extrabold leading-none;
+}
