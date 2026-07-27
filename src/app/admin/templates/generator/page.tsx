@@ -8,6 +8,7 @@ import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
 import { certificateApi, type CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
+import { QRCodeSVG } from "qrcode.react";
 
 const ALL_BINDING_LABELS: Record<string, string> = {
   student_id: "Mã sinh viên",
@@ -265,6 +266,11 @@ export default function CertificateGeneratorPage() {
       };
 
       const cert = await certificateApi.templateIssueSingle(payload);
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+      const certId = cert.certificate_id || cert.serialNumber;
+      if (certId) {
+        handleUpdateActiveField("verification_url", `${baseUrl}/public/certificate/${certId}`);
+      }
       setIssueResult({
         type: "SINGLE",
         data: cert,
@@ -306,6 +312,19 @@ export default function CertificateGeneratorPage() {
         template_id: selectedTemplate.id,
       });
 
+      if (batchRes && Array.isArray(batchRes.results)) {
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+        setRecords((prev) =>
+          prev.map((rec, idx) => {
+            const item = batchRes.results[idx];
+            if (item && item.certificate_id) {
+              return { ...rec, verification_url: `${baseUrl}/public/certificate/${item.certificate_id}` };
+            }
+            return rec;
+          })
+        );
+      }
+
       setIssueResult({
         type: "BATCH",
         data: batchRes,
@@ -340,12 +359,26 @@ export default function CertificateGeneratorPage() {
       justifyContent: field.align === "center" ? "center" : field.align === "right" ? "flex-end" : "flex-start",
       overflow: "hidden",
       boxSizing: "border-box",
-      background: field.type === "qr" ? "#f8f8f8" : "transparent",
+      background: field.type === "qr" ? "#ffffff" : "transparent",
     };
 
     const content = (() => {
       if (field.type === "qr") {
-        return <span style={{ fontSize: 9, color: "#999", textAlign: "center", width: "100%" }}>QR Code</span>;
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+        const rawVal = field.binding && activeRecord[field.binding] ? activeRecord[field.binding] : activeRecord.verification_url;
+        const qrVal =
+          rawVal ||
+          (activeRecord.serialNumber
+            ? `${baseUrl}/public/certificate/${activeRecord.serialNumber}`
+            : activeRecord.student_id
+            ? `${baseUrl}/public/certificate/${activeRecord.student_id}`
+            : `${baseUrl}/public/verify`);
+        const qrSize = Math.max(20, Math.min(field.w, field.h) - 4);
+        return (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
+            <QRCodeSVG value={qrVal} size={qrSize} level="M" />
+          </div>
+        );
       }
       if (field.type === "line") {
         return <div style={{ width: "100%", height: "100%", background: field.color || "#c9a84c" }} />;

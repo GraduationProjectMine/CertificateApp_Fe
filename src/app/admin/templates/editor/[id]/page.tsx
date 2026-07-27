@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
+import { QRCodeSVG } from "qrcode.react";
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -320,12 +321,20 @@ export default function TemplateEditorPage() {
       justifyContent: field.align === "center" ? "center" : field.align === "right" ? "flex-end" : "flex-start",
       overflow: "hidden",
       boxSizing: "border-box",
-      background: field.type === "qr" ? "#f8f8f8" : "transparent",
+      background: field.type === "qr" ? "#ffffff" : "transparent",
     };
 
     const content = (() => {
       if (field.type === "qr") {
-        return <span style={{ fontSize: 9, color: "#999", textAlign: "center", width: "100%" }}>QR Code</span>;
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+        const rawVal = field.binding && mockData[field.binding] ? mockData[field.binding] : mockData.verification_url;
+        const qrVal = rawVal || `${baseUrl}/public/verify`;
+        const qrSize = Math.max(20, Math.min(field.w, field.h) - 4);
+        return (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
+            <QRCodeSVG value={qrVal} size={qrSize} level="M" />
+          </div>
+        );
       }
       if (field.type === "line") {
         return <div style={{ width: "100%", height: "100%", background: field.color || "#c9a84c" }} />;
