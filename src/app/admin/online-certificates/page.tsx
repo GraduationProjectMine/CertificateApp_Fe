@@ -3,6 +3,9 @@
 import styles from "./page.module.css";
 import React, { useEffect, useState, useMemo } from "react";
 import { certificateApi, type OnlineCertificateDto } from "@/features/certificates/services/certificate.api";
+import { templateApi } from "@/features/templates/services/api";
+import type { CertificateTemplate } from "@/features/templates/types";
+import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import Pagination from "@/components/common/Pagination";
 import Button from "@/components/ui/Button";
 import SearchInput from "@/components/common/SearchInput";
@@ -17,6 +20,12 @@ export default function AdminOnlineCertificatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCert, setSelectedCert] = useState<OnlineCertificateDto | null>(null);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
+  const [students, setStudents] = useState<StudentDto[]>([]);
+  const [createForm, setCreateForm] = useState({ template_id: "", student_id: "", student_fullName: "", certificate_title: "" });
+  const [creating, setCreating] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -34,6 +43,38 @@ export default function AdminOnlineCertificatesPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleOpenCreate = async () => {
+    setShowCreateModal(true);
+    setCreateForm({ template_id: "", student_id: "", student_fullName: "", certificate_title: "" });
+    try {
+      const [list, studList] = await Promise.all([
+        templateApi.list(),
+        studentApi.list().catch(() => []),
+      ]);
+      setTemplates(list);
+      setStudents(studList);
+    } catch {}
+  };
+
+  const handleCreate = async () => {
+    if (!createForm.template_id || !createForm.student_id) return;
+    setCreating(true);
+    try {
+      await certificateApi.templateIssueSingle({
+        template_id: createForm.template_id,
+        student_id: createForm.student_id,
+        student_fullName: createForm.student_fullName,
+        certificate_title: createForm.certificate_title || "Văn bằng số",
+      });
+      setShowCreateModal(false);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || "Tạo văn bằng thất bại");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return certificates;
@@ -76,7 +117,7 @@ export default function AdminOnlineCertificatesPage() {
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
-          <Button href="/admin/templates/generator" variant="primary" size="sm">
+          <Button onClick={handleOpenCreate} variant="primary" size="sm">
             + Tạo văn bằng số mới
           </Button>
         </div>
@@ -129,7 +170,7 @@ export default function AdminOnlineCertificatesPage() {
           <EmptyState
             icon="📭"
             title="Không tìm thấy văn bằng số nào"
-            description={searchQuery ? "Thử tìm kiếm với từ khóa khác" : "Hãy tạo văn bằng số đầu tiên trong mục Tạo & Xuất bằng"}
+            description={searchQuery ? "Thử tìm kiếm với từ khóa khác" : "Hãy tạo văn bằng số đầu tiên bằng nút ở góc trên"}
           />
         ) : (
           <>
@@ -282,10 +323,93 @@ export default function AdminOnlineCertificatesPage() {
 
               <div className={styles._modalActions}>
                 <Button href="/public/verify" variant="primary" size="sm">
-                    Mở trang xác minh công khai
+                  Mở trang xác minh công khai
                 </Button>
                 <Button onClick={() => setSelectedCert(null)} variant="secondary" size="sm">
                   Đóng
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className={styles._overlay}>
+          <div className={styles._modal}>
+            <div className={styles._modalHeader}>
+              <div>
+                <span className={styles._modalBadge}>Tạo mới</span>
+                <h2 className={styles._modalTitle}>Tạo văn bằng số</h2>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className={styles._modalClose} type="button">✕</button>
+            </div>
+
+            <div className="flex flex-col gap-4" style={{ fontSize: 13 }}>
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Mẫu văn bằng *</label>
+                <select
+                  value={createForm.template_id}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, template_id: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none"
+                >
+                  <option value="">-- Chọn mẫu --</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} {t.is_default ? "(Mặc định)" : ""}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Mã sinh viên *</label>
+                <div className="flex gap-2">
+                  <select
+                    value={createForm.student_id}
+                    onChange={(e) => { const val = e.target.value; const st = students.find((s) => s.student_id === val); setCreateForm((f) => ({ ...f, student_id: val, student_fullName: st ? st.student_fullName : f.student_fullName })); }}
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none"
+                  >
+                    <option value="">-- Chọn sinh viên --</option>
+                    {students.map((st) => (
+                      <option key={st.student_id} value={st.student_id}>{st.student_id} - {st.student_fullName}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={createForm.student_id}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, student_id: e.target.value }))}
+                    placeholder="Hoặc nhập mã SV..."
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Họ tên sinh viên</label>
+                <input
+                  type="text"
+                  value={createForm.student_fullName}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, student_fullName: e.target.value }))}
+                  placeholder="Nhập họ tên..."
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Tên văn bằng</label>
+                <input
+                  type="text"
+                  value={createForm.certificate_title}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, certificate_title: e.target.value }))}
+                  placeholder="VD: Bằng tốt nghiệp Đại học..."
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
+                <Button onClick={() => setShowCreateModal(false)} variant="secondary" size="sm">Huỷ</Button>
+                <Button onClick={handleCreate} variant="primary" size="sm" disabled={creating || !createForm.template_id || !createForm.student_id}>
+                  {creating ? "Đang tạo..." : "Tạo văn bằng"}
                 </Button>
               </div>
             </div>

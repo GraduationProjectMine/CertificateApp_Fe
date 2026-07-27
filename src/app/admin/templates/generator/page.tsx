@@ -45,6 +45,7 @@ const DEFAULT_DESIGN: DesignData = {
 };
 
 export default function CertificateGeneratorPage() {
+  const router = typeof window !== "undefined" ? { back: () => window.history.back() } : { back: () => {} };
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateTemplate | null>(null);
@@ -52,7 +53,6 @@ export default function CertificateGeneratorPage() {
   const [loading, setLoading] = useState(true);
   const [zoom, setZoom] = useState(0.75);
 
-  // Active Data Record & Imported File state
   const [records, setRecords] = useState<Array<Record<string, string>>>([{}]);
   const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
   const [importedFileName, setImportedFileName] = useState<string>("");
@@ -62,7 +62,6 @@ export default function CertificateGeneratorPage() {
   const [exportingBatch, setExportingBatch] = useState(false);
   const [batchProgress, setBatchProgress] = useState<string>("");
 
-  // Direct Issuing state (IPFS JSON + Blockchain)
   const [issuingSingle, setIssuingSingle] = useState(false);
   const [issuingBatch, setIssuingBatch] = useState(false);
   const [issueResult, setIssueResult] = useState<{ type: "SINGLE" | "BATCH"; data: any } | null>(null);
@@ -105,7 +104,6 @@ export default function CertificateGeneratorPage() {
     setImportedFileName("");
   };
 
-  // Active design configuration
   const activeDesign: DesignData = useMemo(() => {
     if (selectedTemplate && selectedTemplate.design_data) {
       return selectedTemplate.design_data as DesignData;
@@ -113,7 +111,6 @@ export default function CertificateGeneratorPage() {
     return DEFAULT_DESIGN;
   }, [selectedTemplate]);
 
-  // Dynamically extract bound fields present in the selected template + student_id
   const boundFields = useMemo(() => {
     const fields = activeDesign.fields || [];
     const bound = fields.filter((f) => f.dynamic && f.binding);
@@ -151,7 +148,7 @@ export default function CertificateGeneratorPage() {
         return;
       }
       setImportedFileName(res.fileName);
-      setRecords(res.rows.map((r) => r.record));
+      setRecords(res.rows.map((r: any) => r.record));
       setActiveRowIndex(0);
       alert(`Đã tải thành công ${res.totalRows} bản ghi từ file ${res.fileName}`);
     } catch (err: any) {
@@ -199,7 +196,6 @@ export default function CertificateGeneratorPage() {
     try {
       const zip = new JSZip();
       const folder = zip.folder("Certificates") || zip;
-
       const isLandscape = activeDesign.page.width >= activeDesign.page.height;
 
       for (let i = 0; i < records.length; i++) {
@@ -244,7 +240,6 @@ export default function CertificateGeneratorPage() {
     }
   };
 
-  // Issue single certificate with JSON file pinned to IPFS & registered on-chain
   const handleIssueSingle = async () => {
     if (!selectedTemplate) return;
     setIssuingSingle(true);
@@ -273,10 +268,7 @@ export default function CertificateGeneratorPage() {
       if (certId) {
         handleUpdateActiveField("verification_url", `${baseUrl}/public/certificate/${certId}`);
       }
-      setIssueResult({
-        type: "SINGLE",
-        data: cert,
-      });
+      setIssueResult({ type: "SINGLE", data: cert });
     } catch (err: any) {
       alert(err.message || "Cấp phát văn bằng thất bại");
     } finally {
@@ -284,7 +276,6 @@ export default function CertificateGeneratorPage() {
     }
   };
 
-  // Issue batch certificates with JSON files pinned to IPFS & registered on-chain
   const handleIssueBatch = async () => {
     if (!selectedTemplate || records.length === 0) return;
     if (!confirm(`Bạn có chắc chắn muốn phát hành ${records.length} văn bằng lên IPFS JSON & Blockchain?`)) return;
@@ -309,10 +300,7 @@ export default function CertificateGeneratorPage() {
         registryNumber: r.registryNumber,
       }));
 
-      const batchRes = await certificateApi.templateIssueBatch({
-        rows,
-        template_id: selectedTemplate.id,
-      });
+      const batchRes = await certificateApi.templateIssueBatch({ rows, template_id: selectedTemplate.id });
 
       if (batchRes && Array.isArray(batchRes.results)) {
         const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -327,10 +315,7 @@ export default function CertificateGeneratorPage() {
         );
       }
 
-      setIssueResult({
-        type: "BATCH",
-        data: batchRes,
-      });
+      setIssueResult({ type: "BATCH", data: batchRes });
     } catch (err: any) {
       alert(err.message || "Cấp phát lô thất bại");
     } finally {
@@ -373,8 +358,8 @@ export default function CertificateGeneratorPage() {
           (activeRecord.serialNumber
             ? `${baseUrl}/public/certificate/${activeRecord.serialNumber}`
             : activeRecord.student_id
-            ? `${baseUrl}/public/certificate/${activeRecord.student_id}`
-            : `${baseUrl}/public/verify`);
+              ? `${baseUrl}/public/certificate/${activeRecord.student_id}`
+              : `${baseUrl}/public/verify`);
         const qrSize = Math.max(20, Math.min(field.w, field.h) - 4);
         return (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
@@ -408,21 +393,16 @@ export default function CertificateGeneratorPage() {
 
   return (
     <div className={styles._root}>
-      {/* Header Toolbar - 2-Row Layout */}
+      {/* Header */}
       <div className={styles._header}>
-        {/* Row 1: Title, Template Selector, Record Badge & Zoom Controls */}
         <div className={styles._headerRow1}>
           <div className={styles._headerLeft}>
             <div className={styles._titleGroup}>
-              <span className={styles._titleIcon}>🎓</span>
               <h1 className={styles._title}>Tạo & Xuất bằng PDF</h1>
             </div>
-
             <div className={styles._divider} />
-
-            {/* Template Selector Dropdown */}
             <div className={styles._selectorGroup}>
-              <span className={styles._selectorLabel}>Chọn mẫu:</span>
+              <span className={styles._selectorLabel}>Mẫu:</span>
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleSelectTemplate(e.target.value)}
@@ -436,446 +416,261 @@ export default function CertificateGeneratorPage() {
                 ))}
               </select>
             </div>
-
             {selectedTemplate && (
-              <>
-                <div className={styles._divider} />
-                {/* Record Status Badge in Top Bar */}
-                <div className={styles._recordGroup}>
-                  <span className={styles._recordBadge}>
-                    📄 Bản ghi: <strong className="text-blue-600 dark:text-blue-400">{activeRowIndex + 1}</strong> / {records.length}
-                  </span>
-                  {importedFileName ? (
-                    <span className={styles._fileBadge}>
-                      📁 {importedFileName}
-                    </span>
-                  ) : (
-                    <span className={styles._manualHint}>(Dữ liệu nhập tay)</span>
-                  )}
-                </div>
-              </>
+              <span className={styles._recordBadge}>
+                Bản ghi: {activeRowIndex + 1} / {records.length}
+                {importedFileName ? (
+                  <span className={styles._fileBadge}> - {importedFileName}</span>
+                ) : (
+                  <span className={styles._manualHint}> (Nhập tay)</span>
+                )}
+              </span>
             )}
           </div>
-
           {selectedTemplate && (
-            /* Zoom Controls */
             <div className={styles._zoomGroup}>
-              <Button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} variant="ghost" size="sm" title="Thu nhỏ">−</Button>
+              <Button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} variant="ghost" size="sm">-</Button>
               <span className={styles._zoomLabel}>{Math.round(zoom * 100)}%</span>
-              <Button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} variant="ghost" size="sm" title="Phóng to">+</Button>
+              <Button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} variant="ghost" size="sm">+</Button>
             </div>
           )}
         </div>
 
-        {/* Row 2: Pure Action Bar for Import, Export & Blockchain Issue (Evenly Spread) */}
         {selectedTemplate && (
           <div className={styles._headerRow2}>
-            {/* Group 1: Import Data */}
-            <label className={styles._importLabel}>
-              <span>📥</span>
-              <span>{importing ? "Đang nạp..." : "Import CSV/Excel"}</span>
-              <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} className="hidden" />
-            </label>
-
+            <div className={styles._headerRow2Inner}>
+              <label className={styles._importLabel}>
+                <span>{importing ? "Đang nạp..." : "Import CSV/Excel"}</span>
+                <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} className="hidden" />
+              </label>
+            </div>
             <div className={styles._actionDivider} />
-
-            {/* Group 2: PDF Export Group */}
-            <div className={styles._exportGroup}>
-              <Button
-                onClick={exportSinglePdf}
-                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-                variant="secondary"
-                size="sm"
-                title="Xuất 1 file PDF cho bản ghi hiện tại"
-              >
-                <span>📄</span>
-                <span>{exportingSingle ? "Đang xuất..." : "Xuất PDF bản ghi"}</span>
+            <div className={styles._headerRow2Inner}>
+              <Button onClick={exportSinglePdf} disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch} variant="secondary" size="sm">
+                {exportingSingle ? "Đang xuất..." : `Xuất PDF (${activeRowIndex + 1})`}
               </Button>
-              <Button
-                onClick={exportBatchZip}
-                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-                variant="primary"
-                size="sm"
-                title="Xuất tất cả PDF thành file ZIP"
-              >
-                <span>📦</span>
-                <span>{exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất ZIP tất cả (${records.length})`}</span>
+              <Button onClick={exportBatchZip} disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0} variant="secondary" size="sm">
+                {exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất ZIP (${records.length})`}
               </Button>
             </div>
-
             <div className={styles._actionDivider} />
-
-            {/* Group 3: Blockchain Issue Group */}
-            <div className={styles._issueGroup}>
-              <Button
-                onClick={handleIssueSingle}
-                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-                variant="secondary"
-                size="sm"
-                title="Đăng ký bản ghi này lên IPFS & Blockchain"
-              >
-                <span>🚀</span>
-                <span>{issuingSingle ? "Đang phát hành..." : "Phát hành bản ghi"}</span>
+            <div className={styles._headerRow2Inner}>
+              <Button onClick={handleIssueSingle} disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch} variant="primary" size="sm">
+                {issuingSingle ? "Đang phát hành..." : `Phát hành (${activeRowIndex + 1})`}
               </Button>
-              <Button
-                onClick={handleIssueBatch}
-                disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-                variant="primary"
-                size="sm"
-                title="Đăng ký tất cả bản ghi lên IPFS & Blockchain"
-              >
-                <span>🚀</span>
-                <span>{issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length})`}</span>
+              <Button onClick={handleIssueBatch} disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0} variant="primary" size="sm">
+                {issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length})`}
               </Button>
             </div>
-
             <div className={styles._actionDivider} />
-
-            {/* Change Template Action */}
-            <Button onClick={handleCancel} variant="danger" size="sm">
-              <span>✕</span>
-              <span>Đổi mẫu</span>
-            </Button>
+            <Button onClick={handleCancel} variant="danger" size="sm">Đổi mẫu</Button>
           </div>
         )}
       </div>
 
-      {/* Main Content Workspace */}
+      {/* Workspace */}
       {!selectedTemplate ? (
-        /* Empty / Initial Template Selection Screen */
         <div className={styles._emptyState}>
-          <div className={styles._emptyInner}>
-            <div className={styles._emptyIcon}>🎓</div>
-            <h2 className={styles._emptyTitle}>Vui lòng chọn mẫu văn bằng</h2>
-            <p className={styles._emptyDesc}>
-              Hãy chọn 1 mẫu văn bằng bên dưới để hiển thị phôi thiết kế, nạp dữ liệu nhập tay hoặc file Excel và xuất PDF / Phát hành IPFS & Blockchain.
-            </p>
-          </div>
-
+          <h2 className={styles._emptyTitle}>Vui lòng chọn mẫu văn bằng</h2>
+          <p className={styles._emptyDesc}>
+            Chọn mẫu văn bằng bên dưới để hiển thị phôi thiết kế, nạp dữ liệu nhập tay hoặc file Excel và xuất PDF / Phát hành IPFS & Blockchain.
+          </p>
           <div className={styles._templateGrid}>
             {templates.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => handleSelectTemplate(t.id)}
-                className={styles._templateCard}
-              >
+              <div key={t.id} onClick={() => handleSelectTemplate(t.id)} className={styles._templateCard}>
                 <div>
-                  <div className={styles._templateCardHeader}>
-                    <span className={styles._templateBadge}>
-                      {t.is_default ? "Mẫu mặc định" : "Mẫu đã tạo"}
-                    </span>
-                  </div>
+                  <span className={t.is_default ? styles._templateDefaultBadge : styles._templateBadge}>
+                    {t.is_default ? "Mặc định" : "Mẫu đã tạo"}
+                  </span>
                   <h3 className={styles._templateName}>{t.name}</h3>
                   <p className={styles._templateDesc}>{t.description || "Không có mô tả"}</p>
                 </div>
-
-                <Button variant="primary" size="sm" className="w-full">
-                  Chọn mẫu này →
-                </Button>
+                <Button variant="primary" size="sm" className="w-full">Chọn mẫu này</Button>
               </div>
             ))}
-
             {templates.length === 0 && (
               <div className={styles._emptyPlaceholder}>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Chưa có mẫu văn bằng nào. Hãy tạo mẫu trong mục <strong>Mẫu văn bằng</strong> trước.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Chưa có mẫu văn bằng nào. Hãy tạo mẫu trong mục <strong>Mẫu văn bằng</strong> trước.
+                </p>
               </div>
             )}
           </div>
         </div>
       ) : (
-        /* Loaded Template Workspace */
-        <div className={styles._workspace}>
-          {/* Dynamic Input Side Panel */}
+        <div className={styles._workspace} style={{ gap: 12 }}>
+          {/* Side Panel */}
           <div className={styles._sidePanel}>
-            <div className={styles._sidePanelHeader}>
-              <div className={styles._templateNameLabel}>Mẫu: {selectedTemplate.name}</div>
-              <h2 className={styles._sidePanelTitle}>Nhập dữ liệu theo mẫu</h2>
-              <p className={styles._sidePanelDesc}>
-                Hiển thị <strong>{boundFields.length} nhãn động</strong> thuộc mẫu này.
-              </p>
-            </div>
-
-            {/* Record Navigator */}
-            <div className={styles._navCard}>
-              <div className={styles._navCardHeader}>
-                <span className={styles._navCardTitle}>
-                  {importedFileName ? `📁 ${importedFileName}` : "Bản ghi nhập tay"}
-                  {importedFileName && (
-                    <Button
-                      onClick={() => {
-                        setRecords([{}]);
-                        setActiveRowIndex(0);
-                        setImportedFileName("");
-                      }}
-                      variant="ghost"
-                      size="sm"
-                      title="Xóa dữ liệu nạp từ file"
-                      className="!text-red-500 !p-0 !ml-1.5"
-                    >
-                      [Xóa file]
-                    </Button>
-                  )}
-                </span>
-                <span className={styles._navCardCount}>
-                  Dòng {activeRowIndex + 1} / {records.length}
-                </span>
+            <div className={styles._sidePanelSection}>
+              <div className={styles._sidePanelHeader}>
+                <div className={styles._sidePanelTitle}>{selectedTemplate.name}</div>
+                <div className={styles._sidePanelDesc}>{boundFields.length} trường dữ liệu</div>
               </div>
 
+              {/* Record Navigator */}
               <div className={styles._navRow}>
-                <Button
-                  onClick={() => setActiveRowIndex((i) => Math.max(0, i - 1))}
-                  disabled={activeRowIndex <= 0}
-                  variant="secondary"
-                  size="sm"
-                >
-                  ◄ Trước
-                </Button>
-
-                <select
-                  value={activeRowIndex}
-                  onChange={(e) => setActiveRowIndex(Number(e.target.value))}
-                  className={styles._navSelect}
-                >
+                <Button onClick={() => setActiveRowIndex((i) => Math.max(0, i - 1))} disabled={activeRowIndex <= 0} variant="secondary" size="sm">Trước</Button>
+                <select value={activeRowIndex} onChange={(e) => setActiveRowIndex(Number(e.target.value))} className={styles._navSelect}>
                   {records.map((r, i) => (
                     <option key={i} value={i}>
-                      Dòng {i + 1}: {r.student_fullName || r.student_id || `Bản ghi ${i + 1}`}
+                      {i + 1}: {r.student_fullName || r.student_id || `Bản ghi ${i + 1}`}
                     </option>
                   ))}
                 </select>
-
-                <Button
-                  onClick={() => setActiveRowIndex((i) => Math.min(records.length - 1, i + 1))}
-                  disabled={activeRowIndex >= records.length - 1}
-                  variant="secondary"
-                  size="sm"
-                >
-                  Sau ►
-                </Button>
+                <Button onClick={() => setActiveRowIndex((i) => Math.min(records.length - 1, i + 1))} disabled={activeRowIndex >= records.length - 1} variant="secondary" size="sm">Sau</Button>
               </div>
+
+              {importedFileName && (
+                <Button onClick={() => { setRecords([{}]); setActiveRowIndex(0); setImportedFileName(""); }} variant="ghost" size="sm" className="!text-danger">
+                  Xoá dữ liệu import
+                </Button>
+              )}
             </div>
 
-            {/* Dynamic Input Form (Only for bound fields in the active template) */}
+            {/* Dynamic Input Form */}
             <div className={styles._formGroup}>
               {boundFields.map(({ key, label }) => {
                 if (key === "student_id" && students.length > 0) {
                   return (
                     <div key={key}>
-                      <label className={styles._formLabel}>
-                        {label} (Chọn hoặc Nhập tay)
-                      </label>
-                      <select
-                        value={activeRecord[key] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleUpdateActiveField("student_id", val);
-                          const st = students.find((s) => s.student_id === val);
-                          if (st) {
-                            handleUpdateActiveField("student_fullName", st.student_fullName);
-                          }
-                        }}
-                        className={styles._formSelect}
-                      >
-                        <option value="">-- Chọn sinh viên có sẵn --</option>
+                      <label className={styles._formLabel}>{label}</label>
+                      <select value={activeRecord[key] || ""} onChange={(e) => { const val = e.target.value; handleUpdateActiveField("student_id", val); const st = students.find((s) => s.student_id === val); if (st) { handleUpdateActiveField("student_fullName", st.student_fullName); } }} className={styles._formSelect}>
+                        <option value="">-- Chọn sinh viên --</option>
                         {students.map((st) => (
-                          <option key={st.student_id} value={st.student_id}>
-                            {st.student_id} - {st.student_fullName}
-                          </option>
+                          <option key={st.student_id} value={st.student_id}>{st.student_id} - {st.student_fullName}</option>
                         ))}
                       </select>
-                      <input
-                        type="text"
-                        value={activeRecord[key] || ""}
-                        onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                        className={styles._formInput}
-                        placeholder="Hoặc nhập mã SV mới..."
-                      />
+                      <input type="text" value={activeRecord[key] || ""} onChange={(e) => handleUpdateActiveField(key, e.target.value)} className={styles._formInput} placeholder="Hoặc nhập mã SV mới..." />
                     </div>
                   );
                 }
-
                 return (
                   <div key={key}>
-                    <label className={styles._formLabel}>
-                      {label}
-                    </label>
-                    <input
-                      type="text"
-                      value={activeRecord[key] || ""}
-                      onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                      className={styles._formInput}
-                      placeholder={`Nhập ${label.toLowerCase()}...`}
-                    />
+                    <label className={styles._formLabel}>{label}</label>
+                    <input type="text" value={activeRecord[key] || ""} onChange={(e) => handleUpdateActiveField(key, e.target.value)} className={styles._formInput} placeholder={`Nhập ${label.toLowerCase()}...`} />
                   </div>
                 );
               })}
-
               {boundFields.length === 0 && (
                 <div className={styles._noFieldsNotice}>
-                  Mẫu này chưa có trường động nào. Hãy vào mục <strong>Mẫu văn bằng</strong> để thêm các trường động (binding).
+                  Mẫu này chưa có trường động nào. Hãy thêm các trường động trong mục Mẫu văn bằng.
                 </div>
               )}
             </div>
           </div>
 
-          {/* Center Live Canvas Workspace */}
-          <div className={styles._canvasWrap}>
-            <div
-              ref={canvasRef}
-              className={styles._canvas}
-              style={{
-                width: activeDesign.page.width,
-                height: activeDesign.page.height,
-                background: activeDesign.page.bgColor || "#ffffff",
-                transform: `scale(${zoom})`,
-                transformOrigin: "center center",
-              }}
-            >
-              {activeDesign.decorations?.map((dec, i) => {
-                if (dec.type === "border") {
-                  return (
-                    <div
-                      key={`dec_${i}`}
-                      style={{
-                        position: "absolute",
-                        inset: dec.offset || 0,
-                        border: `${dec.width || 2}px ${dec.style || "solid"} ${dec.color || "#000"}`,
-                        borderRadius: dec.style === "double" ? 4 : 0,
-                        pointerEvents: "none",
-                      }}
-                    />
-                  );
-                }
-                if (dec.type === "watermark" && dec.text) {
-                  return (
-                    <div
-                      key={`dec_${i}`}
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        pointerEvents: "none",
-                        opacity: dec.opacity || 0.05,
-                        fontSize: dec.size || 60,
-                        fontFamily: dec.font || "serif",
-                        color: "#000",
-                      }}
-                    >
-                      {dec.text}
-                    </div>
-                  );
-                }
-                return null;
-              })}
-
-              {activeDesign.fields?.map((field) => (
-                <React.Fragment key={field.id}>{renderFieldContent(field)}</React.Fragment>
-              ))}
+          {/* Canvas */}
+          <div className={styles._canvasSection}>
+            <div className={styles._canvasToolbar}>
+              <span className="text-xs font-bold text-gray-600 dark:text-gray-400">Phôi văn bằng</span>
+              <Button onClick={() => { setSelectedTemplateId(""); setSelectedTemplate(null); setRecords([{}]); setActiveRowIndex(0); setImportedFileName(""); }} variant="ghost" size="sm">Đóng</Button>
+            </div>
+            <div className={styles._canvasWrap}>
+              <div
+                ref={canvasRef}
+                className={styles._canvas}
+                style={{
+                  width: activeDesign.page.width,
+                  height: activeDesign.page.height,
+                  background: activeDesign.page.bgColor || "#ffffff",
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "center center",
+                }}
+              >
+                {activeDesign.decorations?.map((dec, i) => {
+                  if (dec.type === "border") {
+                    return (
+                      <div key={`dec_${i}`}
+                        style={{ position: "absolute", inset: dec.offset || 0, border: `${dec.width || 2}px ${dec.style || "solid"} ${dec.color || "#000"}`, borderRadius: dec.style === "double" ? 4 : 0, pointerEvents: "none" }}
+                      />
+                    );
+                  }
+                  if (dec.type === "watermark" && dec.text) {
+                    return (
+                      <div key={`dec_${i}`}
+                        style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", opacity: dec.opacity || 0.05, fontSize: dec.size || 60, fontFamily: dec.font || "serif", color: "#000" }}
+                      >
+                        {dec.text}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+                {activeDesign.fields?.map((field) => (
+                  <React.Fragment key={field.id}>{renderFieldContent(field)}</React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Result Modal for Direct Single / Batch Issuance */}
+      {/* Result Modal */}
       {issueResult && (
         <div className={styles._overlay}>
           <div className={styles._modal}>
             {issueResult.type === "SINGLE" ? (
-              <div>
-                <div style={{ textAlign: "center", marginBottom: 20 }}>
-                  <div style={{ fontSize: 44, marginBottom: 8 }}>🎉</div>
-                  <h2 className={styles._modalResultTitle}>Cấp phát văn bằng thành công!</h2>
-                  <p className={styles._modalResultDesc}>Văn bằng số đã được lưu vào bảng <strong>online_certificates</strong>, tệp JSON lên IPFS và ghi vĩnh viễn lên Blockchain.</p>
+              <div className="flex flex-col gap-4">
+                <div className="text-center">
+                  <h2 className={styles._modalResultTitle}>Cấp phát văn bằng thành công</h2>
+                  <p className={styles._modalResultDesc}>Văn bằng số đã được lưu vào online_certificates, tệp JSON lên IPFS và ghi lên Blockchain.</p>
                 </div>
-
                 <div className={styles._detailBox}>
                   <div className={styles._detailRow}>
-                    <span className={styles._detailRowLabel}>Mã văn bằng (ID): </span>
+                    <span className={styles._detailRowLabel}>Mã văn bằng (ID):</span>
                     <code className={styles._detailRowCode}>{issueResult.data.certificate_id}</code>
                   </div>
                   <div className={styles._detailRow}>
-                    <span className={styles._detailRowLabel}>Sinh viên: </span>
+                    <span className={styles._detailRowLabel}>Sinh viên:</span>
                     <strong className={styles._detailRowValue}>{issueResult.data.student_fullName}</strong> ({issueResult.data.student_id})
                   </div>
                   <div className={styles._detailRow}>
-                    <span className={styles._detailRowLabel}>Tên văn bằng: </span>
+                    <span className={styles._detailRowLabel}>Tên văn bằng:</span>
                     <span className={styles._detailRowValue}>{issueResult.data.certificate_title}</span>
                   </div>
                   <div className={styles._detailRow}>
-                    <span className={styles._detailRowLabel}>IPFS CID (JSON Metadata): </span>
-                    <div style={{ marginTop: 4 }}>
-                      <a href={issueResult.data.file_url || `https://gateway.pinata.cloud/ipfs/${issueResult.data.ipfs_cid}`} target="_blank" rel="noreferrer" className={styles._detailLink}>
-                        🔗 {issueResult.data.ipfs_cid}
-                      </a>
-                    </div>
+                    <span className={styles._detailRowLabel}>IPFS CID (JSON Metadata):</span>
+                    <a href={issueResult.data.file_url || `https://gateway.pinata.cloud/ipfs/${issueResult.data.ipfs_cid}`} target="_blank" rel="noreferrer" className={styles._detailLink}>
+                      {issueResult.data.ipfs_cid}
+                    </a>
                   </div>
                   {issueResult.data.tx_hash && (
                     <div className={styles._detailRow}>
-                      <span className={styles._detailRowLabel}>Blockchain Tx Hash: </span>
-                      <div style={{ marginTop: 4 }}>
-                        <code className={styles._txHashBox}>
-                          ⚡ {issueResult.data.tx_hash}
-                        </code>
-                      </div>
+                      <span className={styles._detailRowLabel}>Blockchain Tx Hash:</span>
+                      <code className={styles._txHashBox}>{issueResult.data.tx_hash}</code>
                     </div>
                   )}
                 </div>
-
-                <Button onClick={() => setIssueResult(null)} variant="primary" size="md" className="w-full mt-5">
-                  Đóng thông báo
-                </Button>
+                <Button onClick={() => setIssueResult(null)} variant="primary" size="md" className="w-full">Đóng</Button>
               </div>
             ) : (
-              <div>
-                <div style={{ textAlign: "center", marginBottom: 16 }}>
-                  <div style={{ fontSize: 44, marginBottom: 8 }}>📦</div>
-                  <h2 className={styles._modalResultTitle}>Kết quả cấp phát lô văn bằng</h2>
+              <div className="flex flex-col gap-4">
+                <div className="text-center">
+                  <h2 className={styles._modalResultTitle}>Kết quả cấp phát lô</h2>
                   <p className={styles._modalResultDesc}>
-                    Đã xử lý <strong>{issueResult.data.total}</strong> bản ghi (Thành công: <strong style={{ color: "#16a34a" }}>{issueResult.data.successCount}</strong>, Thất bại: <strong style={{ color: "#dc2626" }}>{issueResult.data.failCount}</strong>).
+                    Đã xử lý <strong>{issueResult.data.total}</strong> bản ghi (Thành công: <strong className="text-green-600">{issueResult.data.successCount}</strong>, Thất bại: <strong className="text-red-600">{issueResult.data.failCount}</strong>).
                   </p>
                 </div>
-
                 <div className={styles._resultTableScroll}>
                   <table className={styles._batchTable}>
-                    <thead>
-                      <tr className={styles._batchThead}>
-                        <th className={styles._batchTh}>STT</th>
-                        <th className={styles._batchTh}>Sinh viên</th>
-                        <th className={styles._batchTh}>Trạng thái</th>
-                        <th className={styles._batchTh}>IPFS CID / Ghi chú</th>
-                      </tr>
-                    </thead>
+                    <thead><tr className={styles._batchThead}><th className={styles._batchTh}>STT</th><th className={styles._batchTh}>Sinh viên</th><th className={styles._batchTh}>Trạng thái</th><th className={styles._batchTh}>IPFS CID</th></tr></thead>
                     <tbody>
                       {issueResult.data.results.map((r: any) => (
                         <tr key={r.index} className={styles._batchTr}>
                           <td className={styles._batchTd}>{r.index}</td>
                           <td className={styles._batchTd} style={{ fontWeight: 600 }}>{r.student_fullName}</td>
                           <td className={styles._batchTd}>
-                            {r.status === "SUCCESS" ? (
-                              <span className={styles._batchSuccess}>✓ Thành công</span>
-                            ) : (
-                              <span className={styles._batchFail}>✕ Thất bại</span>
-                            )}
+                            {r.status === "SUCCESS" ? <span className={styles._batchSuccess}>Thành công</span> : <span className={styles._batchFail}>Thất bại</span>}
                           </td>
                           <td className={styles._batchTd}>
-                            {r.status === "SUCCESS" ? (
-                              <a href={r.file_url || `https://gateway.pinata.cloud/ipfs/${r.cid}`} target="_blank" rel="noreferrer" className={styles._batchLink}>
-                                {r.cid?.slice(0, 16)}...
-                              </a>
-                            ) : (
-                              <span className={styles._batchError}>{r.error}</span>
-                            )}
+                            {r.status === "SUCCESS" ? <a href={r.file_url || `https://gateway.pinata.cloud/ipfs/${r.cid}`} target="_blank" rel="noreferrer" className={styles._batchLink}>{r.cid?.slice(0, 16)}...</a> : <span className={styles._batchError}>{r.error}</span>}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-
-                <Button onClick={() => setIssueResult(null)} variant="primary" size="md" className="w-full">
-                  Đóng thông báo
-                </Button>
+                <Button onClick={() => setIssueResult(null)} variant="primary" size="md" className="w-full">Đóng</Button>
               </div>
             )}
           </div>
