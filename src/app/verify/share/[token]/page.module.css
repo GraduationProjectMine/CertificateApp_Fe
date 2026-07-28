@@ -1,0 +1,260 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 24px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loadingText {
+  text-align: center;
+  color: #6b7280;
+}
+
+.errorIcon {
+  text-align: center;
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: #1a1a2e;
+  margin: 0 0 12px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #6b7280;
+  margin: 0 0 24px;
+}
+
+.homeLink {
+  display: block;
+  text-align: center;
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 16px;
+}
+
+.heroHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px solid #f3f4f6;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoIcon {
+  font-size: 28px;
+}
+
+.logoText {
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.verifiedBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.verifiedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #16a34a;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+}
+
+.certHeader {
+  margin-bottom: 24px;
+}
+
+.certTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 10px;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.infoGrid {
+  display: grid;
+  gap: 0;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.infoRow {
+  display: flex;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 16px;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  font-size: 13px;
+  color: #9ca3af;
+  min-width: 130px;
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 14px;
+  color: #1a1a2e;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.blockchainSection {
+  background: #f8faff;
+  border: 1.5px solid #e0e7ff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 12px;
+}
+
+.blockchainRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.blockchainLabel {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.txLink {
+  font-size: 13px;
+  color: #667eea;
+  text-decoration: none;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.txLink:hover {
+  text-decoration: underline;
+}
+
+.viewOriginalBtn {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  background: #f0f4ff;
+  color: #667eea;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 20px;
+  transition: background 0.2s;
+}
+
+.viewOriginalBtn:hover {
+  background: #e0e7ff;
+}
+
+.shareInfo {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.shareInfoRow {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.shareInfoRow span:last-child {
+  font-weight: 600;
+  color: #374151;
+}
+
+.footer {
+  text-align: center;
+  border-top: 1.5px solid #f3f4f6;
+  padding-top: 20px;
+}
+
+.footerText {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}

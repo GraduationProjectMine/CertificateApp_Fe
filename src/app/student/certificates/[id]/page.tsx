@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.css";
@@ -61,8 +61,8 @@ export default function StudentCertificateDetailPage() {
         <button onClick={() => router.push("/student/certificates")} className={styles._3}>
           <svg className={styles._4} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            {t("student.certificates.list")}
+          </svg>
+          {t("student.certificates.list")}
         </button>
       </div>
 
@@ -185,6 +185,7 @@ export default function StudentCertificateDetailPage() {
               </svg>
               {t("student.certificates.share_certificate")}
             </button>
+
             <button
               onClick={() => {
                 const url = `${typeof window !== "undefined" ? window.location.origin : ""}/public/certificate/${cert.credentialCode}`;
@@ -196,6 +197,66 @@ export default function StudentCertificateDetailPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
               {t("student.certificates.copy_verify_link")}
+            </button>
+
+            {/* C2: W3C VC 2.0 Export */}
+            <button
+              id="btn-download-vc"
+              onClick={async () => {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+                const token = localStorage.getItem("accessToken") || "";
+                const res = await fetch(`${API_URL}/certificates/${cert.id}/vc-json`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `vc_${cert.id}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              }}
+              className={styles._35}
+            >
+              📜 Tải W3C VC 2.0 JSON
+            </button>
+
+            {/* C2: Open Badges 3.0 Export */}
+            <button
+              id="btn-download-badge"
+              onClick={async () => {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+                const token = localStorage.getItem("accessToken") || "";
+                const res = await fetch(`${API_URL}/certificates/${cert.id}/badge-json`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `badge_${cert.id}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              }}
+              className={styles._35}
+            >
+              🏅 Tải Open Badges 3.0
+            </button>
+
+            {/* C4: Dispute Report Link */}
+            <button
+              id="btn-report-dispute"
+              onClick={() => router.push("/student/disputes")}
+              className={styles._35}
+              style={{ color: "#ef4444" }}
+            >
+              ⚠️ Báo sai sót / Chỉnh sửa
             </button>
           </div>
         </div>
