@@ -3,14 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { staffApi } from "@/features/staff/services/staff.api";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 const emptyForm = { name: "", email: "", role: "", isActive: true, password: "" };
 
 export default function StaffDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { t } = useI18n();
   const [form, setForm] = useState(emptyForm);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -27,7 +25,7 @@ export default function StaffDetailPage() {
         isActive: staff.isActive,
         password: "",
       }))
-      .catch((err) => setError(err instanceof Error ? err.message : t("admin.staff.load_failed")))
+      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải thông tin nhân viên"))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -41,55 +39,55 @@ export default function StaffDetailPage() {
       if (form.password) payload.password = form.password;
       await staffApi.update(id, payload);
       setForm((current) => ({ ...current, password: "" }));
-      setSuccess(t("admin.staff.update_success"));
+      setSuccess("Đã cập nhật nhân viên.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.staff.update_failed"));
+      setError(err instanceof Error ? err.message : "Cập nhật nhân viên thất bại");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="p-8 text-xs text-gray-400 dark:text-gray-500">{t("common.loading_staff")}</div>;
+  if (loading) return <div className="p-8 text-xs text-gray-400 dark:text-gray-500">Đang tải thông tin nhân viên...</div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-6 p-6">
       <div>
-        <h1 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">{t("admin.staff.detail")}</h1>
+        <h1 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Chi tiết nhân viên</h1>
         <p className="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">ID: {id}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-gray-200/60 bg-white p-6 dark:border-gray-800/60 dark:bg-gray-900">
-        <label className="block text-xs font-bold">{t("admin.staff.full_name")}
+        <label className="block text-xs font-bold">Họ và tên
           <input required minLength={2} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800" />
         </label>
-        <label className="block text-xs font-bold">{t("admin.staff.email")}
+        <label className="block text-xs font-bold">Email
           <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800" />
         </label>
-        <label className="block text-xs font-bold">{t("admin.staff.role")}
-          <input readOnly value={form.role === 'ISSUER' ? t("admin.staff.role_admin") : t("admin.staff.role_staff")} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-normal text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400" />
+        <label className="block text-xs font-bold">Vai trò
+          <input readOnly value={form.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 font-normal text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400" />
         </label>
-        <label className="block text-xs font-bold">{t("common.status")}
+        <label className="block text-xs font-bold">Trạng thái
           <select value={form.isActive ? "ACTIVE" : "INACTIVE"} onChange={(e) => setForm({ ...form, isActive: e.target.value === "ACTIVE" })} className="mt-1.5 w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 font-normal dark:border-gray-800">
             <option value="ACTIVE">ACTIVE</option>
             <option value="INACTIVE">INACTIVE</option>
           </select>
         </label>
         <div className="space-y-1.5">
-          <label className="block text-xs font-bold">{t("common.password_new")}</label>
+          <label className="block text-xs font-bold">Mật khẩu mới (không bắt buộc)</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               minLength={8}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder={t("common.password_requirements")}
+              placeholder="Ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số"
               className="w-full rounded-xl border border-gray-200 bg-transparent px-3 py-2.5 pr-10 font-normal dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
-              title={showPassword ? t("common.hide_password") : t("common.show_password")}
+              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
               {showPassword ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -109,8 +107,8 @@ export default function StaffDetailPage() {
         {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-xs text-green-600 dark:bg-green-950/20">{success}</p>}
 
         <div className="flex gap-3">
-          <button disabled={saving} className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? t("common.saving") : t("common.save_changes")}</button>
-          <button type="button" onClick={() => router.push("/admin/staff")} className="rounded-xl bg-gray-100 px-4 py-2.5 text-xs font-bold text-gray-500 dark:bg-gray-800">{t("common.back")}</button>
+          <button disabled={saving} className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
+          <button type="button" onClick={() => router.push("/admin/staff")} className="rounded-xl bg-gray-100 px-4 py-2.5 text-xs font-bold text-gray-500 dark:bg-gray-800">Quay lại</button>
         </div>
       </form>
     </div>

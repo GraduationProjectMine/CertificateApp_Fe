@@ -1,51 +1,33 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi, type ImportBatchDto } from "@/features/students/services/student.api";
-import { useI18n } from "@/features/i18n/I18nContext";
-import Pagination from "@/components/common/Pagination";
-
-const ITEMS_PER_PAGE = 10;
 
 export default function ImportHistoryPage() {
   const router = useRouter();
-  const { t } = useI18n();
   const [batches, setBatches] = useState<ImportBatchDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    studentApi
-      .importHistory()
+    studentApi.importHistory()
       .then(setBatches)
-      .catch((err) => setError(err instanceof Error ? err.message : t("admin.students.load_history_failed")))
+      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải lịch sử import"))
       .finally(() => setLoading(false));
-  }, [t]);
-
-  const totalPages = Math.ceil(batches.length / ITEMS_PER_PAGE);
-  const paginatedBatches = batches.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
-            {t("admin.students.import_history_title")}
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {t("admin.students.import_history_description")}
-          </p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Lịch sử Import</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Các lần import sinh viên từ file CSV.</p>
         </div>
         <button
           onClick={() => router.push("/admin/students/import")}
           className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
         >
-          + {t("admin.students.import_new")}
+          + Import mới
         </button>
       </div>
 
@@ -54,24 +36,24 @@ export default function ImportHistoryPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">{t("common.loading")}</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
       ) : batches.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">{t("admin.students.no_imports")}</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Chưa có lần import nào.</div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-2xs">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200/60 dark:border-gray-800/60">
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("admin.students.file_col")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("admin.students.creator_col")}</th>
-                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("admin.students.total_col")}</th>
-                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("admin.students.success_col")}</th>
-                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("admin.students.failed_col")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("admin.students.time_col")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">File</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Người tạo</th>
+                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tổng</th>
+                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thành công</th>
+                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thất bại</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thời gian</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedBatches.map((b) => (
+              {batches.map((b) => (
                 <tr key={b.id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{b.file_name}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{b.created_by_name}</td>
@@ -89,13 +71,6 @@ export default function ImportHistoryPage() {
               ))}
             </tbody>
           </table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={batches.length}
-            itemsPerPage={ITEMS_PER_PAGE}
-            onPageChange={setCurrentPage}
-          />
         </div>
       )}
     </div>

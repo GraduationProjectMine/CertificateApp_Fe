@@ -10,7 +10,6 @@ import type { CreateCertificatePayload } from "@/features/certificates/services/
 import { ocrApi } from "@/features/ocr/services/api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
-import { useI18n } from "@/features/i18n/I18nContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 function downloadFile(content: Blob, filename: string) {
@@ -21,6 +20,23 @@ function downloadFile(content: Blob, filename: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+const REQUIRED_BATCH_FIELDS: Array<{ key: string; label: string }> = [
+  { key: "student_id", label: "Sinh viên" },
+  { key: "student_fullName", label: "Tên sinh viên" },
+  { key: "certificate_title", label: "Tên văn bằng" },
+  { key: "dob", label: "Ngày sinh" },
+  { key: "placeOfBirth", label: "Nơi sinh" },
+  { key: "gender", label: "Giới tính" },
+  { key: "ethnicity", label: "Dân tộc" },
+  { key: "schoolName", label: "Trường" },
+  { key: "examCohort", label: "Niên khóa" },
+  { key: "examBoard", label: "Hội đồng thi" },
+  { key: "issueLocation", label: "Nơi cấp" },
+  { key: "issueDate", label: "Ngày cấp" },
+  { key: "serialNumber", label: "Số hiệu văn bằng" },
+  { key: "registryNumber", label: "Số vào sổ" },
+];
 
 const EMPTY_RECORD: Record<string, string> = {
   student_id: "",
@@ -41,24 +57,6 @@ const EMPTY_RECORD: Record<string, string> = {
 
 export default function AdminBatchesPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
-
-  const REQUIRED_BATCH_FIELDS: Array<{ key: string; label: string }> = [
-    { key: "student_id", label: t("common.student") },
-    { key: "student_fullName", label: t("common.student_name") },
-    { key: "certificate_title", label: t("admin.batches.certificate_title") },
-    { key: "dob", label: t("admin.batches.dob") },
-    { key: "placeOfBirth", label: t("admin.batches.place_of_birth") },
-    { key: "gender", label: t("admin.batches.gender") },
-    { key: "ethnicity", label: t("admin.batches.ethnicity") },
-    { key: "schoolName", label: t("admin.batches.school_name") },
-    { key: "examCohort", label: t("admin.batches.exam_cohort") },
-    { key: "examBoard", label: t("admin.batches.exam_board") },
-    { key: "issueLocation", label: t("admin.batches.issue_location") },
-    { key: "issueDate", label: t("admin.batches.issue_date") },
-    { key: "serialNumber", label: t("admin.batches.serial_number") },
-    { key: "registryNumber", label: t("admin.batches.registry_number") },
-  ];
   const isIssuer = user?.role === "issuer";
   const [mode, setMode] = useState<"DRAFT_ONLY" | "FULL">(isIssuer ? "FULL" : "DRAFT_ONLY");
   const [batches, setBatches] = useState<IssuanceBatch[]>([]);
@@ -91,7 +89,7 @@ export default function AdminBatchesPage() {
       setError("");
       setBatches(await operationsApi.listBatches());
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.batches.failed_load"));
+      setError(err instanceof Error ? err.message : "Không thể tải lô cấp phát");
     } finally {
       setLoading(false);
     }
@@ -122,12 +120,12 @@ export default function AdminBatchesPage() {
   async function processOcrFiles(files: File[]) {
     setScanningOcr(true);
     try {
-      toast.loading(t("admin.batches.ocr_scanning", { count: files.length }), { id: "ocr-batch" });
+      toast.loading(`Đang quét OCR ${files.length} ảnh văn bằng...`, { id: "ocr-batch" });
       const res = await ocrApi.extractDiplomasBatch(files, ocrLang);
       toast.dismiss("ocr-batch");
 
       if (!res.results || res.results.length === 0) {
-        toast.error(t("admin.batches.ocr_no_data"));
+        toast.error("Không tìm thấy dữ liệu từ ảnh");
         return;
       }
 
@@ -147,7 +145,7 @@ export default function AdminBatchesPage() {
         return {
           student_id: d.student_id || "",
           student_fullName: d.full_name || "",
-          certificate_title: d.diploma_title || t("admin.batches.default_diploma_title"),
+          certificate_title: d.diploma_title || "BẰNG TỐT NGHIỆP",
           dob: d.dob || "",
           placeOfBirth: d.place_of_birth || "",
           gender: d.gender || "",
@@ -163,14 +161,14 @@ export default function AdminBatchesPage() {
         };
       });
 
-      setFileName(t("admin.batches.ocr_batch_name", { count: files.length }));
+      setFileName(`Lô quét OCR (${files.length} văn bằng)`);
       setSourceRows(rows);
       setActiveRecordIndex(0);
 
-      toast.success(t("admin.batches.ocr_success", { total: res.total }));
+      toast.success(`Đã quét thành công ${res.total} ảnh văn bằng!`);
     } catch (err: any) {
       toast.dismiss("ocr-batch");
-      toast.error(err.message || t("admin.batches.ocr_failed"));
+      toast.error(err.message || "Quét OCR thất bại");
     } finally {
       setScanningOcr(false);
     }
@@ -275,17 +273,17 @@ export default function AdminBatchesPage() {
     setShowConfirmBatch(false);
     setSubmitting(true);
     try {
-      const result = await operationsApi.createBatch(fileName || t("admin.batches.default_batch_name", { date: new Date().toLocaleDateString("vi-VN") }), mappedRows, mode);
+      const result = await operationsApi.createBatch(fileName || `Lô cấp phát ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, mode);
       setSelected(result);
       resetImport();
       await load();
       toast.success(
         mode === "FULL"
-          ? t("admin.batches.batch_success_full", { success: result.successRows, total: result.totalRows })
-          : t("admin.batches.batch_success_draft", { success: result.successRows, total: result.totalRows })
+          ? `Đã phát hành và đẩy Blockchain thành công ${result.successRows}/${result.totalRows} văn bằng!`
+          : `Đã lưu DRAFT chờ duyệt thành công ${result.successRows}/${result.totalRows} văn bằng!`
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("admin.batches.create_batch_failed"));
+      toast.error(err instanceof Error ? err.message : "Không thể tạo lô cấp phát");
     } finally {
       setSubmitting(false);
     }
@@ -293,7 +291,7 @@ export default function AdminBatchesPage() {
 
   function requestConfirm() {
     if (!mappedRows.length || invalidRowsCount > 0) {
-      toast.error(t("admin.batches.fill_required_fields"));
+      toast.error("Vui lòng điền đầy đủ tất cả các trường thông tin bắt buộc (*) trước khi cấp phát lô");
       return;
     }
     setShowConfirmBatch(true);
@@ -301,7 +299,7 @@ export default function AdminBatchesPage() {
 
   async function openBatch(batch: IssuanceBatch) {
     try { setSelected(await operationsApi.getBatch(batch.id)); }
-    catch (err) { toast.error(err instanceof Error ? err.message : t("admin.batches.view_batch_failed")); }
+    catch (err) { toast.error(err instanceof Error ? err.message : "Không thể xem chi tiết lô"); }
   }
 
   async function retry(itemId: string) {
@@ -309,8 +307,8 @@ export default function AdminBatchesPage() {
     try {
       setSelected(await operationsApi.retryBatchItem(selected.id, itemId));
       await load();
-      toast.success(t("admin.batches.retry_success"));
-    } catch (err) { toast.error(err instanceof Error ? err.message : t("admin.batches.retry_failed")); }
+      toast.success("Đã xử lý lại dòng bị lỗi");
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Xử lý lại thất bại"); }
   }
 
   function exportErrors() {
@@ -327,10 +325,10 @@ export default function AdminBatchesPage() {
       <ConfirmModal
         open={showConfirmBatch}
         onClose={() => setShowConfirmBatch(false)}
-        title={t("admin.batches.confirm_batch_title")}
-        message={mode === "FULL" ? t("admin.batches.confirm_batch_full", { count: mappedRows.length }) : t("admin.batches.confirm_batch_draft", { count: mappedRows.length })}
-        confirmLabel={mode === "FULL" ? t("admin.batches.confirm_issue") : t("admin.batches.confirm_draft")}
-        cancelLabel={t("common.cancel")}
+        title="Xác nhận phát hành lô văn bằng"
+        message={mode === "FULL" ? `Bạn có chắc chắn muốn cấp ${mappedRows.length} văn bằng và ghi trực tiếp lên Blockchain?` : `Tạo ${mappedRows.length} văn bằng ở trạng thái DRAFT / PENDING (chờ Issuer duyệt phát hành sau).`}
+        confirmLabel={mode === "FULL" ? "Xác nhận phát hành" : "Xác nhận tạo DRAFT"}
+        cancelLabel="Hủy"
         variant="warning"
         icon="warning"
         loading={submitting}
@@ -339,21 +337,21 @@ export default function AdminBatchesPage() {
 
       {/* Header aligned with Cấp bằng mới */}
       <div>
-        <h1 className={styles._2}>{t("admin.batches.title")}</h1>
-        <p className={styles._3}>{t("admin.batches.description")}</p>
+        <h1 className={styles._2}>Cấp phát văn bằng theo lô & OCR</h1>
+        <p className={styles._3}>Quét danh sách ảnh văn bằng, trích xuất thông tin OCR, nhập đầy đủ thông tin và lưu nháp DRAFT trước khi phát hành.</p>
       </div>
 
       {/* OCR Drag-and-Drop Dropzone Panel matching Cấp bằng mới */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">{t("admin.batches.ocr_upload_title")}</div>
+          <div className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Tải lên ảnh văn bằng (Quét OCR hàng loạt)</div>
           <select
             value={ocrLang}
             onChange={(e) => setOcrLang(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value="vie">{t("admin.batches.lang_vietnamese")}</option>
-            <option value="eng">{t("admin.batches.lang_english")}</option>
+            <option value="vie">Ngôn ngữ: Tiếng Việt</option>
+            <option value="eng">Ngôn ngữ: English</option>
           </select>
         </div>
 
@@ -365,8 +363,8 @@ export default function AdminBatchesPage() {
           <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
-          <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.batches.dropzone_text")}</div>
-          <div className="text-[10px] text-gray-400 dark:text-gray-500">{t("admin.batches.dropzone_hint")}</div>
+          <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả danh sách ảnh văn bằng vào đây</div>
+          <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn nhiều ảnh cùng lúc (JPEG, PNG, WebP, TIFF)</div>
           <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" multiple onChange={onOcrFiles} className="hidden" disabled={scanningOcr} />
         </label>
       </div>
@@ -374,7 +372,7 @@ export default function AdminBatchesPage() {
       {scanningOcr && (
         <div className="rounded-2xl border border-teal-200 bg-teal-50/80 p-4 text-xs font-bold text-teal-800 flex items-center gap-3 animate-pulse">
           <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
-          {t("admin.batches.ocr_scanning_indicator")}
+          Đang trích xuất OCR văn bằng... Vui lòng chờ trong giây lát.
         </div>
       )}
 
@@ -388,8 +386,8 @@ export default function AdminBatchesPage() {
                 🎓
               </div>
               <div>
-                <h2 className="text-sm font-bold text-gray-900 dark:text-white">{fileName || t("admin.batches.new_batch")}</h2>
-                <p className="text-xs text-gray-500">{t("admin.batches.entering_data", { count: sourceRows.length })}</p>
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white">{fileName || "Lô văn bằng mới"}</h2>
+                <p className="text-xs text-gray-500">Đang nhập dữ liệu cho {sourceRows.length} văn bằng (Tất cả thông tin là bắt buộc)</p>
               </div>
             </div>
 
@@ -401,19 +399,19 @@ export default function AdminBatchesPage() {
                     onClick={() => setMode("FULL")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === "FULL" ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-900 dark:text-gray-400"}`}
                   >
-                    {t("admin.batches.blockchain_issue")}
+                    Phát hành Blockchain
                   </button>
                   <button
                     type="button"
                     onClick={() => setMode("DRAFT_ONLY")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === "DRAFT_ONLY" ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:text-gray-900 dark:text-gray-400"}`}
                   >
-                    {t("admin.batches.create_draft")}
+                    Tạo DRAFT / Gửi duyệt
                   </button>
                 </div>
               ) : (
                 <span className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-200/60">
-                  {t("admin.batches.draft_pending_issuer")}
+                  Tạo DRAFT (Chờ Issuer duyệt)
                 </span>
               )}
 
@@ -422,7 +420,7 @@ export default function AdminBatchesPage() {
                 onClick={addNewRecord}
                 className="px-3 py-1.5 text-xs font-bold text-primary bg-primary/10 rounded-xl hover:bg-primary/20 transition-all flex items-center gap-1"
               >
-                + {t("admin.batches.add_certificate")}
+                + Thêm văn bằng
               </button>
 
               <button
@@ -430,16 +428,16 @@ export default function AdminBatchesPage() {
                 onClick={resetImport}
                 className="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/30 rounded-xl hover:bg-rose-100 transition-all"
               >
-                {t("common.refresh")}
+                Làm mới
               </button>
             </div>
           </div>
 
           {/* Record Switcher Stepper */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide mr-1">{t("admin.batches.certificate_label")}</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide mr-1">Văn bằng:</span>
             {sourceRows.map((row, idx) => {
-              const title = row.student_fullName || row.student_id || t("admin.batches.certificate_number", { number: idx + 1 });
+              const title = row.student_fullName || row.student_id || `Văn bằng #${idx + 1}`;
               const isValid = REQUIRED_BATCH_FIELDS.every(({ key }) => !!row[key]?.trim());
               return (
                 <div key={idx} className="flex items-center gap-1 shrink-0">
@@ -458,7 +456,7 @@ export default function AdminBatchesPage() {
                     <button
                       type="button"
                       onClick={() => removeActiveRecord(idx)}
-                      title={t("admin.batches.remove_certificate")}
+                      title="Xóa văn bằng này"
                       className="text-xs text-gray-400 hover:text-rose-500 px-1"
                     >
                       ✕
@@ -474,13 +472,13 @@ export default function AdminBatchesPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              {t("admin.batches.form_header", { current: activeRecordIndex + 1, total: sourceRows.length })}
+              Thông tin văn bằng #{activeRecordIndex + 1} / {sourceRows.length} (Tất cả thông tin là bắt buộc)
             </span>
           </div>
 
           <div className={styles._28}>
             <div>
-              <label className={styles._29}>{t("common.student")} *</label>
+              <label className={styles._29}>Sinh viên *</label>
               {students.length > 0 ? (
                 <select
                   className={styles._30}
@@ -491,7 +489,7 @@ export default function AdminBatchesPage() {
                     if (s) handleFieldEdit("student_fullName", s.student_fullName);
                   }}
                 >
-                  <option value="">{t("admin.batches.select_student")}</option>
+                  <option value="">-- Chọn sinh viên --</option>
                   {students.map((s) => (
                     <option key={s.student_id} value={s.student_id}>
                       {s.student_fullName} ({s.email})
@@ -502,7 +500,7 @@ export default function AdminBatchesPage() {
                 <input
                   type="text"
                   className={styles._30}
-                  placeholder={t("admin.batches.student_id_placeholder")}
+                  placeholder="Nhập ID sinh viên..."
                   value={activeRecord.student_id || ""}
                   onChange={(e) => handleFieldEdit("student_id", e.target.value)}
                 />
@@ -510,143 +508,143 @@ export default function AdminBatchesPage() {
             </div>
 
             <div>
-              <label className={styles._29}>{t("common.student_name")} *</label>
+              <label className={styles._29}>Tên sinh viên *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.student_name_placeholder")}
+                placeholder="Họ và tên sinh viên"
                 value={activeRecord.student_fullName || ""}
                 onChange={(e) => handleFieldEdit("student_fullName", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.certificate_title")} *</label>
+              <label className={styles._29}>Tên văn bằng *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.cert_title_placeholder")}
+                placeholder="VD: BẰNG CỬ NHÂN KỸ THUẬT"
                 value={activeRecord.certificate_title || ""}
                 onChange={(e) => handleFieldEdit("certificate_title", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.dob")} *</label>
+              <label className={styles._29}>Ngày sinh *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.dob_placeholder")}
+                placeholder="VD: 15/08/2002"
                 value={activeRecord.dob || ""}
                 onChange={(e) => handleFieldEdit("dob", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.place_of_birth")} *</label>
+              <label className={styles._29}>Nơi sinh *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.place_of_birth_placeholder")}
+                placeholder="VD: Hà Nội"
                 value={activeRecord.placeOfBirth || ""}
                 onChange={(e) => handleFieldEdit("placeOfBirth", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.gender")} *</label>
+              <label className={styles._29}>Giới tính *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.gender_placeholder")}
+                placeholder="VD: Nam / Nữ"
                 value={activeRecord.gender || ""}
                 onChange={(e) => handleFieldEdit("gender", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.ethnicity")} *</label>
+              <label className={styles._29}>Dân tộc *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.ethnicity_placeholder")}
+                placeholder="VD: Kinh"
                 value={activeRecord.ethnicity || ""}
                 onChange={(e) => handleFieldEdit("ethnicity", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.school_name")} *</label>
+              <label className={styles._29}>Trường *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.school_name_placeholder")}
+                placeholder="Tên trường..."
                 value={activeRecord.schoolName || ""}
                 onChange={(e) => handleFieldEdit("schoolName", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.exam_cohort")} *</label>
+              <label className={styles._29}>Niên khóa *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.exam_cohort_placeholder")}
+                placeholder="VD: 2022 - 2026"
                 value={activeRecord.examCohort || ""}
                 onChange={(e) => handleFieldEdit("examCohort", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.exam_board")} *</label>
+              <label className={styles._29}>Hội đồng thi *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.exam_board_placeholder")}
+                placeholder="VD: Hội đồng thi Kỹ thuật"
                 value={activeRecord.examBoard || ""}
                 onChange={(e) => handleFieldEdit("examBoard", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.issue_location")} *</label>
+              <label className={styles._29}>Nơi cấp *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.issue_location_placeholder")}
+                placeholder="VD: Hà Nội"
                 value={activeRecord.issueLocation || ""}
                 onChange={(e) => handleFieldEdit("issueLocation", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.issue_date")} *</label>
+              <label className={styles._29}>Ngày cấp *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.issue_date_placeholder")}
+                placeholder="VD: 20/06/2026"
                 value={activeRecord.issueDate || ""}
                 onChange={(e) => handleFieldEdit("issueDate", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.serial_number")} *</label>
+              <label className={styles._29}>Số hiệu văn bằng *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.serial_number_placeholder")}
+                placeholder="VD: B123456"
                 value={activeRecord.serialNumber || ""}
                 onChange={(e) => handleFieldEdit("serialNumber", e.target.value)}
               />
             </div>
 
             <div>
-              <label className={styles._29}>{t("admin.batches.registry_number")} *</label>
+              <label className={styles._29}>Số vào sổ *</label>
               <input
                 type="text"
                 className={styles._30}
-                placeholder={t("admin.batches.registry_number_placeholder")}
+                placeholder="VD: 789/QĐ-ĐH"
                 value={activeRecord.registryNumber || ""}
                 onChange={(e) => handleFieldEdit("registryNumber", e.target.value)}
               />
@@ -658,8 +656,8 @@ export default function AdminBatchesPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
             <div>
-              <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">{t("admin.batches.overview_table_title")}</h3>
-              <p className="text-[11px] text-gray-500">{t("admin.batches.overview_table_desc")}</p>
+              <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Bảng tổng quan dữ liệu cấp phát lô</h3>
+              <p className="text-[11px] text-gray-500">Xem lại và chỉnh sửa trực tiếp trên từng dòng (Tất cả thông tin là bắt buộc)</p>
             </div>
 
             {/* Filter Tabs & Search */}
@@ -670,14 +668,14 @@ export default function AdminBatchesPage() {
                   onClick={() => setPreviewTab("ALL")}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${previewTab === "ALL" ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm" : "text-gray-500"}`}
                 >
-                  {t("common.all")} ({mappedRowsWithStatus.length})
+                  Tất cả ({mappedRowsWithStatus.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setPreviewTab("VALID")}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${previewTab === "VALID" ? "bg-white dark:bg-gray-900 text-emerald-600 shadow-sm" : "text-gray-500"}`}
                 >
-                  ✓ {t("admin.batches.valid")} ({validRowsCount})
+                  ✓ Hợp lệ ({validRowsCount})
                 </button>
                 {invalidRowsCount > 0 && (
                   <button
@@ -685,14 +683,14 @@ export default function AdminBatchesPage() {
                     onClick={() => setPreviewTab("INVALID")}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${previewTab === "INVALID" ? "bg-white dark:bg-gray-900 text-rose-600 shadow-sm" : "text-gray-500"}`}
                   >
-                    {t("admin.batches.missing_info", { count: invalidRowsCount })}
+                    ⚠ Thiếu thông tin ({invalidRowsCount})
                   </button>
                 )}
               </div>
 
               <input
                 type="text"
-                placeholder={t("common.search")}
+                placeholder="Tìm kiếm..."
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 className="w-48 rounded-xl border border-gray-200 bg-transparent px-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:border-gray-700"
@@ -705,17 +703,17 @@ export default function AdminBatchesPage() {
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-100 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700/80">
                 <tr className="text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider">
-                  <th className="py-3.5 px-3 w-12 text-center">{t("common.table.no")}</th>
-                  <th className="py-3.5 px-3">{t("common.student")} *</th>
-                  <th className="py-3.5 px-3">{t("common.student_name")} *</th>
-                  <th className="py-3.5 px-3">{t("admin.batches.certificate_title")} *</th>
-                  <th className="py-3.5 px-3">{t("admin.batches.dob")} *</th>
-                  <th className="py-3.5 px-3">{t("admin.batches.place_of_birth")} *</th>
-                  <th className="py-3.5 px-3">{t("admin.batches.school_name")} *</th>
-                  <th className="py-3.5 px-3">{t("admin.batches.serial_number")} *</th>
-                  <th className="py-3.5 px-3">{t("admin.batches.registry_number")} *</th>
-                  <th className="py-3.5 px-3 text-center">{t("common.status")}</th>
-                  <th className="py-3.5 px-3 text-center">{t("common.actions")}</th>
+                  <th className="py-3.5 px-3 w-12 text-center">STT</th>
+                  <th className="py-3.5 px-3">Sinh viên *</th>
+                  <th className="py-3.5 px-3">Tên sinh viên *</th>
+                  <th className="py-3.5 px-3">Tên văn bằng *</th>
+                  <th className="py-3.5 px-3">Ngày sinh *</th>
+                  <th className="py-3.5 px-3">Nơi sinh *</th>
+                  <th className="py-3.5 px-3">Trường *</th>
+                  <th className="py-3.5 px-3">Số hiệu *</th>
+                  <th className="py-3.5 px-3">Số vào sổ *</th>
+                  <th className="py-3.5 px-3 text-center">Trạng thái</th>
+                  <th className="py-3.5 px-3 text-center">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -729,7 +727,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.student_id || ""}
-                        placeholder={t("admin.batches.student_code_placeholder")}
+                        placeholder="Mã SV..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "student_id", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded font-mono font-bold text-primary dark:text-teal-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -738,7 +736,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.student_fullName || ""}
-                        placeholder={t("admin.batches.full_name_placeholder")}
+                        placeholder="Họ tên..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "student_fullName", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded font-semibold text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -747,7 +745,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.certificate_title || ""}
-                        placeholder={t("admin.batches.cert_title_short_placeholder")}
+                        placeholder="Tên văn bằng..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "certificate_title", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded font-medium text-gray-800 dark:text-gray-200 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -756,7 +754,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.dob || ""}
-                        placeholder={t("admin.batches.dob_short_placeholder")}
+                        placeholder="Ngày sinh..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "dob", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -765,7 +763,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.placeOfBirth || ""}
-                        placeholder={t("admin.batches.place_of_birth_short_placeholder")}
+                        placeholder="Nơi sinh..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "placeOfBirth", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -774,7 +772,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.schoolName || ""}
-                        placeholder={t("admin.batches.school_short_placeholder")}
+                        placeholder="Trường..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "schoolName", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -783,7 +781,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.serialNumber || ""}
-                        placeholder={t("admin.batches.serial_short_placeholder")}
+                        placeholder="Số hiệu..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "serialNumber", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded font-mono text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -792,7 +790,7 @@ export default function AdminBatchesPage() {
                       <input
                         type="text"
                         value={item.record.registryNumber || ""}
-                        placeholder={t("admin.batches.registry_short_placeholder")}
+                        placeholder="Số vào sổ..."
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "registryNumber", e.target.value)}
                         className="w-full bg-transparent px-2 py-1.5 rounded font-mono text-gray-600 dark:text-gray-400 focus:bg-white dark:focus:bg-slate-800 border border-transparent focus:border-primary outline-none"
                       />
@@ -800,11 +798,11 @@ export default function AdminBatchesPage() {
                     <td className="p-3 text-center">
                       {item.isValid ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                          ✓ {t("admin.batches.ready")}
+                          ✓ Sẵn sàng
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold" title={t("admin.batches.missing_tooltip", { fields: item.missingFields.join(", ") })}>
-                          {t("admin.batches.missing_count", { count: item.missingFields.length })}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold" title={`Thiếu: ${item.missingFields.join(", ")}`}>
+                          ⚠ Thiếu {item.missingFields.length} thông tin
                         </span>
                       )}
                     </td>
@@ -814,7 +812,7 @@ export default function AdminBatchesPage() {
                         onClick={() => setActiveRecordIndex(item.originalIndex - 1)}
                         className="px-2.5 py-1 text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all"
                       >
-                        {t("admin.batches.edit_form")}
+                        Sửa Form
                       </button>
                     </td>
                   </tr>
@@ -822,7 +820,7 @@ export default function AdminBatchesPage() {
                 {filteredPreviewRows.length === 0 && (
                   <tr>
                     <td colSpan={11} className="p-8 text-center text-xs text-gray-400">
-                      {searchKeyword ? t("admin.batches.no_search_results") : t("admin.batches.no_data")}
+                      {searchKeyword ? "Không tìm thấy kết quả phù hợp." : "Chưa có dữ liệu. Vui lòng nhập dữ liệu hoặc quét OCR ảnh văn bằng."}
                     </td>
                   </tr>
                 )}
@@ -833,7 +831,7 @@ export default function AdminBatchesPage() {
           {/* Execution Footer Bar */}
           <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4 mt-4">
             <div className="text-xs text-gray-500">
-              {t("admin.batches.valid_summary", { valid: validRowsCount, total: mappedRows.length })}
+              {validRowsCount} / {mappedRows.length} văn bằng hợp lệ (Đầy đủ tất cả trường thông tin)
             </div>
             <button
               type="button"
@@ -841,7 +839,7 @@ export default function AdminBatchesPage() {
               onClick={requestConfirm}
               className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md transition-all disabled:opacity-50"
             >
-              {submitting ? t("common.processing") : mode === "FULL" ? t("admin.batches.confirm_issue_count", { count: mappedRows.length }) : t("admin.batches.confirm_draft_count", { count: mappedRows.length })}
+              {submitting ? "Đang xử lý..." : mode === "FULL" ? `Xác nhận phát hành ${mappedRows.length} văn bằng` : `Xác nhận tạo ${mappedRows.length} DRAFT`}
             </button>
           </div>
         </div>
@@ -855,12 +853,12 @@ export default function AdminBatchesPage() {
           <table className={styles._8}>
             <thead className={styles._9}>
               <tr>
-                <th className={styles._10}>{t("admin.batches.batch_name")}</th>
-                <th className={styles._11}>{t("admin.batches.progress")}</th>
-                <th className={styles._11}>{t("common.success")}</th>
-                <th className={styles._11}>{t("common.error")}</th>
-                <th className={styles._10}>{t("admin.batches.created_by")}</th>
-                <th className={styles._12}>{t("common.actions")}</th>
+                <th className={styles._10}>Tên lô</th>
+                <th className={styles._11}>Tiến độ</th>
+                <th className={styles._11}>Thành công</th>
+                <th className={styles._11}>Lỗi</th>
+                <th className={styles._10}>Người tạo</th>
+                <th className={styles._12}>Thao tác</th>
               </tr>
             </thead>
             <tbody className={styles._13}>
@@ -880,15 +878,15 @@ export default function AdminBatchesPage() {
                   <td className={styles._19}>{batch.failedRows}</td>
                   <td className={styles._16}>{batch.createdByName}</td>
                   <td className={styles._12}>
-                    <button className={styles._20} onClick={() => openBatch(batch)}>{t("common.detail")}</button>
+                    <button className={styles._20} onClick={() => openBatch(batch)}>Chi tiết</button>
                   </td>
                 </tr>
               ))}
               {!loading && batches.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-xs text-gray-400 dark:text-gray-500">{t("admin.batches.no_batches")}</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-xs text-gray-400 dark:text-gray-500">Chưa có lô cấp phát.</td></tr>
               )}
               {loading && (
-                <tr><td colSpan={6} className="p-8 text-center text-xs text-gray-400 dark:text-gray-500">{t("common.loading")}</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-xs text-gray-400 dark:text-gray-500">Đang tải...</td></tr>
               )}
             </tbody>
           </table>
@@ -900,23 +898,23 @@ export default function AdminBatchesPage() {
         <section className="rounded-3xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-black text-gray-900 dark:text-white">{t("admin.batches.result_title")}: {selected.name}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t("admin.batches.result_summary", { success: selected.successRows, failed: selected.failedRows })}</p>
+              <h2 className="text-sm font-black text-gray-900 dark:text-white">Kết quả: {selected.name}</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{selected.successRows} thành công · {selected.failedRows} lỗi</p>
             </div>
             <div className="flex gap-2">
-              {selected.failedRows > 0 && <button className="rounded-lg border px-3 py-2 text-xs font-bold" onClick={exportErrors}>{t("admin.batches.export_errors_csv")}</button>}
-              <button aria-label={t("common.close")} className="px-2" onClick={() => setSelected(null)}>✕</button>
+              {selected.failedRows > 0 && <button className="rounded-lg border px-3 py-2 text-xs font-bold" onClick={exportErrors}>Xuất lỗi CSV</button>}
+              <button aria-label="Đóng chi tiết" className="px-2" onClick={() => setSelected(null)}>✕</button>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b text-gray-500 dark:text-gray-400">
-                  <th className="p-3">{t("admin.batches.row")}</th>
-                  <th className="p-3">{t("common.student")}</th>
-                  <th className="p-3">{t("admin.batches.serial_number")}</th>
-                  <th className="p-3">{t("common.status")}</th>
-                  <th className="p-3">{t("admin.batches.result")}</th>
+                  <th className="p-3">Dòng</th>
+                  <th className="p-3">Sinh viên</th>
+                  <th className="p-3">Số hiệu</th>
+                  <th className="p-3">Trạng thái</th>
+                  <th className="p-3">Kết quả</th>
                 </tr>
               </thead>
               <tbody>

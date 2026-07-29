@@ -6,7 +6,6 @@ import jsPDF from "jspdf";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
 import { QRCodeSVG } from "qrcode.react";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -51,43 +50,9 @@ const FIELD_BINDINGS = [
 function generateId() { return `fld_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`; }
 
 export default function TemplateEditorPage() {
-  const { t } = useI18n();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-
-  const getFieldTypeLabel = useCallback((type: string) => {
-    const map: Record<string, string> = {
-      text: t("admin.templates.field_type_text"),
-      image: t("admin.templates.field_type_image"),
-      qr: t("admin.templates.field_type_qr"),
-      line: t("admin.templates.field_type_line"),
-      rect: t("admin.templates.field_type_rect"),
-    };
-    return map[type] || type;
-  }, [t]);
-
-  const getBindingLabel = useCallback((binding: string) => {
-    const map: Record<string, string> = {
-      student_fullName: t("admin.certificates.student_name"),
-      certificate_title: t("admin.certificates.name"),
-      organization_name: t("admin.certificates.organization"),
-      organization_logo: t("admin.certificates.organization_logo"),
-      dob: t("admin.certificates.dob"),
-      placeOfBirth: t("admin.certificates.place_of_birth"),
-      gender: t("admin.certificates.gender"),
-      ethnicity: t("admin.certificates.ethnicity"),
-      schoolName: t("admin.certificates.school"),
-      examCohort: t("admin.certificates.exam_cohort"),
-      examBoard: t("admin.certificates.exam_board"),
-      issueLocation: t("admin.certificates.issue_location"),
-      issueDate: t("admin.certificates.issue_date"),
-      serialNumber: t("admin.certificates.serial_number"),
-      registryNumber: t("admin.certificates.registry_number"),
-      verification_url: t("admin.certificates.verification_url"),
-    };
-    return map[binding] || binding;
-  }, [t]);
 
   const [template, setTemplate] = useState<CertificateTemplate | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,23 +67,23 @@ export default function TemplateEditorPage() {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Dynamic Manual Input Data & Import File State
-  const [mockData, setMockData] = useState<Record<string, string>>(() => ({
-    student_fullName: t("admin.certificates.student_name"),
-    certificate_title: t("admin.certificates.name"),
-    dob: t("admin.certificates.dob"),
-    placeOfBirth: t("admin.certificates.place_of_birth"),
-    gender: t("admin.certificates.gender"),
-    ethnicity: t("admin.certificates.ethnicity"),
-    schoolName: t("admin.certificates.school"),
-    examCohort: t("admin.certificates.exam_cohort"),
-    examBoard: t("admin.certificates.exam_board"),
-    issueLocation: t("admin.certificates.issue_location"),
-    issueDate: t("admin.certificates.issue_date"),
-    serialNumber: t("admin.certificates.serial_number"),
-    registryNumber: t("admin.certificates.registry_number"),
-    organization_name: t("admin.certificates.organization"),
+  const [mockData, setMockData] = useState<Record<string, string>>({
+    student_fullName: "Họ và tên",
+    certificate_title: "Tên văn bằng",
+    dob: "Ngày sinh",
+    placeOfBirth: "Nơi sinh",
+    gender: "Giới tính",
+    ethnicity: "Dân tộc",
+    schoolName: "Tên trường",
+    examCohort: "Khóa học",
+    examBoard: "Hội đồng thi",
+    issueLocation: "Nơi cấp",
+    issueDate: "Ngày cấp",
+    serialNumber: "Số hiệu",
+    registryNumber: "Số vào sổ",
+    organization_name: "Tên tổ chức",
     verification_url: "https://verify.certchain.edu/cert/sample-id",
-  }));
+  });
 
   const [importedData, setImportedData] = useState<{
     fileName: string;
@@ -132,7 +97,7 @@ export default function TemplateEditorPage() {
   useEffect(() => {
     if (id === "new") {
       setDesign(DEFAULT_DESIGN);
-      setTemplateName(t("admin.templates.new_template_name"));
+      setTemplateName("Mẫu văn bằng mới");
       setLoading(false);
       return;
     }
@@ -260,10 +225,10 @@ export default function TemplateEditorPage() {
         router.push(`/admin/templates/editor/${created.id}`);
       } else {
         await templateApi.update(id, { name: templateName, design_data: design as any });
-        alert(t("admin.templates.save_success"));
+        alert("Đã lưu mẫu thành công!");
       }
     } catch (err: any) {
-      alert(err.message || t("admin.templates.save_failed"));
+      alert(err.message || "Lưu mẫu thất bại");
     } finally {
       setSaving(false);
     }
@@ -276,16 +241,16 @@ export default function TemplateEditorPage() {
     try {
       const res = await templateApi.importDataFile(file);
       if (!res.rows || res.rows.length === 0) {
-        alert(t("admin.templates.invalid_file_data"));
+        alert("File không chứa dữ liệu hợp lệ.");
         return;
       }
       setImportedData(res);
       setActiveRowIndex(0);
       setMockData((prev) => ({ ...prev, ...res.rows[0].record }));
       setPreviewMode(true);
-      alert(t("admin.templates.import_file_success", { count: res.totalRows, fileName: res.fileName }));
+      alert(`Đã tải ${res.totalRows} dòng từ file ${res.fileName}`);
     } catch (err: any) {
-      alert(err.message || t("admin.templates.import_failed"));
+      alert(err.message || "Không thể nạp dữ liệu từ file");
     } finally {
       setImportingFile(false);
       e.target.value = "";
@@ -322,14 +287,14 @@ export default function TemplateEditorPage() {
       const docName = (mockData.student_fullName || mockData.student_id || templateName || "van_bang").replace(/\s+/g, "_");
       pdf.save(`${docName}.pdf`);
     } catch (err: any) {
-      alert(err.message || t("admin.templates.pdf_export_failed"));
+      alert(err.message || "Xuất PDF thất bại");
     } finally {
       setExportingPdf(false);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("common.loading")}</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>;
   }
 
   const renderFieldContent = (field: TemplateField) => {
@@ -429,7 +394,7 @@ export default function TemplateEditorPage() {
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 280 }}
-            placeholder={t("admin.templates.template_name_placeholder")}
+            placeholder="Tên mẫu văn bằng"
           />
         </div>
 
@@ -443,7 +408,7 @@ export default function TemplateEditorPage() {
 
           {/* Import Data File button */}
           <label style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#334155", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-            📥 {importingFile ? t("admin.templates.importing") : t("admin.templates.import_csv")}
+            📥 {importingFile ? "Đang nạp file..." : "Import CSV/Excel"}
             <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFileChange} disabled={importingFile} style={{ display: "none" }} />
           </label>
 
@@ -453,7 +418,7 @@ export default function TemplateEditorPage() {
             disabled={exportingPdf}
             style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#059669", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
           >
-            {exportingPdf ? t("admin.templates.exporting_pdf") : t("admin.templates.export_pdf")}
+            📄 {exportingPdf ? "Đang xuất PDF..." : "Xuất PDF"}
           </button>
 
           {/* Mode Switcher */}
@@ -461,7 +426,7 @@ export default function TemplateEditorPage() {
             onClick={() => setPreviewMode(!previewMode)}
             style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: previewMode ? "#3b82f6" : "#fff", color: previewMode ? "#fff" : "#64748b", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
           >
-            {previewMode ? t("admin.templates.design_mode") : t("admin.templates.preview_mode")}
+            {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
           </button>
 
           {/* Save button */}
@@ -470,7 +435,7 @@ export default function TemplateEditorPage() {
             disabled={saving || !templateName.trim()}
             style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving || !templateName.trim() ? 0.6 : 1 }}
           >
-            {saving ? t("common.saving") : t("common.save")}
+            {saving ? "Đang lưu..." : "Lưu mẫu"}
           </button>
         </div>
       </div>
@@ -479,7 +444,7 @@ export default function TemplateEditorPage() {
         {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
         {!previewMode ? (
           <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>{t("admin.templates.add_field")}</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
             {FIELD_TEMPLATES.map((ft) => (
               <button
                 key={ft.type}
@@ -489,17 +454,17 @@ export default function TemplateEditorPage() {
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.background = "#fff"; }}
               >
                 <span style={{ fontSize: 16 }}>{ft.icon}</span>
-                <span>{getFieldTypeLabel(ft.type)}</span>
+                <span>{ft.label}</span>
               </button>
             ))}
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>{t("admin.templates.field_list", { count: design.fields.length })}</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
             {design.fields.map((f) => (
               <div
                 key={f.id}
                 onClick={() => setSelectedId(f.id)}
                 style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "#64748b", background: selectedId === f.id ? "#f0f7ff" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
               >
-                <span style={{ fontWeight: 500 }}>{f.binding ? getBindingLabel(f.binding) : f.text || t("admin.templates.text_placeholder")}</span>
+                <span style={{ fontWeight: 500 }}>{f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}</span>
                 <span style={{ fontSize: 10, color: "#94a3b8" }}>{f.type}</span>
               </div>
             ))}
@@ -508,15 +473,15 @@ export default function TemplateEditorPage() {
           /* Manual Input & Import Record Navigation Side Panel */
           <div style={{ width: 320, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
             <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>{t("admin.templates.enter_cert_data")}</h3>
-              <p style={{ fontSize: 11, color: "#64748b" }}>{t("admin.templates.enter_cert_data_desc")}</p>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
+              <p style={{ fontSize: 11, color: "#64748b" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
             </div>
 
             {/* Imported File Record Selector */}
             {importedData && (
               <div style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: 12, borderRadius: 10 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
-                  📁 {importedData.fileName} ({importedData.totalRows} {t("admin.templates.records")})
+                  📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
@@ -533,7 +498,7 @@ export default function TemplateEditorPage() {
                   >
                     {importedData.rows.map((r, i) => (
                       <option key={i} value={i}>
-                        {t("admin.templates.row_label", { rowNumber: r.rowNumber, name: r.record.student_fullName || r.record.student_id || t("admin.templates.record_n", { n: r.rowNumber }) })}
+                        Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
                       </option>
                     ))}
                   </select>
@@ -551,29 +516,29 @@ export default function TemplateEditorPage() {
             {/* Manual Form Inputs for Certificate Fields */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { key: "student_fullName" },
-                { key: "certificate_title" },
-                { key: "organization_name" },
-                { key: "dob" },
-                { key: "placeOfBirth" },
-                { key: "gender" },
-                { key: "ethnicity" },
-                { key: "schoolName" },
-                { key: "examCohort" },
-                { key: "examBoard" },
-                { key: "issueLocation" },
-                { key: "issueDate" },
-                { key: "serialNumber" },
-                { key: "registryNumber" },
-              ].map(({ key }) => (
+                { key: "student_fullName", label: "Họ và tên sinh viên" },
+                { key: "certificate_title", label: "Tên văn bằng" },
+                { key: "organization_name", label: "Tên tổ chức / Trường" },
+                { key: "dob", label: "Ngày sinh" },
+                { key: "placeOfBirth", label: "Nơi sinh" },
+                { key: "gender", label: "Giới tính" },
+                { key: "ethnicity", label: "Dân tộc" },
+                { key: "schoolName", label: "Đơn vị đào tạo" },
+                { key: "examCohort", label: "Khóa học" },
+                { key: "examBoard", label: "Hội đồng thi" },
+                { key: "issueLocation", label: "Nơi cấp" },
+                { key: "issueDate", label: "Ngày cấp" },
+                { key: "serialNumber", label: "Số hiệu" },
+                { key: "registryNumber", label: "Số vào sổ" },
+              ].map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{getBindingLabel(key)}</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{label}</label>
                   <input
                     type="text"
                     value={mockData[key] || ""}
                     onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
                     style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#1e293b", outline: "none" }}
-                    placeholder={t("admin.templates.enter_field", { field: getBindingLabel(key).toLowerCase() })}
+                    placeholder={`Nhập ${label.toLowerCase()}...`}
                   />
                 </div>
               ))}
@@ -640,33 +605,33 @@ export default function TemplateEditorPage() {
         {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
           <div style={{ width: 280, background: "#fff", borderLeft: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>{t("admin.templates.field_properties")}</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính trường</h3>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.field_type")}</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại</label>
               <select
                 value={selectedField.type}
                 onChange={(e) => updateField(selectedField.id, { type: e.target.value as any })}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", background: "#fff", outline: "none" }}
               >
-                <option value="text">{getFieldTypeLabel("text")}</option>
-                <option value="image">{getFieldTypeLabel("image")}</option>
-                <option value="qr">{getFieldTypeLabel("qr")}</option>
-                <option value="line">{getFieldTypeLabel("line")}</option>
-                <option value="rect">{getFieldTypeLabel("rect")}</option>
+                <option value="text">Văn bản</option>
+                <option value="image">Hình ảnh</option>
+                <option value="qr">Mã QR</option>
+                <option value="line">Đường kẻ</option>
+                <option value="rect">Hình chữ nhật</option>
               </select>
             </div>
 
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.dynamic_binding")}</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
                   style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", background: "#fff", outline: "none" }}
                 >
                   {FIELD_BINDINGS.map((b) => (
-                    <option key={b.value} value={b.value}>{b.value ? getBindingLabel(b.value) : t("admin.templates.static_text_option")}</option>
+                    <option key={b.value} value={b.value}>{b.label}</option>
                   ))}
                 </select>
               </div>
@@ -674,7 +639,7 @@ export default function TemplateEditorPage() {
 
             {!selectedField.dynamic && selectedField.type === "text" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.static_content")}</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung tĩnh</label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
@@ -686,7 +651,7 @@ export default function TemplateEditorPage() {
 
             {(selectedField.type === "line" || selectedField.type === "rect") && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.color")}</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <input
                     type="color"
@@ -707,7 +672,7 @@ export default function TemplateEditorPage() {
             {selectedField.type === "text" && (
               <>
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.font")}</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Phông chữ</label>
                   <select
                     value={selectedField.font || "sans-serif"}
                     onChange={(e) => updateField(selectedField.id, { font: e.target.value })}
@@ -722,7 +687,7 @@ export default function TemplateEditorPage() {
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                   <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.font_size")}</label>
+                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ</label>
                     <input
                       type="number"
                       value={selectedField.size || 14}
@@ -733,7 +698,7 @@ export default function TemplateEditorPage() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.color")}</label>
+                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <input
                         type="color"
@@ -752,7 +717,7 @@ export default function TemplateEditorPage() {
                 </div>
 
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("admin.templates.alignment")}</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Căn chỉnh</label>
                   <div style={{ display: "flex", gap: 4 }}>
                     {(["left", "center", "right"] as const).map((a) => (
                       <button
@@ -764,7 +729,7 @@ export default function TemplateEditorPage() {
                           color: selectedField.align === a ? "#3b82f6" : "#94a3b8",
                         }}
                       >
-                        {a === "left" ? t("admin.templates.align_left") : a === "center" ? t("admin.templates.align_center") : t("admin.templates.align_right")}
+                        {a === "left" ? "Trái" : a === "center" ? "Giữa" : "Phải"}
                       </button>
                     ))}
                   </div>
@@ -778,7 +743,7 @@ export default function TemplateEditorPage() {
                       onChange={(e) => updateField(selectedField.id, { bold: e.target.checked })}
                       style={{ accentColor: "#3b82f6" }}
                     />
-                    {t("admin.templates.bold")}
+                    Đậm
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: "#64748b" }}>
                     <input
@@ -787,14 +752,14 @@ export default function TemplateEditorPage() {
                       onChange={(e) => updateField(selectedField.id, { italic: e.target.checked })}
                       style={{ accentColor: "#3b82f6" }}
                     />
-                    {t("admin.templates.italic")}
+                    Nghiêng
                   </label>
                 </div>
               </>
             )}
 
             <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("admin.templates.position_size")}</h4>
+              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Vị trí & Kích thước</h4>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 {(["x", "y", "w", "h"] as const).map((prop) => (
                   <div key={prop}>

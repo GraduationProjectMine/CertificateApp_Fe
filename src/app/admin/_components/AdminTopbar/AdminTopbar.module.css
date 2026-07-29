@@ -57,7 +57,8 @@
 }
 
 ._15 {
- @apply w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/85 dark:bg-white/[0.04] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.08] hover:text-gray-900 dark:hover:text-white transition-colors relative flex items-center justify-center shrink-0 cursor-pointer text-xs font-extrabold;
+ @apply p-2 rounded-xl text-gray-500 transition-colors relative;
+
 }
 
 ._16 {

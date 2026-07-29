@@ -1,29 +1,24 @@
-"use client";
+﻿"use client";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
-import { useI18n } from "@/features/i18n/I18nContext";
-import Pagination from "@/components/common/Pagination";
 
-const ITEMS_PER_PAGE = 6;
+const TYPE_OPTIONS = [
+  { value: "all", label: "Tất cả" },
+  { value: "BACHELOR_DEGREE", label: "Bằng cử nhân" },
+  { value: "CERTIFICATE", label: "Chứng chỉ" },
+];
 
 export default function StudentCertificatesPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
-  const TYPE_OPTIONS = [
-    { value: "all", label: t("common.all") },
-    { value: "BACHELOR_DEGREE", label: t("common.bachelor_degree") },
-    { value: "CERTIFICATE", label: t("common.certificate") },
-  ];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<StudentCertificate[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -45,30 +40,20 @@ export default function StudentCertificatesPage() {
     });
   }, [certs, filterType, filterStatus]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterType, filterStatus]);
-
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginatedCerts = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   return (
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("student.certificates.title")}</h1>
+          <h1 className={styles._3}>Văn bằng của tôi</h1>
           <p className={styles._4}>
-            {loading ? "..." : t("student.certificates.issued_count", { count: certs.length })}
+            {loading ? "..." : `${certs.length} văn bằng đã được cấp`}
           </p>
         </div>
       </div>
 
       <div className={styles._5}>
         <div className={styles._6}>
-          <label className={styles._7}>{t("common.type")}</label>
+          <label className={styles._7}>Loại</label>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -80,15 +65,15 @@ export default function StudentCertificatesPage() {
           </select>
         </div>
         <div className={styles._6}>
-          <label className={styles._7}>{t("common.status")}</label>
+          <label className={styles._7}>Trạng thái</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className={styles._8}
           >
-            <option value="all">{t("common.all")}</option>
-            <option value="valid">{t("common.valid")}</option>
-            <option value="revoked">{t("common.revoked")}</option>
+            <option value="all">Tất cả</option>
+            <option value="valid">Hợp lệ</option>
+            <option value="revoked">Đã thu hồi</option>
           </select>
         </div>
       </div>
@@ -123,52 +108,42 @@ export default function StudentCertificatesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className={styles._12}>{t("student.certificates.no_matching")}</p>
+          <p className={styles._12}>Không tìm thấy văn bằng phù hợp</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className={styles._13}>
-            {paginatedCerts.map((cert) => (
-              <Link key={cert.id} href={`/student/certificates/${cert.id}`} className={styles._14}>
-                <div className={styles._15}>
-                  <div className={styles._16}>
-                    <div className={styles._17}>
-                      <svg className={styles._18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={cert.type === "BACHELOR_DEGREE"
-                          ? "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                          : "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"}
-                        />
-                      </svg>
-                    </div>
-                    <div className={styles._19}>
-                      <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? t("common.bachelor_degree") : t("common.certificate")}</p>
-                      <h3 className={styles._21}>{cert.credentialTitle}</h3>
-                      <p className={styles._22}>{cert.issuerName} · {cert.issueDate}</p>
-                    </div>
+        <div className={styles._13}>
+          {filtered.map((cert) => (
+            <Link key={cert.id} href={`/student/certificates/${cert.id}`} className={styles._14}>
+              <div className={styles._15}>
+                <div className={styles._16}>
+                  <div className={styles._17}>
+                    <svg className={styles._18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={cert.type === "BACHELOR_DEGREE"
+                        ? "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                        : "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"}
+                      />
+                    </svg>
                   </div>
-                  <div className={styles._23}>
-                    {cert.onChain && (
-                      <span className={styles._24}>
-                        <span className={styles._25} />
-                        On-chain
-                      </span>
-                    )}
-                    <span className={`${styles._0} ${cert.status === "VALID" ? styles._26 : styles._27}`}>
-                      {cert.status === "VALID" ? t("common.valid") : t("common.revoked")}
-                    </span>
+                  <div className={styles._19}>
+                    <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? "Bằng cử nhân" : "Chứng chỉ"}</p>
+                    <h3 className={styles._21}>{cert.credentialTitle}</h3>
+                    <p className={styles._22}>{cert.issuerName} · {cert.issueDate}</p>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filtered.length}
-            itemsPerPage={ITEMS_PER_PAGE}
-            onPageChange={setCurrentPage}
-          />
+                <div className={styles._23}>
+                  {cert.onChain && (
+                    <span className={styles._24}>
+                      <span className={styles._25} />
+                      On-chain
+                    </span>
+                  )}
+                  <span className={`${styles._0} ${cert.status === "VALID" ? styles._26 : styles._27}`}>
+                    {cert.status === "VALID" ? "Hợp lệ" : "Đã thu hồi"}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>
