@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { staffApi, type StaffDto } from "@/features/staff/services/staff.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
@@ -7,22 +7,16 @@ import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
-import SearchInput from "@/components/common/SearchInput";
-import EmptyState from "@/components/common/EmptyState";
-import Button from "@/components/ui/Button";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function StaffListPage() {
   const router = useRouter();
-  const { t } = useI18n();
   const { user } = useAuth();
   const [staff, setStaff] = useState<StaffDto[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
   const [lockingId, setLockingId] = useState("");
   const [lockTarget, setLockTarget] = useState<StaffDto | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -38,7 +32,7 @@ export default function StaffListPage() {
       const data = await staffApi.list();
       setStaff(data);
     } catch (err: any) {
-      setError(err.message || t("admin.staff.load_failed"));
+      setError(err.message || "Không thể tải danh sách nhân viên");
     } finally {
       setLoading(false);
     }
@@ -47,19 +41,6 @@ export default function StaffListPage() {
   useEffect(() => {
     fetchStaff();
   }, [fetchStaff]);
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return staff;
-    const q = search.toLowerCase().trim();
-    return staff.filter((s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.email.toLowerCase().includes(q) ||
-      s.staff_id.toLowerCase().includes(q)
-    );
-  }, [staff, search]);
-
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  useEffect(() => { setCurrentPage(1); }, [search, itemsPerPage]);
 
   const handleLock = async () => {
     if (!canManageStaff || !lockTarget) return;
@@ -72,7 +53,7 @@ export default function StaffListPage() {
         prev.map((s) => (s.staff_id === id ? { ...s, isActive: false } : s)),
       );
     } catch (err: any) {
-      setError(err.message || t("admin.staff.lock_failed"));
+      setError(err.message || "Khóa nhân viên thất bại");
     } finally {
       setLockingId("");
     }
@@ -81,7 +62,7 @@ export default function StaffListPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createForm.name || !createForm.email || !createForm.password) {
-      setCreateError(t("common.fill_all_fields"));
+      setCreateError("Vui lòng điền đầy đủ thông tin");
       return;
     }
     setCreating(true);
@@ -92,7 +73,7 @@ export default function StaffListPage() {
       setCreateForm({ name: "", email: "", password: "" });
       await fetchStaff();
     } catch (err: any) {
-      setCreateError(err.message || t("admin.staff.create_failed"));
+      setCreateError(err.message || "Tạo nhân viên thất bại");
     } finally {
       setCreating(false);
     }
@@ -103,10 +84,10 @@ export default function StaffListPage() {
       <ConfirmModal
         open={!!lockTarget}
         onClose={() => setLockTarget(null)}
-        title={t("common.lock_account")}
-        message={lockTarget ? t("admin.staff.lock_confirm", { name: lockTarget.name }) : ""}
-        confirmLabel={t("common.lock")}
-        cancelLabel={t("common.cancel")}
+        title="Khóa tài khoản"
+        message={lockTarget ? `Bạn có chắc chắn muốn khóa tài khoản của nhân viên ${lockTarget.name}? Nhân viên sẽ không thể đăng nhập vào hệ thống.` : ""}
+        confirmLabel="Khóa"
+        cancelLabel="Hủy"
         variant="warning"
         icon="warning"
         onConfirm={() => void handleLock()}
@@ -115,25 +96,25 @@ export default function StaffListPage() {
       <FormModal
         open={showCreate}
         onClose={() => { setShowCreate(false); setCreateError(""); setCreateForm({ name: "", email: "", password: "" }); }}
-        title={t("admin.staff.create_title")}
-        description={t("admin.staff.create_description")}
+        title="Thêm nhân viên"
+        description="Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng."
         onSubmit={(e) => void handleCreate(e)}
         submitting={creating}
-        submitLabel={t("admin.staff.create_submit")}
+        submitLabel="Tạo nhân viên"
       >
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("admin.staff.full_name")} *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Họ và tên *</label>
           <input
             type="text"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.name}
             onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-            placeholder={t("admin.staff.name_placeholder")}
+            placeholder="Nguyễn Văn B"
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("admin.staff.email")} *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
           <input
             type="email"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
@@ -143,13 +124,13 @@ export default function StaffListPage() {
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("common.password")} *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu *</label>
           <input
             type="password"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.password}
             onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-            placeholder={t("common.password_min_length")}
+            placeholder="Tối thiểu 8 ký tự"
           />
         </div>
         {createError && <div className="text-[11px] text-red-500 bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{createError}</div>}
@@ -157,55 +138,50 @@ export default function StaffListPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("admin.staff.title")}</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("admin.staff.description")}</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Nhân viên</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Danh sách nhân viên trong trường.</p>
         </div>
         {canManageStaff && (
           <button
             onClick={() => setShowCreate(true)}
             className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
           >
-            + {t("admin.staff.add")}
+            + Thêm nhân viên
           </button>
         )}
       </div>
 
       {error && (
         <div className="rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600 dark:bg-red-950/20">
-          {error} <button onClick={fetchStaff} className="ml-2 underline">{t("common.retry")}</button>
+          {error} <button onClick={fetchStaff} className="ml-2 underline">Thử lại</button>
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder={t("admin.staff.search_placeholder")}
-        >
-          <Button variant="secondary" size="sm" onClick={fetchStaff} disabled={loading}>{t("common.refresh")}</Button>
-        </SearchInput>
-      </div>
-
       {loading ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">{t("admin.staff.loading")}</div>
-      ) : staff.length === 0 && !search ? (
-        <EmptyState icon="👥" title={t("admin.staff.empty")} action={canManageStaff ? <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>{t("admin.staff.create_first")}</Button> : undefined} />
-      ) : filtered.length === 0 ? (
-        <EmptyState icon="🔍" title={t("common.no_results")} />
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Đang tải danh sách nhân viên...</div>
+      ) : staff.length === 0 ? (
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+          <p>Chưa có nhân viên nào.</p>
+          {canManageStaff && (
+            <button onClick={() => setShowCreate(true)} className="text-primary underline text-xs mt-2 inline-block">
+              Tạo nhân viên đầu tiên
+            </button>
+          )}
+        </div>
       ) : (
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200/60 dark:border-gray-800/60">
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("common.table.name")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("common.table.email")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("common.table.role")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("common.table.status")}</th>
-                  {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("common.table.actions")}</th>}
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tên</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Email</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Vai trò</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Trạng thái</th>
+                  {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>}
               </tr>
             </thead>
             <tbody>
-              {filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((s) => (
+              {staff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((s) => (
                 <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{s.email}</td>
@@ -215,29 +191,29 @@ export default function StaffListPage() {
                         ? 'bg-primary/10 text-primary'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}>
-                      {s.role === 'ISSUER' ? t("admin.staff.role_admin") : t("admin.staff.role_staff")}
+                      {s.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                       s.isActive
-                        ? 'bg-green-500/10 text-green-500'
-                        : 'bg-red-500/10 text-red-500'
+                        ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border border-green-200/50'
+                        : 'bg-amber-50 dark:bg-amber-950/20 text-warning border border-amber-250/50'
                     }`}>
-                      {s.isActive ? t("admin.staff.status_active") : t("admin.staff.status_inactive")}
+                      {s.isActive ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                   </td>
                   {canManageStaff && (
                     <td className="px-4 py-3 text-right space-x-2">
                       <ActionLink onClick={() => router.push(`/admin/staff/${s.staff_id}`)}>
-                        {t("common.view_edit")}
+                        Xem / Sửa
                       </ActionLink>
                       {s.isActive ? (
                         <ActionButton onClick={() => setLockTarget(s)} disabled={lockingId === s.staff_id}>
-                          {lockingId === s.staff_id ? t("common.locking") : t("common.lock")}
+                          {lockingId === s.staff_id ? "Đang khóa..." : "Khóa"}
                         </ActionButton>
                       ) : (
-                        <ActionText>{t("common.locked")}</ActionText>
+                        <ActionText>Đã khóa</ActionText>
                       )}
                     </td>
                   )}
@@ -247,14 +223,10 @@ export default function StaffListPage() {
           </table>
           <Pagination
             currentPage={currentPage}
-            totalPages={Math.ceil(filtered.length / itemsPerPage)}
-            totalItems={filtered.length}
-            itemsPerPage={itemsPerPage}
+            totalPages={Math.ceil(staff.length / ITEMS_PER_PAGE)}
+            totalItems={staff.length}
+            itemsPerPage={ITEMS_PER_PAGE}
             onPageChange={setCurrentPage}
-            onItemsPerPageChange={(size) => {
-              setItemsPerPage(size);
-              setCurrentPage(1);
-            }}
           />
         </div>
       )}
