@@ -6,10 +6,11 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
 import { navItems } from "../data";
 import ThemeToggle from "@/components/common/ThemeToggle";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
 export default function NavHeader() {
   const { user, logout } = useAuth();
-  const { t, locale, toggleLocale } = useI18n();
+  const { t } = useI18n();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -61,13 +62,7 @@ export default function NavHeader() {
 
         <div className={styles._7}>
           <ThemeToggle className={styles._8} />
-          <button
-            onClick={toggleLocale}
-            className={styles._10}
-            aria-label="Toggle language"
-          >
-            {locale === "vi" ? "EN" : "VI"}
-          </button>
+          <LanguageSwitcher />
 
           <span className={styles._11} />
           {user ? (
@@ -160,12 +155,7 @@ export default function NavHeader() {
             )}
             <div className={styles._25}>
               <ThemeToggle className={styles._26} />
-              <button
-                onClick={toggleLocale}
-                className={styles._27}
-              >
-                {locale === "vi" ? "EN" : "VI"}
-              </button>
+              <LanguageSwitcher />
             </div>
             <hr className={styles._28} />
             {user ? (

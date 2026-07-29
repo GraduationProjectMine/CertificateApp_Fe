@@ -1,14 +1,18 @@
 "use client";
+
 import styles from "./page.module.css";
 import React, { useState } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -20,19 +24,19 @@ export default function ForgotPasswordPage() {
     setSuccess("");
 
     if (!email.trim()) {
-      setError("Vui lòng nhập email tài khoản");
+      setError(t("auth.forgot.email_required"));
       return;
     }
 
     if (!isValidEmail(email.trim())) {
-      setError("Email không hợp lệ");
+      setError(t("auth.forgot.email_invalid"));
       return;
     }
 
     setIsSubmitting(true);
     await new Promise((resolve) => window.setTimeout(resolve, 650));
     setIsSubmitting(false);
-    setSuccess("Nếu email thuộc hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi trong vài phút.");
+    setSuccess(t("auth.forgot.success_message"));
   };
 
   return (
@@ -54,18 +58,22 @@ export default function ForgotPasswordPage() {
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
-              Khôi phục quyền truy cập
+              {t("auth.forgot_visual_tag")}
             </p>
             <h1 className={styles._13}>
-              Lấy lại tài khoản quản trị một cách an toàn.
+              {t("auth.forgot_visual_title")}
             </h1>
             <p className={styles._14}>
-              Gửi yêu cầu đặt lại mật khẩu qua email đã đăng ký, sau đó quay lại hệ thống để tiếp tục cấp phát và xác minh văn bằng.
+              {t("auth.forgot_visual_desc")}
             </p>
           </div>
 
           <div className={styles._15} data-reveal>
-            {["Email xác minh", "Liên kết giới hạn", "Bảo vệ phiên"].map((item) => (
+            {[
+              t("auth.register.institution_verify"),
+              t("auth.register.create_wallet"),
+              t("auth.register.create_profile"),
+            ].map((item) => (
               <div key={item} className={styles._16}>
                 <span className={styles._17} />
                 <span className={styles._18}>{item}</span>
@@ -82,21 +90,24 @@ export default function ForgotPasswordPage() {
               </span>
               <span className={styles._23}>CertiChain</span>
             </Link>
-            <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
-              Đăng nhập
-            </Link>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
+                {t("auth.login_btn")}
+              </Link>
+            </div>
           </div>
 
           <div className={`auth-card-surface ${styles._25}`}>
             <div className={styles._26}>
               <p className={styles._27}>
-                Quên mật khẩu
+                {t("auth.forgot_title")}
               </p>
               <h2 className={styles._28}>
-                Nhận hướng dẫn đặt lại
+                {t("auth.forgot_subtitle")}
               </h2>
               <p className={styles._29}>
-                Nhập email quản trị đã đăng ký. Hệ thống sẽ gửi hướng dẫn khôi phục nếu tài khoản tồn tại.
+                {t("auth.forgot_form_subtitle")}
               </p>
             </div>
 
@@ -115,7 +126,7 @@ export default function ForgotPasswordPage() {
             <form className={styles._32} onSubmit={handleSubmit}>
               <label className={styles._33}>
                 <span className={styles._34}>
-                  Email tài khoản
+                  {t("auth.email")}
                 </span>
                 <input
                   type="email"
@@ -128,16 +139,16 @@ export default function ForgotPasswordPage() {
               </label>
 
               <Button type="submit" disabled={isSubmitting} className={styles._36}>
-                {isSubmitting ? "Đang gửi..." : "Gửi hướng dẫn khôi phục"}
+                {isSubmitting ? t("auth.loading") : t("auth.send_btn")}
               </Button>
             </form>
 
             <div className={styles._37}>
               <Button variant="ghost" href="/auth/login" className={`auth-switch-link ${styles._38}`}>
-                Quay lại đăng nhập
+                {t("auth.back_to_login")}
               </Button>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._39}`}>
-                Chưa có tài khoản trường học?
+                {t("auth.no_account_question")}
               </Button>
             </div>
           </div>

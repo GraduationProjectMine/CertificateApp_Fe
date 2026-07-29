@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
+import { useI18n } from "@/features/i18n/I18nContext";
 import { BrowserProvider } from "ethers";
 
 function getDashboardRedirect(role: string) {
@@ -18,6 +20,7 @@ function getDashboardRedirect(role: string) {
 }
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const { user, login, loginWithMetaMask } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -35,13 +38,13 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     if (!email || !password) {
-      setError("Vui lòng nhập email và mật khẩu");
+      setError(t("auth.login.email_password_required"));
       return;
     }
 
     setIsSubmitting(true);
     const result = await login(email, password);
-    if (!result.success) setError(result.error || "Sai email hoặc mật khẩu");
+    if (!result.success) setError(result.error || t("auth.login.invalid_credentials"));
     setIsSubmitting(false);
   };
 
@@ -49,7 +52,7 @@ export default function LoginPage() {
     setError("");
 
     if (typeof window === "undefined" || !(window as any).ethereum) {
-      setError("Không tìm thấy MetaMask. Vui lòng cài đặt tiện ích mở rộng MetaMask.");
+      setError(t("auth.login.wallet_not_found"));
       return;
     }
 
@@ -72,11 +75,11 @@ export default function LoginPage() {
       // 3. Login with MetaMask
       const result = await loginWithMetaMask(walletAddress, signature, tempToken);
       if (!result.success) {
-        setError(result.error || "Đăng nhập MetaMask thất bại");
+        setError(result.error || t("auth.login.wallet_connect_failed"));
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Lỗi kết nối hoặc chữ ký bị từ chối.");
+      setError(err?.message || t("auth.login.signature_rejected"));
     } finally {
       setIsWalletSubmitting(false);
     }
@@ -100,18 +103,22 @@ export default function LoginPage() {
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
-              Bảo mật danh tính học thuật
+              {t("auth.login_visual_tag")}
             </p>
             <h1 className={styles._13}>
-              Truy cập hệ thống cấp phát văn bằng số.
+              {t("auth.login_visual_title")}
             </h1>
             <p className={styles._14}>
-              Quản trị, cấp bằng, xác minh và theo dõi dữ liệu blockchain từ một không gian làm việc thống nhất.
+              {t("auth.login_visual_desc")}
             </p>
           </div>
 
           <div className={styles._15} data-reveal>
-            {["JWT bảo vệ", "Tài khoản tổ chức", "Phiên đăng nhập"].map((item) => (
+            {[
+              t("auth.register.institution_verify"),
+              t("auth.register.create_wallet"),
+              t("auth.register.create_profile"),
+            ].map((item) => (
               <div key={item} className={styles._16}>
                 <span className={styles._17} />
                 <span className={styles._18}>{item}</span>
@@ -128,20 +135,23 @@ export default function LoginPage() {
               </span>
               <span className={styles._23}>CertiChain</span>
             </Link>
-            <Link href="/" className={`auth-switch-link ${styles._24}`}>
-              Trang chủ
-            </Link>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <Link href="/auth/register" className={`auth-switch-link ${styles._24}`}>
+                {t("auth.register_link")}
+              </Link>
+            </div>
           </div>
 
           <div className={`auth-card-surface ${styles._25}`}>
             <div className={styles._26}>
               <p className={styles._27}>
-                Đăng nhập tài khoản
+                {t("auth.login_title")}
               </p>
               <h2 className={styles._28}>
-                Chào mừng trở lại
+                {t("auth.login_welcome")}
               </h2>
-              <p className={styles._29}>Sử dụng email và mật khẩu đã được cấp trong hệ thống.</p>
+              <p className={styles._29}>{t("auth.login_form_subtitle")}</p>
             </div>
 
             {error && (
@@ -153,7 +163,7 @@ export default function LoginPage() {
             <form className={styles._31} onSubmit={handleSubmit}>
               <label className={styles._32}>
                 <span className={styles._33}>
-                  Email
+                  {t("auth.email")}
                 </span>
                 <input
                   type="email"
@@ -167,7 +177,7 @@ export default function LoginPage() {
 
               <label className={styles._32}>
                 <span className={styles._33}>
-                  Mật khẩu
+                  {t("auth.password")}
                 </span>
                 <div className="relative">
                   <input
@@ -176,7 +186,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className={`${styles._34} pr-10`}
-                    placeholder="Nhập mật khẩu"
+                    placeholder={t("auth.password")}
                   />
                   <button
                     type="button"
@@ -198,13 +208,13 @@ export default function LoginPage() {
               </label>
 
               <Button type="submit" disabled={isSubmitting || isWalletSubmitting} className={styles._35}>
-                {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
+                {isSubmitting ? t("auth.loading") : t("auth.login_btn")}
               </Button>
             </form>
 
             <div className="relative flex py-2 items-center">
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-              <span className="flex-shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase">Hoặc</span>
+              <span className="flex-shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase">{t("auth.or")}</span>
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
             </div>
 
@@ -234,15 +244,15 @@ export default function LoginPage() {
                 <path d="m159.3 215 46.2 7.8 34.3-36.4-45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
                 <path d="m159.3 215-46.2 7.8-34.3-36.4 45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
               </svg>
-              {isWalletSubmitting ? "Đang kết nối ví..." : "Đăng nhập với MetaMask"}
+              {isWalletSubmitting ? t("auth.loading") : t("auth.metamask")}
             </Button>
 
             <div className={styles._43}>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._44}`}>
-                Đăng ký tài khoản trường học
+                {t("auth.register_link")}
               </Button>
               <Link href="/auth/forgot-password" className={`auth-switch-link ${styles._45}`}>
-                Quên mật khẩu?
+                {t("auth.forgot_password")}
               </Link>
             </div>
           </div>

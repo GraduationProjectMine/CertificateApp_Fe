@@ -1,12 +1,15 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate } from "@/features/templates/types";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
+import Button from "@/components/ui/Button";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const DEFAULT_DESIGN = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -18,6 +21,7 @@ const DEFAULT_DESIGN = {
 };
 
 export default function AdminTemplatesPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +31,7 @@ export default function AdminTemplatesPage() {
   const [newDesc, setNewDesc] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteTargetName, setDeleteTargetName] = useState("");
+  const [search, setSearch] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -86,44 +91,53 @@ export default function AdminTemplatesPage() {
     }
   };
 
+  const filtered = useMemo(() => {
+    if (!search.trim()) return templates;
+    const q = search.toLowerCase().trim();
+    return templates.filter((t) =>
+      t.name.toLowerCase().includes(q) ||
+      (t.description || "").toLowerCase().includes(q)
+    );
+  }, [templates, search]);
+
   return (
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Quản lý Mẫu Bằng</h1>
-          <p className={styles._4}>Thiết kế và quản lý các mẫu văn bằng, chứng chỉ cho tổ chức của bạn.</p>
+          <h1 className={styles._3}>{t("admin.templates.title")}</h1>
+          <p className={styles._4}>{t("admin.templates.description_main")}</p>
         </div>
-        <button className={styles._5} onClick={() => setShowCreateModal(true)}>
-          + Thiết kế mẫu bằng mới
-        </button>
+        <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+          + {t("admin.templates.design_new")}
+        </Button>
       </div>
 
       <FormModal
         open={showCreateModal}
         onClose={() => { setShowCreateModal(false); setNewName(""); setNewDesc(""); }}
-        title="Tạo mẫu văn bằng mới"
-        description="Thiết kế mẫu văn bằng chứng chỉ cho tổ chức của bạn."
+        title={t("admin.templates.create_title")}
+        description={t("admin.templates.create_description")}
         onSubmit={(e) => { e.preventDefault(); void handleCreate(); }}
-        submitLabel="Tạo mẫu"
+        submitLabel={t("admin.templates.create_submit")}
         size="md"
       >
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên mẫu *</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t("admin.templates.name")} *</label>
           <input
             type="text"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs outline-none focus:ring-1 focus:ring-primary"
-            placeholder="VD: Mẫu bằng tốt nghiệp ĐH"
+            placeholder={t("admin.templates.name_placeholder")}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mô tả (tuỳ chọn)</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t("admin.templates.description")}</label>
           <textarea
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs outline-none focus:ring-1 focus:ring-primary resize-none"
             rows={3}
-            placeholder="VD: Mẫu mặc định cho kỹ sư CNTT"
+            placeholder={t("admin.templates.desc_placeholder")}
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
           />
@@ -133,29 +147,41 @@ export default function AdminTemplatesPage() {
       <ConfirmModal
         open={!!deleteTargetId}
         onClose={() => { setDeleteTargetId(""); setDeleteTargetName(""); }}
-        title="Xóa mẫu văn bằng"
-        message={`Bạn có chắc chắn muốn xóa mẫu "${deleteTargetName}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa"
-        cancelLabel="Hủy"
+        title={t("admin.templates.delete_title")}
+        message={t("admin.templates.delete_confirm", { name: deleteTargetName })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
         variant="danger"
         icon="danger"
         onConfirm={() => void handleDelete()}
       />
 
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={t("admin.templates.search_placeholder")}
+        >
+          <Button variant="secondary" size="sm" onClick={fetchData} disabled={loading}>{t("common.refresh")}</Button>
+        </SearchInput>
+      </div>
+
       <div className={styles._6}>
         {loading ? (
-          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("common.loading")}</div>
         ) : error ? (
           <div className="p-8 text-center text-red-500 dark:text-red-400 text-xs">{error}</div>
-        ) : templates.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Chưa có mẫu văn bằng nào. Hãy tạo mẫu đầu tiên!</div>
+        ) : templates.length === 0 && !search ? (
+          <EmptyState icon="📄" title={t("admin.templates.no_templates")} action={<Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>{t("admin.templates.create_first")}</Button>} />
+        ) : filtered.length === 0 ? (
+          <EmptyState icon="🔍" title={t("common.no_results")} />
         ) : (
-          templates.map((template) => (
+          filtered.map((template) => (
             <div key={template.id} className={styles._7}>
               <div className={styles._8}>
                 <div className={styles._9}>
                   <div className={styles._10}>
-                    {template.is_default ? "MẶC ĐỊNH" : "THƯỜNG"}
+                    {template.is_default ? t("admin.templates.default_badge") : t("admin.templates.normal_badge")}
                   </div>
                 </div>
                 <div>
@@ -166,33 +192,21 @@ export default function AdminTemplatesPage() {
                 </div>
               </div>
               <div className={styles._13}>
-                <Link
-                  href={`/admin/templates/editor/${template.id}`}
-                  className="text-[10px] font-bold text-primary hover:text-primary-hover transition-colors"
-                >
-                  Thiết kế
-                </Link>
+                <Button variant="ghost" size="sm" href={`/admin/templates/editor/${template.id}`}>
+                  {t("admin.templates.design")}
+                </Button>
                 {!template.is_default && (
-                  <button
-                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                    onClick={() => handleSetDefault(template.id)}
-                  >
-                    Đặt mặc định
-                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => handleSetDefault(template.id)}>
+                    {t("admin.templates.set_default")}
+                  </Button>
                 )}
-                <button
-                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  onClick={() => handleDuplicate(template.id)}
-                >
-                  Nhân bản
-                </button>
+                <Button variant="ghost" size="sm" onClick={() => handleDuplicate(template.id)}>
+                  {t("admin.templates.duplicate")}
+                </Button>
                 {!template.is_default && (
-                  <button
-                    className="text-[10px] font-bold text-danger hover:text-red-600 transition-colors"
-                    onClick={() => { setDeleteTargetId(template.id); setDeleteTargetName(template.name); }}
-                  >
-                    Xoá
-                  </button>
+                  <Button variant="ghost" size="sm" className="!text-danger" onClick={() => { setDeleteTargetId(template.id); setDeleteTargetName(template.name); }}>
+                    {t("common.delete")}
+                  </Button>
                 )}
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "@/features/theme/ThemeContext";
+import { useI18n } from "@/features/i18n/I18nContext";
 import styles from "./theme-toggle.module.css";
 
 type ThemeToggleProps = {
@@ -10,9 +11,10 @@ type ThemeToggleProps = {
 
 export default function ThemeToggle({ className = "", label }: ThemeToggleProps) {
   const { theme, toggleTheme, mounted } = useTheme();
+  const { t, locale } = useI18n();
   const isDark = theme === "dark";
-  const ariaLabel = mounted && isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối";
-  const title = mounted && isDark ? "Giao diện sáng" : "Giao diện tối";
+  const ariaLabel = mounted && isDark ? t("theme.light") : t("theme.dark");
+  const title = mounted && isDark ? t("theme.label_light") : t("theme.label_dark");
 
   return (
     <button

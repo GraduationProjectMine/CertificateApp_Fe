@@ -9,7 +9,7 @@ interface MenuItem {
 
 export const menuItems: MenuItem[] = [
   {
-    title: "Bảng điều khiển",
+    title: "dashboard",
     path: "/admin/dashboard",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -18,7 +18,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Sinh viên",
+    title: "students",
     path: "/admin/students",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -27,7 +27,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Văn bằng đã cấp",
+    title: "certificates",
     path: "/admin/certificates",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -36,7 +36,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Văn bằng số (Online)",
+    title: "online_certificates",
     path: "/admin/online-certificates",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -45,7 +45,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Cấp bằng mới",
+    title: "issue_certificate",
     path: "/admin/certificates/issue",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -54,7 +54,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Nhân viên",
+    title: "staff",
     path: "/admin/staff",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -63,7 +63,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Mẫu văn bằng",
+    title: "templates",
     path: "/admin/templates",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -72,16 +72,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Tạo & Xuất bằng PDF",
-    path: "/admin/templates/generator",
-    icon: (
-      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-      </svg>
-    )
-  },
-  {
-    title: "Lô cấp phát",
+    title: "batches",
     path: "/admin/batches",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -90,7 +81,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Thu hồi bằng",
+    title: "revocations",
     path: "/admin/revocations",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -99,7 +90,7 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Hoạt động (Audit)",
+    title: "audit_logs",
     path: "/admin/audit-logs",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -107,14 +98,12 @@ export const menuItems: MenuItem[] = [
       </svg>
     )
   },
-
   {
-    title: "Cài đặt",
+    title: "settings",
     path: "/admin/settings",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
       </svg>
     )
   }

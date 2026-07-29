@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
 import type { User } from "@/features/auth/types";
 import ThemeToggle from "@/components/common/ThemeToggle";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import Tooltip from "@/components/common/Tooltip";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 interface AdminTopbarProps {
   user: User;
@@ -14,19 +16,19 @@ interface AdminTopbarProps {
   onLogout: () => void;
 }
 
-function getBreadcrumbs(pathname: string) {
+function getBreadcrumbs(pathname: string, t: (path: string) => string) {
   const segments = pathname.split("/").filter(Boolean);
   return segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
-    const item = menuItems.find((m) => m.path === href) || { title: segment };
+    const item = menuItems.find((m) => m.path === href);
     const displayTitle =
       segment === "admin"
-        ? "Quản trị"
+        ? t("admin.topbar.breadcrumb_admin")
         : segment === "certificates"
-        ? "Văn bằng"
+        ? t("admin.topbar.breadcrumb_certificates")
         : segment === "issue"
-        ? "Cấp mới "
-        : item.title;
+        ? t("admin.topbar.breadcrumb_issue")
+        : item ? t("admin.sidebar." + item.title) : segment;
 
     return {
       title: displayTitle.charAt(0).toUpperCase() + displayTitle.slice(1),
@@ -38,12 +40,13 @@ function getBreadcrumbs(pathname: string) {
 
 export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopbarProps) {
   const pathname = usePathname();
-  const breadcrumbs = getBreadcrumbs(pathname);
+  const { t } = useI18n();
+  const breadcrumbs = getBreadcrumbs(pathname, t);
 
   return (
     <header className={styles._1}>
       <div className={styles._2}>
-        <Tooltip content="Mở danh mục Menu" position="bottom">
+        <Tooltip content={t("admin.topbar.menu_tooltip")} position="bottom">
           <button
             onClick={onMenuToggle}
             className={styles._3}
@@ -56,7 +59,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
         </Tooltip>
 
         <nav className={styles._5}>
-          <span className={styles._6}>Cổng trường</span>
+          <span className={styles._6}>{t("admin.system")}</span>
           {breadcrumbs.map((crumb) => (
             <React.Fragment key={crumb.href}>
               <span className={styles._7}>/</span>
@@ -73,7 +76,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
       </div>
 
       <div className={styles._2}>
-        <Tooltip content={user.loginType === "metamask" ? `Ví MetaMask: ${user.walletAddress}` : "Phiên đăng nhập Email"} position="bottom">
+        <Tooltip content={user.loginType === "metamask" ? t("admin.topbar.wallet_tooltip").replace("{wallet}", user.walletAddress || "") : t("admin.topbar.session_tooltip")} position="bottom">
           {user.loginType === "metamask" ? (
             <div className={styles._9}>
               <svg className={styles._10} viewBox="0 0 256 238" fill="none">
@@ -89,20 +92,21 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
           ) : (
             <div className={styles._13}>
               <span className={styles._14}></span>
-              <span>Email Session</span>
+              <span>{t("admin.topbar.email_session")}</span>
             </div>
           )}
         </Tooltip>
 
-        <Tooltip content="Chuyển đổi giao diện Sáng / Tối" position="bottom">
+        <Tooltip content="Ngôn ngữ / Language" position="bottom">
+          <LanguageSwitcher className={styles._15} />
+        </Tooltip>
+
+        <Tooltip content={t("admin.topbar.theme_tooltip")} position="bottom">
           <ThemeToggle className={styles._15} />
         </Tooltip>
 
-        <Tooltip content="Thông báo hệ thống" position="bottom">
-          <button
-            className={`${styles._15}`}
-            aria-label="View notifications"
-          >
+        <Tooltip content={t("admin.topbar.notification_tooltip")} position="bottom">
+          <button className={`${styles._15}`} aria-label="View notifications">
             <svg className={styles._16} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
             </svg>
@@ -110,15 +114,12 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
           </button>
         </Tooltip>
 
-        <Tooltip content="Đăng xuất khỏi hệ thống" position="bottom">
-          <button
-            onClick={onLogout}
-            className={styles._18}
-          >
+        <Tooltip content={t("admin.topbar.logout_tooltip")} position="bottom">
+          <button onClick={onLogout} className={styles._18}>
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1"></path>
             </svg>
-            <span>Thoát</span>
+            <span>{t("admin.topbar.logout")}</span>
           </button>
         </Tooltip>
       </div>

@@ -7,7 +7,11 @@ import type { CertificateDto } from "@/features/certificates/services/certificat
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import { ActionLink, ActionButton } from "@/components/common/TableActions";
+import Button from "@/components/ui/Button";
 import Pagination from "@/components/common/Pagination";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,6 +23,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
 };
 
 export default function AdminCertificatesPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const { user } = useAuth();
   const isIssuer = user?.role === "issuer";
@@ -113,12 +118,14 @@ export default function AdminCertificatesPage() {
     );
   });
 
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterStatus]);
+  }, [searchQuery, filterStatus, itemsPerPage]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginatedCerts = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedCerts = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const pendingCount = filtered.filter((c) => c.status === "PENDING").length;
 
@@ -127,10 +134,10 @@ export default function AdminCertificatesPage() {
       <ConfirmModal
         open={!!deleteTargetId}
         onClose={() => { setDeleteTargetId(""); setDeleteError(""); }}
-        title="Xóa văn bằng"
-        message="Bạn có chắc chắn muốn xóa văn bằng này? Hành động này không thể hoàn tác."
-        confirmLabel="Xóa"
-        cancelLabel="Hủy"
+        title={t("admin.certificates.delete_title")}
+        message={t("admin.certificates.delete_confirm")}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
         variant="danger"
         icon="danger"
         onConfirm={() => void handleDelete()}
@@ -138,56 +145,54 @@ export default function AdminCertificatesPage() {
 
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Quản lý Văn bằng</h1>
-          <p className={styles._4}>Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
+          <h1 className={styles._3}>{t("admin.certificates.title")}</h1>
+          <p className={styles._4}>{t("admin.certificates.description")}</p>
         </div>
         <button onClick={() => router.push("/admin/certificates/issue")} className={styles._5}>
-          + Cấp bằng mới
+          + {t("admin.certificates.issue_title")}
         </button>
       </div>
 
-      <div className={styles._6}>
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo mã văn bằng, tên sinh viên, số hiệu..."
-          className={styles._7}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <div className={styles._8}>
-          <select className={styles._9} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="">Tất cả trạng thái</option>
+          onChange={setSearchQuery}
+          placeholder={t("admin.certificates.search_placeholder")}
+        >
+          <select className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="">{t("common.all_status")}</option>
             <option value="DRAFT">Draft</option>
             <option value="PENDING">Pending Blockchain</option>
             <option value="ISSUED">Issued</option>
             <option value="REVOKED">Revoked</option>
           </select>
-        </div>
+          <Button variant="secondary" size="sm" onClick={fetchData} disabled={loading}>{t("common.refresh")}</Button>
+        </SearchInput>
       </div>
 
       {isIssuer && selectedIds.size > 0 && (
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/10">
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Đã chọn {selectedIds.size} văn bằng PENDING</span>
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{t("admin.certificates.selected_pending", { count: selectedIds.size })}</span>
           <button
             onClick={handleBatchApprove}
             disabled={batchApproving}
             className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-hover disabled:opacity-50 transition-all"
           >
-            {batchApproving ? "Đang ký blockchain..." : `Ký hàng loạt (${selectedIds.size})`}
+            {batchApproving ? t("admin.certificates.signing_blockchain") : t("admin.certificates.batch_sign", { count: selectedIds.size })}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="rounded-xl border px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400"
           >
-            Bỏ chọn
+            {t("common.clear_selection")}
           </button>
         </div>
       )}
 
       {batchApproveResult && (
         <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-2">Kết quả ký hàng loạt</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Thành công: {batchApproveResult.successCount} / Thất bại: {batchApproveResult.failCount}</p>
+          <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-2">{t("admin.certificates.batch_result")}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("common.success")}: {batchApproveResult.successCount} / {t("common.failed")}: {batchApproveResult.failCount}</p>
           {batchApproveResult.failCount > 0 && (
             <div className="max-h-32 overflow-y-auto space-y-1">
               {batchApproveResult.results.filter((r) => r.status === "FAILED").map((r) => (
@@ -197,7 +202,7 @@ export default function AdminCertificatesPage() {
               ))}
             </div>
           )}
-          <button onClick={() => setBatchApproveResult(null)} className="mt-2 text-xs font-bold text-primary hover:underline">Đóng</button>
+          <button onClick={() => setBatchApproveResult(null)} className="mt-2 text-xs font-bold text-primary hover:underline">{t("common.close")}</button>
         </div>
       )}
 
@@ -207,11 +212,11 @@ export default function AdminCertificatesPage() {
       <div className={styles._10}>
         <div className={styles._11}>
           {loading ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("common.loading")}</div>
           ) : error ? (
             <div className="p-8 text-center text-red-500 text-xs">{error}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không có văn bằng nào.</div>
+            <EmptyState icon="📭" title={t("admin.certificates.no_certificates")} description={searchQuery ? t("common.try_different_search") : undefined} />
           ) : (
             <>
               <table className={styles._12}>
@@ -222,14 +227,14 @@ export default function AdminCertificatesPage() {
                         <input type="checkbox" checked={selectedIds.size === pendingCount && pendingCount > 0} onChange={toggleSelectAll} className="accent-primary" />
                       </th>
                     )}
-                    <th className={styles._14}>Mã văn bằng</th>
-                    <th className={styles._14}>Sinh viên</th>
-                    <th className={styles._14}>Loại bằng</th>
-                    <th className={styles._14}>Ngày cấp</th>
+                    <th className={styles._14}>{t("admin.certificates.code")}</th>
+                    <th className={styles._14}>{t("admin.certificates.student_name")}</th>
+                    <th className={styles._14}>{t("admin.certificates.type")}</th>
+                    <th className={styles._14}>{t("admin.certificates.issue_date")}</th>
                     <th className={styles._15}>IPFS Gateway</th>
-                    <th className={styles._15}>Blockchain status</th>
-                    <th className={styles._14}>Trạng thái</th>
-                    <th className={styles._16}>Thao tác</th>
+                    <th className={styles._15}>Blockchain</th>
+                    <th className={styles._14}>{t("common.status")}</th>
+                    <th className={styles._16}>{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className={styles._17}>
@@ -272,11 +277,11 @@ export default function AdminCertificatesPage() {
                         </td>
                         <td className={styles._27}>
                           <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
-                            Chi tiết
+                            {t("common.detail")}
                           </ActionLink>
                           {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
                             <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
-                              Xóa
+                              {t("common.delete")}
                             </ActionButton>
                           )}
                         </td>
@@ -289,8 +294,12 @@ export default function AdminCertificatesPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={filtered.length}
-                itemsPerPage={ITEMS_PER_PAGE}
+                itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
+                onItemsPerPageChange={(size) => {
+                  setItemsPerPage(size);
+                  setCurrentPage(1);
+                }}
               />
             </>
           )}

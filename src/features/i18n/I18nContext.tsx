@@ -7,7 +7,7 @@ import { t as translateFn, tArr as translateArrFn } from "./translations";
 interface I18nContextType {
   locale: Locale;
   toggleLocale: () => void;
-  t: (path: string) => string;
+  t: (path: string, params?: Record<string, string | number>) => string;
   tArr: (path: string) => TranslationValue[];
 }
 
@@ -39,7 +39,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const translate = useCallback((path: string) => translateFn(locale, path), [locale]);
+  const translate = useCallback((path: string, params?: Record<string, string | number>) => {
+    let result = translateFn(locale, path);
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        result = result.replace(`{${key}}`, String(value));
+      }
+    }
+    return result;
+  }, [locale]);
   const translateArr = useCallback((path: string) => translateArrFn(locale, path), [locale]);
 
   return (

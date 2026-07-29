@@ -1,19 +1,33 @@
 "use client";
 
+import styles from "./page.module.css";
 import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
 import { certificateApi, type OnlineCertificateDto } from "@/features/certificates/services/certificate.api";
+import { templateApi } from "@/features/templates/services/api";
+import type { CertificateTemplate } from "@/features/templates/types";
+import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import Pagination from "@/components/common/Pagination";
+import Button from "@/components/ui/Button";
+import SearchInput from "@/components/common/SearchInput";
+import EmptyState from "@/components/common/EmptyState";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminOnlineCertificatesPage() {
+  const { t } = useI18n();
   const [certificates, setCertificates] = useState<OnlineCertificateDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCert, setSelectedCert] = useState<OnlineCertificateDto | null>(null);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
+  const [students, setStudents] = useState<StudentDto[]>([]);
+  const [createForm, setCreateForm] = useState({ template_id: "", student_id: "", student_fullName: "", certificate_title: "" });
+  const [creating, setCreating] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -22,7 +36,7 @@ export default function AdminOnlineCertificatesPage() {
       const data = await certificateApi.listOnline();
       setCertificates(data);
     } catch (err: any) {
-      setError(err.message || "Không thể tải danh sách văn bằng số");
+      setError(err.message || t("admin.online_certificates.load_failed"));
     } finally {
       setLoading(false);
     }
@@ -31,6 +45,38 @@ export default function AdminOnlineCertificatesPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleOpenCreate = async () => {
+    setShowCreateModal(true);
+    setCreateForm({ template_id: "", student_id: "", student_fullName: "", certificate_title: "" });
+    try {
+      const [list, studList] = await Promise.all([
+        templateApi.list(),
+        studentApi.list().catch(() => []),
+      ]);
+      setTemplates(list);
+      setStudents(studList);
+    } catch {}
+  };
+
+  const handleCreate = async () => {
+    if (!createForm.template_id || !createForm.student_id) return;
+    setCreating(true);
+    try {
+      await certificateApi.templateIssueSingle({
+        template_id: createForm.template_id,
+        student_id: createForm.student_id,
+        student_fullName: createForm.student_fullName,
+        certificate_title: createForm.certificate_title || t("admin.online_certificates.title"),
+      });
+      setShowCreateModal(false);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || t("admin.online_certificates.create_failed"));
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return certificates;
@@ -45,237 +91,159 @@ export default function AdminOnlineCertificatesPage() {
     );
   }, [certificates, searchQuery]);
 
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, itemsPerPage]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = useMemo(() => {
-    return filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  }, [filtered, currentPage]);
+    return filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filtered, currentPage, itemsPerPage]);
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1400, margin: "0 auto" }}>
+    <div className={styles._container}>
       {/* Header Banner */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
+      <div className={styles._headerRow}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 900, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>
-              Văn bằng số (Online Certificates)
+          <div className={styles._headerTitleWrap}>
+            <h1 className={styles._title}>
+              {t("admin.online_certificates.title")}
             </h1>
-            <span style={{ background: "#e8f5e9", color: "#09561eff", border: "1px solid #bfdbfe", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-              {certificates.length} văn bằng
+            <span className={styles._countBadge}>
+              {certificates.length} {t("admin.online_certificates.certificates")}
             </span>
           </div>
-          <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
-            Danh sách văn bằng phát hành trực tiếp từ mẫu và nạp dữ liệu online, được lưu tại bảng <code>online_certificates</code>, Pinata IPFS &amp; Blockchain.
+          <p className={styles._subtitle}>
+            {t("admin.online_certificates.description")}
           </p>
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
-          <Link
-            href="/admin/templates/generator"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "#10766Eff",
-              color: "#fff",
-              padding: "10px 18px",
-              borderRadius: 12,
-              fontWeight: 700,
-              fontSize: 13,
-              textDecoration: "none",
-              boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
-              transition: "all 0.2s"
-            }}
-          >
-            <span>+ Tạo văn bằng số mới</span>
-          </Link>
+          <Button onClick={handleOpenCreate} variant="primary" size="sm">
+            + {t("admin.online_certificates.create")}
+          </Button>
         </div>
       </div>
 
       {/* Stats Counter Bar */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Tổng văn bằng số</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a" }}>{certificates.length}</div>
+      <div className={styles._statsGrid}>
+        <div className={styles._statCard}>
+          <div className={styles._statLabel}>{t("admin.online_certificates.total_online")}</div>
+          <div className={styles._statValue}>{certificates.length}</div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã ghi Blockchain</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#16a34a" }}>
+        <div className={styles._statCard}>
+          <div className={styles._statLabel} style={{ color: "#16a34a" }}>{t("admin.online_certificates.blockchain_recorded")}</div>
+          <div className={styles._statValueGreen}>
             {certificates.filter(c => !!c.tx_hash).length}
           </div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#0284c7", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã lưu IPFS JSON</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#0284c7" }}>
+        <div className={styles._statCard}>
+          <div className={styles._statLabel} style={{ color: "#0284c7" }}>{t("admin.online_certificates.ipfs_saved")}</div>
+          <div className={styles._statValueBlue}>
             {certificates.filter(c => !!c.ipfs_cid).length}
           </div>
         </div>
       </div>
 
       {/* Control / Search Panel */}
-      <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: 16, borderRadius: 16, marginBottom: 20, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên văn bằng, sinh viên, số hiệu, số vào sổ, Tx Hash..."
-            style={{
-              width: "100%",
-              padding: "10px 14px 10px 38px",
-              borderRadius: 10,
-              border: "1px solid #cbd5e1",
-              fontSize: 13,
-              outline: "none",
-              background: "#f8fafc"
-            }}
-          />
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: 14 }}>🔍</span>
-        </div>
-
-        <button
-          onClick={fetchData}
-          style={{
-            padding: "10px 16px",
-            background: "#f1f5f9",
-            color: "#334155",
-            border: "1px solid #cbd5e1",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer"
-          }}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-4 mb-5">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder={t("admin.online_certificates.search_placeholder")}
         >
-          🔄 Tải lại
-        </button>
+          <Button variant="secondary" size="sm" onClick={fetchData} disabled={loading}>{t("common.refresh")}</Button>
+        </SearchInput>
       </div>
 
       {/* Main Data Table */}
-      <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+      <div className={styles._tableWrap}>
         {loading ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#64748b", fontSize: 14 }}>
-            ⏳ Đang tải danh sách văn bằng số...
+          <div className={styles._loading}>
+            {t("admin.online_certificates.loading_list")}
           </div>
         ) : error ? (
-          <div style={{ padding: 32, textAlign: "center", color: "#dc2626", fontSize: 14 }}>
-            ⚠️ {error}
+          <div className={styles._error}>
+            {error}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#64748b" }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#334155" }}>Không tìm thấy văn bằng số nào</div>
-            <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>
-              {searchQuery ? "Thử tìm kiếm với từ khóa khác" : "Hãy tạo văn bằng số đầu tiên trong mục Tạo & Xuất bằng"}
-            </p>
-          </div>
+          <EmptyState
+            icon="📭"
+            title={t("admin.online_certificates.no_certificates")}
+            description={searchQuery ? t("common.try_different_search") : t("admin.online_certificates.create_first")}
+          />
         ) : (
           <>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+            <div className={styles._tableScroll}>
+              <table className={styles._table}>
                 <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 700 }}>
-                    <th style={{ padding: "14px 16px" }}>Mã &amp; Tên văn bằng</th>
-                    <th style={{ padding: "14px 16px" }}>Sinh viên / Người nhận</th>
-                    <th style={{ padding: "14px 16px" }}>Số hiệu / Số sổ</th>
-                    <th style={{ padding: "14px 16px" }}>IPFS (JSON)</th>
-                    <th style={{ padding: "14px 16px" }}>Blockchain Hash</th>
-                    <th style={{ padding: "14px 16px" }}>Ngày cấp</th>
-                    <th style={{ padding: "14px 16px", textAlign: "right" }}>Hành động</th>
+                  <tr className={styles._thead}>
+                    <th className={styles._th}>{t("admin.online_certificates.certificate_info")}</th>
+                    <th className={styles._th}>{t("admin.online_certificates.student_recipient")}</th>
+                    <th className={styles._th}>{t("admin.online_certificates.serial_registry")}</th>
+                    <th className={styles._th}>IPFS (JSON)</th>
+                    <th className={styles._th}>Blockchain Hash</th>
+                    <th className={styles._th}>{t("admin.certificates.issue_date")}</th>
+                    <th className={styles._thRight}>{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((cert) => (
-                    <tr key={cert.certificate_id} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}>
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#0f172a" }}>{cert.certificate_title}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace", marginTop: 2 }}>ID: {cert.certificate_id}</div>
+                    <tr key={cert.certificate_id} className={styles._tr}>
+                      <td className={styles._td}>
+                        <div className={styles._certTitle}>{cert.certificate_title}</div>
+                        <div className={styles._certId}>ID: {cert.certificate_id}</div>
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#334155" }}>{cert.student_fullName}</div>
-                        {cert.student_id && <div style={{ fontSize: 11, color: "#64748b" }}>SV: {cert.student_id}</div>}
+                      <td className={styles._td}>
+                        <div className={styles._studentName}>{cert.student_fullName}</div>
+                        {cert.student_id && <div className={styles._studentId}>SV: {cert.student_id}</div>}
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
-                        <div><strong style={{ color: "#475569" }}>SH:</strong> {cert.serialNumber || "—"}</div>
-                        <div><strong style={{ color: "#475569" }}>Sổ:</strong> {cert.registryNumber || "—"}</div>
+                      <td className={styles._td}>
+                        <div><strong className={styles._metaLabel}>SH:</strong> {cert.serialNumber || "—"}</div>
+                        <div><strong className={styles._metaLabel}>Sổ:</strong> {cert.registryNumber || "—"}</div>
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
+                      <td className={styles._td}>
                         {cert.ipfs_cid ? (
                           <a
                             href={`https://gateway.pinata.cloud/ipfs/${cert.ipfs_cid}`}
                             target="_blank"
                             rel="noreferrer"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                              background: "#f0f9ff",
-                              color: "#0284c7",
-                              border: "1px solid #bae6fd",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              textDecoration: "none"
-                            }}
+                            className={styles._ipfsBadge}
                           >
                             🌐 IPFS Gateway
                           </a>
                         ) : (
-                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa lưu</span>
+                          <span className={styles._naText}>{t("admin.online_certificates.not_saved")}</span>
                         )}
                       </td>
 
-                      <td style={{ padding: "14px 16px" }}>
+                      <td className={styles._td}>
                         {cert.tx_hash ? (
-                          <span
-                            title={cert.tx_hash}
-                            style={{
-                              display: "inline-block",
-                              background: "#f0fdf4",
-                              color: "#16a34a",
-                              border: "1px solid #bbf7d0",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              fontFamily: "monospace"
-                            }}
-                          >
+                          <span title={cert.tx_hash} className={styles._txBadge}>
                             ✓ {cert.tx_hash.slice(0, 10)}...{cert.tx_hash.slice(-6)}
                           </span>
                         ) : (
-                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa ghi</span>
+                          <span className={styles._naText}>{t("admin.online_certificates.not_recorded")}</span>
                         )}
                       </td>
 
-                      <td style={{ padding: "14px 16px", color: "#64748b", fontSize: 12 }}>
-                        {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
+                      <td className={styles._td}>
+                        <span className={styles._dateText}>
+                          {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
+                        </span>
                       </td>
 
-                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                        <button
-                          onClick={() => setSelectedCert(cert)}
-                          style={{
-                            background: "#f1f5f9",
-                            color: "#2563eb",
-                            border: "1px solid #cbd5e1",
-                            padding: "6px 12px",
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer"
-                          }}
-                        >
-                          Chi tiết
-                        </button>
+                      <td className={styles._td} style={{ textAlign: "right" }}>
+                        <Button onClick={() => setSelectedCert(cert)} variant="ghost" size="sm">
+                          {t("common.detail")}
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -286,8 +254,12 @@ export default function AdminOnlineCertificatesPage() {
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={filtered.length}
-              itemsPerPage={ITEMS_PER_PAGE}
+              itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              onItemsPerPageChange={(size) => {
+                setItemsPerPage(size);
+                setCurrentPage(1);
+              }}
             />
           </>
         )}
@@ -295,101 +267,158 @@ export default function AdminOnlineCertificatesPage() {
 
       {/* Detail Modal */}
       {selectedCert && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 20, maxWidth: 600, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, borderBottom: "1px solid #f1f5f9", paddingBottom: 12 }}>
+        <div className={styles._overlay}>
+          <div className={styles._modal}>
+            <div className={styles._modalHeader}>
               <div>
-                <span style={{ background: "#eff6ff", color: "#2563eb", fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>Văn bằng số</span>
-                <h2 style={{ fontSize: 18, fontWeight: 900, color: "#0f172a", margin: "4px 0 0 0" }}>{selectedCert.certificate_title}</h2>
+                <span className={styles._modalBadge}>{t("admin.online_certificates.title")}</span>
+                <h2 className={styles._modalTitle}>{selectedCert.certificate_title}</h2>
               </div>
-              <button onClick={() => setSelectedCert(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>✕</button>
+              <button onClick={() => setSelectedCert(null)} className={styles._modalClose} type="button">✕</button>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13 }}>
-              <div style={{ background: "#f8fafc", padding: 14, borderRadius: 12, border: "1px solid #e2e8f0" }}>
-                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700, marginBottom: 2 }}>MÃ VĂN BẰNG (ID)</div>
-                <code style={{ fontSize: 12, color: "#0f172a", wordBreak: "break-all" }}>{selectedCert.certificate_id}</code>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>{t("admin.online_certificates.cert_id_label")}</div>
+                <code className={styles._detailValue}>{selectedCert.certificate_id}</code>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SINH VIÊN</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.student_fullName}</div>
+              <div className={styles._detailGrid2}>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>{t("admin.online_certificates.student_label")}</div>
+                  <div className={styles._detailValueName}>{selectedCert.student_fullName}</div>
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>MÃ SINH VIÊN</div>
-                  <div style={{ fontWeight: 700, color: "#334155", marginTop: 2 }}>{selectedCert.student_id || "Không gắn thẻ"}</div>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>{t("admin.online_certificates.student_id_label")}</div>
+                  <div className={styles._detailValueName}>{selectedCert.student_id || t("admin.online_certificates.not_linked")}</div>
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SỐ HIỆU (SERIAL)</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.serialNumber || "—"}</div>
+              <div className={styles._detailGrid2}>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>{t("admin.online_certificates.serial_label")}</div>
+                  <div className={styles._detailValueName}>{selectedCert.serialNumber || "—"}</div>
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SỐ VÀO SỔ</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.registryNumber || "—"}</div>
+                <div className={styles._detailCard}>
+                  <div className={styles._detailLabel}>{t("admin.online_certificates.registry_label")}</div>
+                  <div className={styles._detailValueName}>{selectedCert.registryNumber || "—"}</div>
                 </div>
               </div>
 
               {selectedCert.ipfs_cid && (
-                <div style={{ background: "#f0f9ff", padding: 12, borderRadius: 10, border: "1px solid #bae6fd" }}>
-                  <div style={{ color: "#0369a1", fontSize: 11, fontWeight: 700 }}>IPFS CID &amp; GATEWAY</div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: "#0c4a6e", wordBreak: "break-all", margin: "4px 0 8px 0" }}>{selectedCert.ipfs_cid}</div>
+                <div className={styles._ipfsCard}>
+                  <div className={styles._ipfsCardLabel}>{t("admin.online_certificates.ipfs_label")}</div>
+                  <div className={styles._ipfsCardCid}>{selectedCert.ipfs_cid}</div>
                   <a
                     href={`https://gateway.pinata.cloud/ipfs/${selectedCert.ipfs_cid}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontSize: 12, fontWeight: 800, color: "#0284c7", textDecoration: "none" }}
+                    className={styles._ipfsCardLink}
                   >
-                    🔗 Mở JSON gốc trên Pinata IPFS Gateway →
+                    {t("admin.online_certificates.open_ipfs_gateway")}
                   </a>
                 </div>
               )}
 
               {selectedCert.tx_hash && (
-                <div style={{ background: "#f0fdf4", padding: 12, borderRadius: 10, border: "1px solid #bbf7d0" }}>
-                  <div style={{ color: "#15803d", fontSize: 11, fontWeight: 700 }}>BLOCKCHAIN TRANSACTION HASH</div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: "#14532d", wordBreak: "break-all", marginTop: 4 }}>{selectedCert.tx_hash}</div>
+                <div className={styles._txCard}>
+                  <div className={styles._txCardLabel}>{t("admin.online_certificates.tx_hash_label")}</div>
+                  <div className={styles._txCardValue}>{selectedCert.tx_hash}</div>
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                <Link
-                  href="/public/verify"
-                  target="_blank"
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    background: "#2563eb",
-                    color: "#fff",
-                    padding: "10px",
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    textDecoration: "none"
-                  }}
+              <div className={styles._modalActions}>
+                <Button href="/public/verify" variant="primary" size="sm">
+                  {t("admin.online_certificates.open_verify_page")}
+                </Button>
+                <Button onClick={() => setSelectedCert(null)} variant="secondary" size="sm">
+                  {t("common.close")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className={styles._overlay}>
+          <div className={styles._modal}>
+            <div className={styles._modalHeader}>
+              <div>
+                <span className={styles._modalBadge}>{t("common.add")}</span>
+                <h2 className={styles._modalTitle}>{t("admin.online_certificates.create")}</h2>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className={styles._modalClose} type="button">✕</button>
+            </div>
+
+            <div className="flex flex-col gap-4" style={{ fontSize: 13 }}>
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">{t("admin.templates.title")} *</label>
+                <select
+                  value={createForm.template_id}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, template_id: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none"
                 >
-                  🔍 Mở trang xác minh công khai
-                </Link>
-                <button
-                  onClick={() => setSelectedCert(null)}
-                  style={{
-                    background: "#f1f5f9",
-                    color: "#334155",
-                    border: "1px solid #cbd5e1",
-                    padding: "10px 18px",
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: "pointer"
-                  }}
-                >
-                  Đóng
-                </button>
+                  <option value="">{t("admin.online_certificates.select_template")}</option>
+                  {templates.map((tmpl) => (
+                    <option key={tmpl.id} value={tmpl.id}>{tmpl.name} {tmpl.is_default ? `(${t("admin.online_certificates.default")})` : ""}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">{t("admin.certificates.student_code")} *</label>
+                <div className="flex gap-2">
+                  <select
+                    value={createForm.student_id}
+                    onChange={(e) => { const val = e.target.value; const st = students.find((s) => s.student_id === val); setCreateForm((f) => ({ ...f, student_id: val, student_fullName: st ? st.student_fullName : f.student_fullName })); }}
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none"
+                  >
+                    <option value="">{t("admin.online_certificates.select_student")}</option>
+                    {students.map((st) => (
+                      <option key={st.student_id} value={st.student_id}>{st.student_id} - {st.student_fullName}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={createForm.student_id}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, student_id: e.target.value }))}
+                    placeholder={t("admin.online_certificates.or_enter_id")}
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">{t("admin.online_certificates.student_fullname")}</label>
+                <input
+                  type="text"
+                  value={createForm.student_fullName}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, student_fullName: e.target.value }))}
+                  placeholder={t("admin.online_certificates.enter_fullname")}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">{t("admin.online_certificates.cert_title")}</label>
+                <input
+                  type="text"
+                  value={createForm.certificate_title}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, certificate_title: e.target.value }))}
+                  placeholder={t("admin.online_certificates.cert_title_placeholder")}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
+                <Button onClick={() => setShowCreateModal(false)} variant="secondary" size="sm">{t("common.cancel")}</Button>
+                <Button onClick={handleCreate} variant="primary" size="sm" disabled={creating || !createForm.template_id || !createForm.student_id}>
+                  {creating ? t("common.creating") : t("admin.online_certificates.create_cert")}
+                </Button>
               </div>
             </div>
           </div>

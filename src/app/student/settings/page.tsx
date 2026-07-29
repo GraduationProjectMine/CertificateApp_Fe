@@ -2,27 +2,29 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/AuthContext";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
 
   const sections = [
     {
-      title: "Tài khoản",
+      title: t("common.account"),
       items: [
-        { label: "Hồ sơ cá nhân", desc: "Cập nhật thông tin cá nhân của bạn", href: "/student/profile" },
-        { label: "Đổi mật khẩu", desc: "Thay đổi mật khẩu đăng nhập", href: "/student/profile/change-password" },
+        { label: t("student.profile.personal_info"), desc: t("student.profile.update_info_desc"), href: "/student/profile" },
+        { label: t("student.profile.change_password"), desc: t("student.profile.change_password_desc"), href: "/student/profile/change-password" },
       ],
     },
     {
-      title: "Thông báo",
+      title: t("common.notification"),
       items: [
-        { label: "Thông báo", desc: "Xem các thông báo về văn bằng", href: "/student/notifications" },
+        { label: t("common.notification"), desc: t("student.notifications.view_cert_notifications"), href: "/student/notifications" },
       ],
     },
     {
-      title: "Thông tin tài khoản",
+      title: t("student.settings.account_info"),
       items: [],
     },
   ];
@@ -30,24 +32,24 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Cài đặt</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Quản lý tài khoản và tùy chỉnh.</p>
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("student.settings.title")}</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("student.settings.description")}</p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-5 text-sm space-y-3">
-        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">Thông tin tài khoản</h3>
+        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">{t("student.settings.account_info")}</h3>
         <dl className="space-y-2">
           <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Họ tên</dt>
+            <dt className="text-gray-500 dark:text-gray-400 text-xs">{t("student.profile.full_name")}</dt>
             <dd className="font-medium text-gray-900 dark:text-white text-xs">{user?.name}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Email</dt>
+            <dt className="text-gray-500 dark:text-gray-400 text-xs">{t("student.profile.email")}</dt>
             <dd className="font-medium text-gray-900 dark:text-white text-xs">{user?.email}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Vai trò</dt>
-            <dd className="font-medium text-gray-900 dark:text-white text-xs">Sinh viên</dd>
+            <dt className="text-gray-500 dark:text-gray-400 text-xs">{t("common.role")}</dt>
+            <dd className="font-medium text-gray-900 dark:text-white text-xs">{t("common.student")}</dd>
           </div>
         </dl>
       </div>
