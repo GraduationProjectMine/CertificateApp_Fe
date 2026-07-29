@@ -8,6 +8,7 @@ export interface NotificationDto {
   message: string;
   type: string;
   related_id: string | null;
+  deep_link: string | null;
   is_read: boolean;
   createdAt: string;
 }
@@ -22,4 +23,12 @@ export const notificationApi = {
 
   markAllAsRead: () =>
     request<{ message: string }>('/notifications/read-all', { method: 'PUT' }),
+
+  preferences: () => request<{ email_notifications: boolean }>('/notifications/preferences'),
+
+  updatePreferences: (emailNotifications: boolean) =>
+    request<{ message: string }>('/notifications/preferences', {
+      method: 'PUT',
+      body: JSON.stringify({ email_notifications: emailNotifications }),
+    }),
 };

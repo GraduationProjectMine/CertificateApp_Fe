@@ -7,6 +7,7 @@ export interface StudentDto {
   organization_id: string;
   organization_name: string;
   isActive: boolean;
+  isActivated: boolean;
   createdAt: string;
 }
 
@@ -91,5 +92,10 @@ export const studentApi = {
     request<{ message: string }>('/students/change-password', {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  resendActivation: (studentId: string) =>
+    request<{ message: string }>(`/auth/resend-activation/${studentId}`, {
+      method: 'POST',
     }),
 };

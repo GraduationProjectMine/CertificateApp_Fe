@@ -1,0 +1,174 @@
+@reference "../../globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+
+._1 {
+  @apply p-6 sm:p-8;
+}
+
+._2 {
+  @apply flex items-center justify-between mb-6;
+}
+
+._3 {
+  @apply text-2xl font-bold text-gray-900 dark:text-white;
+}
+
+._4 {
+  @apply text-sm text-gray-500 mt-1;
+}
+
+._5 {
+  @apply space-y-3;
+}
+
+._6 {
+  @apply bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/30;
+}
+
+._7 {
+  @apply flex items-start justify-between gap-4;
+}
+
+._8 {
+  @apply flex-1 min-w-0;
+}
+
+._9 {
+  @apply text-sm font-bold text-gray-900 dark:text-white truncate;
+}
+
+._10 {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-0.5;
+}
+
+._11 {
+  @apply flex items-center gap-2 mt-3 flex-wrap;
+}
+
+._12 {
+  @apply flex items-center gap-2 shrink-0;
+}
+
+._13 {
+  @apply text-xs font-medium text-gray-500 dark:text-gray-400;
+}
+
+._14 {
+  @apply w-4 h-4;
+}
+
+._15 {
+  @apply flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold;
+}
+
+._16 {
+  @apply bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50;
+}
+
+._17 {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200/50 dark:border-gray-700/50;
+}
+
+._18 {
+  @apply bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200/50;
+}
+
+._19 {
+  @apply text-center py-16;
+}
+
+._20 {
+  @apply mx-auto w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-4;
+}
+
+._21 {
+  @apply w-8 h-8;
+}
+
+._22 {
+  @apply text-sm text-gray-500 font-semibold;
+}
+
+._23 {
+  @apply px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-hover transition-all flex items-center gap-2;
+}
+
+._24 {
+  @apply w-4 h-4;
+}
+
+._25 {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-3 flex items-center gap-1.5;
+}
+
+._26 {
+  @apply w-3.5 h-3.5;
+}
+
+._27 {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40;
+}
+
+._28 {
+  @apply bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden;
+}
+
+._29 {
+  @apply flex items-center justify-between px-6 pt-5 pb-3;
+}
+
+._30 {
+  @apply text-lg font-bold text-gray-900 dark:text-white;
+}
+
+._31 {
+  @apply p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all;
+}
+
+._32 {
+  @apply px-6 pb-6 space-y-4;
+}
+
+._33 {
+  @apply space-y-1.5;
+}
+
+._34 {
+  @apply text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+}
+
+._35 {
+  @apply w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none;
+}
+
+._36 {
+  @apply flex gap-2 flex-wrap;
+}
+
+._37 {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer;
+}
+
+._38 {
+  @apply bg-primary/10 text-primary border-primary/30;
+}
+
+._39 {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600;
+}
+
+._40 {
+  @apply w-3.5 h-3.5;
+}
+
+._41 {
+  @apply flex items-center gap-4 pt-2;
+}
+
+._42 {
+  @apply flex-1 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all;
+}
+
+._43 {
+  @apply flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+}

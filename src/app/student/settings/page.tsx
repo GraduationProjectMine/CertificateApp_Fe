@@ -1,11 +1,31 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/AuthContext";
+import { notificationApi } from "@/features/notifications/services/notification.api";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [emailNotif, setEmailNotif] = useState(false);
+  const [loadingPref, setLoadingPref] = useState(true);
+
+  useEffect(() => {
+    notificationApi.preferences()
+      .then((data) => setEmailNotif(data.email_notifications))
+      .catch(() => {})
+      .finally(() => setLoadingPref(false));
+  }, []);
+
+  const toggleEmailNotif = async () => {
+    const next = !emailNotif;
+    setEmailNotif(next);
+    try {
+      await notificationApi.updatePreferences(next);
+    } catch {
+      setEmailNotif(!next);
+    }
+  };
 
   const sections = [
     {
@@ -50,6 +70,32 @@ export default function SettingsPage() {
             <dd className="font-medium text-gray-900 dark:text-white text-xs">Sinh viên</dd>
           </div>
         </dl>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-5 text-sm space-y-4">
+        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">Tuỳ chọn thông báo</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Thông báo qua email</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Nhận thông báo qua email khi có văn bằng mới</p>
+          </div>
+          {loadingPref ? (
+            <div className="w-10 h-6 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          ) : (
+            <button
+              onClick={toggleEmailNotif}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                emailNotif ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                  emailNotif ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {sections.map((section) => (
