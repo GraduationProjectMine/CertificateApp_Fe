@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { notificationApi, type NotificationDto } from "@/features/notifications/services/notification.api";
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -9,6 +10,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,11 +29,16 @@ export default function NotificationsPage() {
 
   useEffect(() => { fetch(); }, []);
 
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      await notificationApi.markAsRead(id);
-      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
-    } catch {}
+  const handleClick = async (n: NotificationDto) => {
+    if (!n.is_read) {
+      try {
+        await notificationApi.markAsRead(n.id);
+        setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
+      } catch {}
+    }
+    if (n.deep_link) {
+      router.push(n.deep_link);
+    }
   };
 
   const handleMarkAllAsRead = async () => {
@@ -75,7 +82,7 @@ export default function NotificationsPage() {
             return (
               <div
                 key={n.id}
-                onClick={() => !n.is_read && handleMarkAsRead(n.id)}
+                onClick={() => handleClick(n)}
                 className={`rounded-2xl border p-4 cursor-pointer transition-all ${
                   n.is_read
                     ? "bg-white dark:bg-gray-900 border-gray-200/60 dark:border-gray-800/60"
@@ -94,6 +101,11 @@ export default function NotificationsPage() {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{n.message}</p>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5">{new Date(n.createdAt).toLocaleString('vi-VN')}</p>
                   </div>
+                  {n.deep_link && (
+                    <svg className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
                 </div>
               </div>
             );

@@ -118,7 +118,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1"></path>
             </svg>
-            <span>Thoát</span>
+            <span>Đăng xuất</span>
           </button>
         </Tooltip>
       </div>
