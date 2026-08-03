@@ -23,4 +23,12 @@ export const issuerApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  uploadLogo: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ message: string; logo_url: string; organization: IssuerProfile }>('/issuer/upload-logo', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };

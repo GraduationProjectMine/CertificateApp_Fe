@@ -28,6 +28,8 @@ export interface CertificateDetails {
   fileUrl?: string | null;
   organizationName: string;
   organizationId: string;
+  organizationLogo?: string | null;
+  organizationWallet?: string | null;
   txHash: string | null;
   issuedAt: string | null;
   revokedAt: string | null;
@@ -78,6 +80,15 @@ export const verifierApi = {
     } catch (err: any) {
       return await verifierApi.getOnlineCertificate(id);
     }
+  },
+
+  scanOcr: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ serialNumber: string | null; registryNumber: string | null; accuracy: number; rawText: string }>('/verifier/scan-ocr', {
+      method: 'POST',
+      body: formData,
+    });
   },
 };
 
