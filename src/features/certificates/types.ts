@@ -1,4 +1,4 @@
-﻿export type CertificateStatus = "ISSUED" | "PENDING" | "REVOKED" | "DRAFT";
+export type CertificateStatus = "ISSUED" | "PENDING" | "REVOKED" | "DRAFT";
 
 export interface Certificate {
   id: string;
@@ -32,6 +32,7 @@ export interface StudentCertificate {
   issuerName: string;
   issuerLogo: string;
   status: "VALID" | "REVOKED";
+  rawStatus: CertificateStatus;
   onChain: boolean;
   ipfsCid: string;
   metadataHash: string;
@@ -39,4 +40,13 @@ export interface StudentCertificate {
   contractAddress: string;
   network: string;
   credentialHash: string;
+  dob?: string | null;
+  placeOfBirth?: string | null;
+  gender?: string | null;
+  ethnicity?: string | null;
+  schoolName?: string | null;
+  examCohort?: string | null;
+  examBoard?: string | null;
+  issueLocation?: string | null;
+  registryNumber?: string | null;
 }
