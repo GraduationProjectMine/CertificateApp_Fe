@@ -154,6 +154,10 @@ export function mapCertificateDtoToStudentCert(
     PENDING: "VALID",
     DRAFT: "VALID",
   };
+  const titleLower = (dto.certificate_title || "").toLowerCase();
+  const isCertType = titleLower.includes("chứng chỉ") || titleLower.includes("certificate") || titleLower.includes("chứng nhận");
+  const inferredType = isCertType ? "CERTIFICATE" : "BACHELOR_DEGREE";
+
   return {
     id: dto.certificate_id,
     credentialCode: dto.serialNumber || dto.certificate_id,
@@ -161,14 +165,15 @@ export function mapCertificateDtoToStudentCert(
     studentName: dto.student_fullName,
     studentCode: "",
     credentialTitle: dto.certificate_title,
-    type: "BACHELOR_DEGREE",
+    type: inferredType,
     major: "",
     classification: "",
     gpa: "",
-    issueDate: dto.issueDate || dto.issuedAt?.split("T")[0] || "",
+    issueDate: dto.issueDate || (dto.issuedAt ? dto.issuedAt.split("T")[0] : ""),
     issuerName: dto.organization_name,
     issuerLogo: "",
     status: statusMap[dto.status] || "VALID",
+    rawStatus: (dto.status as any) || "DRAFT",
     onChain: !!dto.tx_hash,
     ipfsCid: dto.ipfs_cid || "",
     metadataHash: "",
@@ -176,5 +181,14 @@ export function mapCertificateDtoToStudentCert(
     contractAddress: "",
     network: "",
     credentialHash: "",
+    dob: dto.dob,
+    placeOfBirth: dto.placeOfBirth,
+    gender: dto.gender,
+    ethnicity: dto.ethnicity,
+    schoolName: dto.schoolName,
+    examCohort: dto.examCohort,
+    examBoard: dto.examBoard,
+    issueLocation: dto.issueLocation,
+    registryNumber: dto.registryNumber,
   };
 }

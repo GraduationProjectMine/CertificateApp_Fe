@@ -73,10 +73,10 @@ export default function NewDisputePage() {
                   onChange={(e) => setFormCertId(e.target.value)}
                   className={styles._44}
                 >
-                  <option value="">-- Chọn văn bằng --</option>
-                  {certs.map((c) => (
+                  <option value="">-- Chọn văn bằng bản thảo --</option>
+                  {certs.filter((c) => c.status === "DRAFT").map((c) => (
                     <option key={c.certificate_id} value={c.certificate_id}>
-                      {c.certificate_title} - {c.student_fullName}
+                      {c.certificate_title} - {c.student_fullName} (Bản thảo)
                     </option>
                   ))}
                 </select>
