@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import styles from "./VerificationResult.module.css";
+import IssuerBadge from "../IssuerBadge/IssuerBadge";
 
 export interface VerificationData {
   status: "VALID" | "INVALID" | "REVOKED";
@@ -10,6 +11,8 @@ export interface VerificationData {
   studentName?: string;
   credentialTitle?: string;
   issuerName?: string;
+  issuerLogo?: string | null;
+  issuerWallet?: string | null;
   issueDate?: string;
   major?: string;
   classification?: string;
@@ -35,10 +38,6 @@ interface Props {
 
 export default function VerificationResult({ result, onReset }: Props) {
   if (result.status === "VALID") {
-    const imageUrl =
-      result.fileUrl ||
-      (result.ipfsCid ? `https://gateway.pinata.cloud/ipfs/${result.ipfsCid}` : null);
-
     return (
       <div className={styles._1}>
         <div className={styles._2}>
@@ -48,119 +47,18 @@ export default function VerificationResult({ result, onReset }: Props) {
             </svg>
           </div>
           <h2 className={styles._5}>Văn bằng hợp lệ</h2>
-          <p className={styles._6}>Văn bằng này đã được xác thực trên blockchain và không có dấu hiệu giả mạo.</p>
         </div>
 
-        {imageUrl && (
-          <div className={styles._7}>
-            <h3 className={styles._8}>Ảnh văn bằng gốc (IPFS)</h3>
-            <div className="mt-3 flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
-              <img
-                src={imageUrl}
-                alt="Ảnh văn bằng gốc"
-                className="max-h-96 w-auto object-contain rounded-xl shadow-md border border-gray-200 dark:border-gray-700 transition-all hover:scale-[1.01]"
-                onError={(e) => {
-                  if (result.ipfsCid && !(e.target as HTMLImageElement).src.includes('ipfs.io')) {
-                    (e.target as HTMLImageElement).src = `https://ipfs.io/ipfs/${result.ipfsCid}`;
-                  }
-                }}
-              />
-              <a
-                href={imageUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline"
-              >
-                <span>Mở ảnh gốc trên IPFS Gateway</span>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
+        {/* Issuer Organization Badge */}
+        {result.issuerName && (
+          <div className="mt-4 mb-4">
+            <IssuerBadge
+              organizationName={result.issuerName}
+              logoUrl={result.issuerLogo}
+              walletAddress={result.issuerWallet}
+            />
           </div>
         )}
-
-        <div className={styles._7}>
-          <h3 className={styles._8}>Thông tin văn bằng</h3>
-          <dl className={styles._9}>
-            <div className={styles._10}>
-              <dt className={styles._11}>Họ tên người nhận</dt>
-              <dd className={styles._12}>{result.studentName}</dd>
-            </div>
-            <div className={styles._10}>
-              <dt className={styles._11}>Tên văn bằng</dt>
-              <dd className={styles._12}>{result.credentialTitle}</dd>
-            </div>
-            <div className={styles._10}>
-              <dt className={styles._11}>Trường/Tổ chức cấp</dt>
-              <dd className={styles._12}>{result.issuerName}</dd>
-            </div>
-            <div className={styles._10}>
-              <dt className={styles._11}>Ngày cấp</dt>
-              <dd className={styles._12}>{result.issueDate}</dd>
-            </div>
-            <div className={styles._10}>
-              <dt className={styles._11}>Mã văn bằng</dt>
-              <dd className={styles._12}>{result.credentialCode}</dd>
-            </div>
-            <div className={styles._10}>
-              <dt className={styles._11}>Số hiệu</dt>
-              <dd className={styles._12}>{result.serialNumber}</dd>
-            </div>
-            {result.registryNumber && <div className={styles._10}>
-              <dt className={styles._11}>Số vào sổ</dt>
-              <dd className={styles._12}>{result.registryNumber}</dd>
-            </div>}
-            {result.major && <div className={styles._10}>
-              <dt className={styles._11}>Ngành</dt>
-              <dd className={styles._12}>{result.major}</dd>
-            </div>}
-            {result.classification && <div className={styles._10}>
-              <dt className={styles._11}>Xếp loại</dt>
-              <dd className={styles._12}>{result.classification}</dd>
-            </div>}
-          </dl>
-        </div>
-
-        <div className={styles._7}>
-          <h3 className={styles._8}>Bảo mật & Blockchain</h3>
-          <dl className={styles._9}>
-            {result.credentialHash && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Hash văn bằng</dt>
-                <dd className={`${styles._12} font-mono text-xs`}>{result.credentialHash}</dd>
-              </div>
-            )}
-            {result.ipfsCid && (
-              <div className={styles._10}>
-                <dt className={styles._11}>CID IPFS</dt>
-                <dd className={`${styles._12} font-mono text-xs`}>{result.ipfsCid}</dd>
-              </div>
-            )}
-            {result.transactionHash && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Transaction Hash</dt>
-                <dd className={`${styles._12} font-mono text-xs text-primary`}>{result.transactionHash}</dd>
-              </div>
-            )}
-            {result.contractAddress && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Contract Address</dt>
-                <dd className={`${styles._12} font-mono text-xs`}>{result.contractAddress}</dd>
-              </div>
-            )}
-            {result.network && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Network</dt>
-                <dd className={styles._12}>{result.network}</dd>
-              </div>
-            )}
-            <div className={styles._10}>
-              <dt className={styles._11}>Thời gian xác minh</dt>
-              <dd className={styles._12}>{result.verifiedAt}</dd>
-            </div>
-          </dl>
-        </div>
 
         <div className={styles._13}>
           <Link
@@ -190,40 +88,23 @@ export default function VerificationResult({ result, onReset }: Props) {
           <p className={styles._6}>Văn bằng này không còn hiệu lực và đã bị thu hồi bởi tổ chức cấp.</p>
         </div>
 
-        <div className={styles._7}>
-          <dl className={styles._9}>
-            <div className={styles._10}>
-              <dt className={styles._11}>Mã văn bằng</dt>
-              <dd className={styles._12}>{result.credentialCode}</dd>
-            </div>
-            {result.studentName && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Người nhận</dt>
-                <dd className={styles._12}>{result.studentName}</dd>
-              </div>
-            )}
-            {result.revokedAt && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Ngày thu hồi</dt>
-                <dd className={styles._12}>{result.revokedAt}</dd>
-              </div>
-            )}
-            {result.revokeReason && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Lý do thu hồi</dt>
-                <dd className={styles._12}>{result.revokeReason}</dd>
-              </div>
-            )}
-            {result.revokeTransactionHash && (
-              <div className={styles._10}>
-                <dt className={styles._11}>Transaction thu hồi</dt>
-                <dd className={`${styles._12} font-mono text-xs`}>{result.revokeTransactionHash}</dd>
-              </div>
-            )}
-          </dl>
-        </div>
+        {result.issuerName && (
+          <div className="mt-4 mb-4">
+            <IssuerBadge
+              organizationName={result.issuerName}
+              logoUrl={result.issuerLogo}
+              walletAddress={result.issuerWallet}
+            />
+          </div>
+        )}
 
         <div className={styles._13}>
+          <Link
+            href={`/public/certificate/${result.certificateId || result.credentialCode}`}
+            className={styles._14}
+          >
+            Xem chi tiết văn bằng
+          </Link>
           <button onClick={onReset} className={styles._15}>
             Xác minh văn bằng khác
           </button>
@@ -248,7 +129,7 @@ export default function VerificationResult({ result, onReset }: Props) {
         <p className={styles._24}>Bạn có thể thử:</p>
         <ul className={styles._25}>
           <li>Kiểm tra lại mã văn bằng đã nhập</li>
-          <li>Quét mã QR trên văn bằng</li>
+          <li>Quét ảnh văn bằng bằng camera OCR</li>
           <li>Liên hệ tổ chức cấp văn bằng để được hỗ trợ</li>
         </ul>
       </div>
