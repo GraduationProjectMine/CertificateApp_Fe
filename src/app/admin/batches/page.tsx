@@ -11,6 +11,7 @@ import { ocrApi } from "@/features/ocr/services/api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import Pagination from "@/components/common/Pagination";
 
 function downloadFile(content: Blob, filename: string) {
   const url = URL.createObjectURL(content);
@@ -55,6 +56,8 @@ const EMPTY_RECORD: Record<string, string> = {
   registryNumber: "",
 };
 
+const BATCHES_PER_PAGE = 5;
+
 export default function AdminBatchesPage() {
   const { user } = useAuth();
   const isIssuer = user?.role === "issuer";
@@ -66,6 +69,11 @@ export default function AdminBatchesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
+  const [batchCurrentPage, setBatchCurrentPage] = useState(1);
+
+  const paginatedBatches = useMemo(() => {
+    return batches.slice((batchCurrentPage - 1) * BATCHES_PER_PAGE, batchCurrentPage * BATCHES_PER_PAGE);
+  }, [batches, batchCurrentPage]);
 
   // Initialize with 1 editable record so the UI Form is always visible by default
   const [sourceRows, setSourceRows] = useState<Record<string, string>[]>([{ ...EMPTY_RECORD }]);
@@ -269,16 +277,21 @@ export default function AdminBatchesPage() {
     setPreviewTab("ALL");
   }
 
+  useEffect(() => {
+    if (!isIssuer) setMode("DRAFT_ONLY");
+  }, [isIssuer]);
+
   async function executeBatch() {
     setShowConfirmBatch(false);
     setSubmitting(true);
+    const activeMode = isIssuer ? mode : "DRAFT_ONLY";
     try {
-      const result = await operationsApi.createBatch(fileName || `Lô cấp phát ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, mode);
+      const result = await operationsApi.createBatch(fileName || `Lô cấp phát ${new Date().toLocaleDateString("vi-VN")}`, mappedRows, activeMode);
       setSelected(result);
       resetImport();
       await load();
       toast.success(
-        mode === "FULL"
+        activeMode === "FULL"
           ? `Đã phát hành và đẩy Blockchain thành công ${result.successRows}/${result.totalRows} văn bằng!`
           : `Đã lưu DRAFT chờ duyệt thành công ${result.successRows}/${result.totalRows} văn bằng!`
       );
@@ -322,6 +335,22 @@ export default function AdminBatchesPage() {
 
   return (
     <div className={styles._1}>
+      {submitting && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">
+                {mode === "FULL" ? "Đang phát hành lô lên Blockchain" : "Đang tạo nháp lô văn bằng"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Đang xử lý dữ liệu &amp; ghi mã hóa. Vui lòng không đóng hoặc làm mới trang...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmModal
         open={showConfirmBatch}
         onClose={() => setShowConfirmBatch(false)}
@@ -862,7 +891,7 @@ export default function AdminBatchesPage() {
               </tr>
             </thead>
             <tbody className={styles._13}>
-              {batches.map((batch) => (
+              {paginatedBatches.map((batch) => (
                 <tr className={styles._14} key={batch.id}>
                   <td className={styles._15}>
                     {batch.name}
@@ -891,6 +920,13 @@ export default function AdminBatchesPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={batchCurrentPage}
+          totalPages={Math.ceil(batches.length / BATCHES_PER_PAGE)}
+          totalItems={batches.length}
+          itemsPerPage={BATCHES_PER_PAGE}
+          onPageChange={setBatchCurrentPage}
+        />
       </div>
 
       {/* Batch Result Modal/Detail view */}

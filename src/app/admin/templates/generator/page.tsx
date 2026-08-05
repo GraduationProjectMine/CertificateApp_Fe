@@ -8,7 +8,10 @@ import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
 import { certificateApi, type CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
+import { issuerApi } from "@/features/issuer/services/issuer.api";
 import { QRCodeSVG } from "qrcode.react";
+
+import { useAuth } from "@/features/auth/components/AuthContext";
 
 const ALL_BINDING_LABELS: Record<string, string> = {
   student_id: "Mã sinh viên",
@@ -43,6 +46,7 @@ const DEFAULT_DESIGN: DesignData = {
 };
 
 export default function CertificateGeneratorPage() {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateTemplate | null>(null);
@@ -70,12 +74,21 @@ export default function CertificateGeneratorPage() {
   useEffect(() => {
     const initData = async () => {
       try {
-        const [list, studList] = await Promise.all([
+        const [list, studList, profileRes] = await Promise.all([
           templateApi.list(),
           studentApi.list().catch(() => []),
+          issuerApi.getProfile().catch(() => null),
         ]);
         setTemplates(list);
         setStudents(studList);
+        if (profileRes && profileRes.logo_url) {
+          setRecords((prev) => {
+            const next = [...prev];
+            if (!next[0]) next[0] = {};
+            next[0] = { organization_logo: profileRes.logo_url || "", organization_name: profileRes.organization_name || "", ...next[0] };
+            return next;
+          });
+        }
       } catch (err: any) {
         console.error("Failed to load initial data", err);
       } finally {
@@ -363,6 +376,25 @@ export default function CertificateGeneratorPage() {
     };
 
     const content = (() => {
+      if (field.type === "image" || field.binding === "organization_logo") {
+        const rawSrc = field.binding ? activeRecord[field.binding] : field.src;
+        const imgSrc = rawSrc || field.src || activeRecord.organization_logo;
+        if (imgSrc && (imgSrc.startsWith("http") || imgSrc.startsWith("data:") || imgSrc.startsWith("/"))) {
+          return (
+            <img
+              src={imgSrc}
+              alt={field.label || "Logo"}
+              style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
+            />
+          );
+        }
+        return (
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#64748b", fontSize: 11 }}>
+            <span style={{ fontSize: 18 }}>🖼</span>
+            <span>{field.label || "Logo tổ chức"}</span>
+          </div>
+        );
+      }
       if (field.type === "qr") {
         const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
         const rawVal = field.binding && activeRecord[field.binding] ? activeRecord[field.binding] : activeRecord.verification_url;
@@ -404,6 +436,14 @@ export default function CertificateGeneratorPage() {
     return <div className="p-8 text-center text-gray-500 text-xs">Đang tải danh sách mẫu...</div>;
   }
 
+  if (user?.role === "staff") {
+    return (
+      <div className="p-8 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+        Tài khoản nhân viên không có quyền truy cập trang Tạo &amp; Xuất bằng PDF.
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
       {/* Header Toolbar - 2-Row Layout */}
@@ -419,16 +459,17 @@ export default function CertificateGeneratorPage() {
             <div className="h-4 w-[1px] bg-slate-200 shrink-0" />
 
             {/* Template Selector Dropdown */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs shrink-0">
-              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Chọn mẫu:</span>
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-2xs shrink-0">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Chọn mẫu:</span>
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleSelectTemplate(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1 whitespace-nowrap"
+                className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-semibold focus:outline-none cursor-pointer pr-1 whitespace-nowrap"
+                style={{ background: "#ffffff", color: "#0f172a" }}
               >
-                <option value="">-- Chọn mẫu văn bằng --</option>
+                <option value="" style={{ background: "#ffffff", color: "#0f172a" }}>-- Chọn mẫu văn bằng --</option>
                 {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
+                  <option key={t.id} value={t.id} style={{ background: "#ffffff", color: "#0f172a" }}>
                     {t.name} {t.is_default ? "(Mặc định)" : ""}
                   </option>
                 ))}
@@ -567,7 +608,7 @@ export default function CertificateGeneratorPage() {
                   justifyContent: "space-between",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#3b82f6";
+                  e.currentTarget.style.borderColor = "#147D74";
                   e.currentTarget.style.transform = "translateY(-2px)";
                 }}
                 onMouseLeave={(e) => {
@@ -577,7 +618,7 @@ export default function CertificateGeneratorPage() {
               >
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#eff6ff", color: "#2563eb" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#e6f2f1", color: "#147D74" }}>
                       {t.is_default ? "Mẫu mặc định" : "Mẫu đã tạo"}
                     </span>
                   </div>
@@ -591,13 +632,16 @@ export default function CertificateGeneratorPage() {
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: 8,
-                    background: "#3b82f6",
+                    background: "#147D74",
                     color: "#fff",
                     border: "none",
                     fontSize: 12,
                     fontWeight: 700,
                     cursor: "pointer",
+                    transition: "background 0.2s",
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#0f635c"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "#147D74"; }}
                 >
                   Chọn mẫu này →
                 </button>
@@ -617,10 +661,10 @@ export default function CertificateGeneratorPage() {
           {/* Dynamic Input Side Panel */}
           <div style={{ width: 340, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto", display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid #f1f5f9" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", marginBottom: 2 }}>Mẫu: {selectedTemplate.name}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#147D74", marginBottom: 2 }}>Mẫu: {selectedTemplate.name}</div>
               <h2 style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>Nhập dữ liệu theo mẫu</h2>
               <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>
-                Hiển thị <strong style={{ color: "#2563eb" }}>{boundFields.length} nhãn động</strong> thuộc mẫu này.
+                Hiển thị <strong style={{ color: "#147D74" }}>{boundFields.length} nhãn động</strong> thuộc mẫu này.
               </p>
             </div>
 
@@ -660,7 +704,7 @@ export default function CertificateGeneratorPage() {
                 <button
                   onClick={() => setActiveRowIndex((i) => Math.max(0, i - 1))}
                   disabled={activeRowIndex <= 0}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
                 >
                   ◄ Trước
                 </button>
@@ -668,10 +712,10 @@ export default function CertificateGeneratorPage() {
                 <select
                   value={activeRowIndex}
                   onChange={(e) => setActiveRowIndex(Number(e.target.value))}
-                  style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#fff", fontWeight: 500 }}
+                  style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#ffffff", color: "#0f172a", fontWeight: 500 }}
                 >
                   {records.map((r, i) => (
-                    <option key={i} value={i}>
+                    <option key={i} value={i} style={{ background: "#ffffff", color: "#0f172a" }}>
                       Dòng {i + 1}: {r.student_fullName || r.student_id || `Bản ghi ${i + 1}`}
                     </option>
                   ))}
@@ -680,7 +724,7 @@ export default function CertificateGeneratorPage() {
                 <button
                   onClick={() => setActiveRowIndex((i) => Math.min(records.length - 1, i + 1))}
                   disabled={activeRowIndex >= records.length - 1}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex >= records.length - 1 ? 0.4 : 1 }}
+                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex >= records.length - 1 ? 0.4 : 1 }}
                 >
                   Sau ►
                 </button>
@@ -706,11 +750,11 @@ export default function CertificateGeneratorPage() {
                             handleUpdateActiveField("student_fullName", st.student_fullName);
                           }
                         }}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box", marginBottom: 4 }}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, background: "#ffffff", color: "#0f172a", outline: "none", boxSizing: "border-box", marginBottom: 4 }}
                       >
-                        <option value="">-- Chọn sinh viên có sẵn --</option>
+                        <option value="" style={{ background: "#ffffff", color: "#0f172a" }}>-- Chọn sinh viên có sẵn --</option>
                         {students.map((st) => (
-                          <option key={st.student_id} value={st.student_id}>
+                          <option key={st.student_id} value={st.student_id} style={{ background: "#ffffff", color: "#0f172a" }}>
                             {st.student_id} - {st.student_fullName}
                           </option>
                         ))}
@@ -719,7 +763,7 @@ export default function CertificateGeneratorPage() {
                         type="text"
                         value={activeRecord[key] || ""}
                         onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, background: "#ffffff", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
                         placeholder="Hoặc nhập mã SV mới..."
                       />
                     </div>
@@ -735,7 +779,7 @@ export default function CertificateGeneratorPage() {
                       type="text"
                       value={activeRecord[key] || ""}
                       onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, background: "#ffffff", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
                       placeholder={`Nhập ${label.toLowerCase()}...`}
                     />
                   </div>
@@ -817,104 +861,26 @@ export default function CertificateGeneratorPage() {
       {/* Result Modal for Direct Single / Batch Issuance */}
       {issueResult && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 16, maxWidth: 650, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
-            {issueResult.type === "SINGLE" ? (
-              <div>
-                <div style={{ textAlign: "center", marginBottom: 20 }}>
-                  <div style={{ fontSize: 44, marginBottom: 8 }}>🎉</div>
-                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>Cấp phát văn bằng thành công!</h2>
-                  <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Văn bằng số đã được lưu vào bảng <strong>online_certificates</strong>, tệp JSON lên IPFS và ghi vĩnh viễn lên Blockchain.</p>
-                </div>
-
-                <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>Mã văn bằng (ID): </span>
-                    <code style={{ background: "#e2e8f0", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>{issueResult.data.certificate_id}</code>
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>Sinh viên: </span>
-                    <strong>{issueResult.data.student_fullName}</strong> ({issueResult.data.student_id})
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>Tên văn bằng: </span>
-                    {issueResult.data.certificate_title}
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#475569" }}>IPFS CID (JSON Metadata): </span>
-                    <div style={{ marginTop: 4 }}>
-                      <a href={issueResult.data.file_url || `https://gateway.pinata.cloud/ipfs/${issueResult.data.ipfs_cid}`} target="_blank" rel="noreferrer" style={{ color: "#2563eb", wordBreak: "break-all", fontWeight: 600, textDecoration: "underline" }}>
-                        🔗 {issueResult.data.ipfs_cid}
-                      </a>
-                    </div>
-                  </div>
-                  {issueResult.data.tx_hash && (
-                    <div>
-                      <span style={{ fontWeight: 700, color: "#475569" }}>Blockchain Tx Hash: </span>
-                      <div style={{ marginTop: 4 }}>
-                        <code style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 8px", borderRadius: 6, fontSize: 11, wordBreak: "break-all", display: "block" }}>
-                          ⚡ {issueResult.data.tx_hash}
-                        </code>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <button onClick={() => setIssueResult(null)} style={{ marginTop: 20, width: "100%", padding: "10px", borderRadius: 8, background: "#0f172a", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>
-                  Đóng thông báo
-                </button>
+          <div style={{ background: "#fff", borderRadius: 20, maxWidth: 440, width: "100%", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
+            <div style={{ textAlign: "center", padding: "28px 20px", borderRadius: 16, background: "rgba(20, 125, 116, 0.08)", border: "1px solid #b2d8d5", marginBottom: 20 }}>
+              <div style={{ margin: "0 auto 12px", width: 56, height: 56, borderRadius: "50%", background: "#e6f2f1", display: "flex", alignItems: "center", justifyContent: "center", color: "#147D74" }}>
+                <svg style={{ width: 28, height: 28 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-            ) : (
-              <div>
-                <div style={{ textAlign: "center", marginBottom: 16 }}>
-                  <div style={{ fontSize: 44, marginBottom: 8 }}>📦</div>
-                  <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0 }}>Kết quả cấp phát lô văn bằng</h2>
-                  <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
-                    Đã xử lý <strong>{issueResult.data.total}</strong> bản ghi (Thành công: <strong style={{ color: "#16a34a" }}>{issueResult.data.successCount}</strong>, Thất bại: <strong style={{ color: "#dc2626" }}>{issueResult.data.failCount}</strong>).
-                  </p>
-                </div>
+              <h2 style={{ fontSize: 20, fontWeight: 900, color: "#147D74", margin: 0 }}>
+                {issueResult.type === "SINGLE" ? "Cấp phát văn bằng thành công!" : "Kết quả cấp phát lô văn bằng thành công!"}
+              </h2>
+            </div>
 
-                <div style={{ overflowX: "auto", maxHeight: 300, border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
-                  <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
-                        <th style={{ padding: "8px 12px" }}>STT</th>
-                        <th style={{ padding: "8px 12px" }}>Sinh viên</th>
-                        <th style={{ padding: "8px 12px" }}>Trạng thái</th>
-                        <th style={{ padding: "8px 12px" }}>IPFS CID / Ghi chú</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {issueResult.data.results.map((r: any) => (
-                        <tr key={r.index} style={{ borderTop: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "8px 12px" }}>{r.index}</td>
-                          <td style={{ padding: "8px 12px", fontWeight: 600 }}>{r.student_fullName}</td>
-                          <td style={{ padding: "8px 12px" }}>
-                            {r.status === "SUCCESS" ? (
-                              <span style={{ color: "#16a34a", fontWeight: 700 }}>✓ Thành công</span>
-                            ) : (
-                              <span style={{ color: "#dc2626", fontWeight: 700 }}>✕ Thất bại</span>
-                            )}
-                          </td>
-                          <td style={{ padding: "8px 12px" }}>
-                            {r.status === "SUCCESS" ? (
-                              <a href={r.file_url || `https://gateway.pinata.cloud/ipfs/${r.cid}`} target="_blank" rel="noreferrer" style={{ color: "#2563eb", textDecoration: "underline" }}>
-                                {r.cid?.slice(0, 16)}...
-                              </a>
-                            ) : (
-                              <span style={{ color: "#dc2626" }}>{r.error}</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <button onClick={() => setIssueResult(null)} style={{ width: "100%", padding: "10px", borderRadius: 8, background: "#0f172a", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>
-                  Đóng thông báo
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => setIssueResult(null)}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, background: "#147D74", color: "#fff", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.2s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#0f635c"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#147D74"; }}
+            >
+              Đóng thông báo
+            </button>
           </div>
         </div>
       )}

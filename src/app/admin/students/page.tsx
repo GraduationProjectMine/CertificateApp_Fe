@@ -26,7 +26,6 @@ export default function AdminStudentsPage() {
   const [createForm, setCreateForm] = useState({ name: "", email: "", password: "" });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [resendingId, setResendingId] = useState("");
 
   useEffect(() => {
     studentApi.list()
@@ -83,20 +82,6 @@ export default function AdminStudentsPage() {
       setError(err instanceof Error ? err.message : "Không thể khóa tài khoản");
     } finally {
       setLockingId("");
-    }
-  };
-
-  const handleResendActivation = async (studentId: string) => {
-    setResendingId(studentId);
-    setError("");
-    try {
-      const res = await studentApi.resendActivation(studentId);
-      toast.success(res.message || "Email kích hoạt đã được gửi lại.");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Gửi email thất bại";
-      toast.error(msg);
-    } finally {
-      setResendingId("");
     }
   };
 
@@ -279,14 +264,6 @@ export default function AdminStudentsPage() {
                         <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
                           Xem / Sửa
                         </ActionLink>
-                        {student.isActive && !student.isActivated && (
-                          <ActionButton
-                            onClick={() => void handleResendActivation(student.student_id)}
-                            disabled={resendingId === student.student_id}
-                          >
-                            {resendingId === student.student_id ? "Đang gửi..." : "Gửi email kích hoạt"}
-                          </ActionButton>
-                        )}
                         {student.isActive ? (
                           <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>
                             {lockingId === student.student_id ? "Đang khóa..." : "Khóa"}

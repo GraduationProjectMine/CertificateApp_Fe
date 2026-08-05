@@ -61,13 +61,12 @@ export default function AdminAuditLogsPage() {
                 <th className={styles._8}>Hành động</th>
                 <th className={styles._8}>Đối tượng</th>
                 <th className={styles._8}>Kết quả</th>
-                <th className={styles._8}>Chi tiết</th>
               </tr>
             </thead>
             <tbody className={styles._9}>
-              {data.items.map((log) => <tr className={styles._10} key={log.id}><td className={styles._11}>{new Date(log.createdAt).toLocaleString("vi-VN")}</td><td className={styles._12}>{log.actorName || "Hệ thống"}<span className="mt-1 block text-[10px] font-normal text-gray-400 dark:text-gray-500">{log.ipAddress || "—"}</span></td><td className={styles._13}>{actionLabels[log.action] || log.action}</td><td className={styles._11}>{log.targetType}<span className="mt-1 block max-w-40 truncate font-mono text-[10px] text-gray-400 dark:text-gray-500" title={log.targetId || ""}>{log.targetId || "—"}</span></td><td className={`p-4 font-bold ${log.success ? "text-green-600" : "text-red-500"}`}>{log.success ? "THÀNH CÔNG" : "THẤT BẠI"}</td><td className={styles._14}><span className="block max-w-xs truncate" title={log.details ? JSON.stringify(log.details) : ""}>{log.details ? JSON.stringify(log.details) : "—"}</span></td></tr>)}
-              {!loading && data.items.length === 0 && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={6}>Không có nhật ký phù hợp.</td></tr>}
-              {loading && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={6}>Đang tải...</td></tr>}
+              {data.items.map((log) => <tr className={styles._10} key={log.id}><td className={styles._11}>{new Date(log.createdAt).toLocaleString("vi-VN")}</td><td className={styles._12}>{log.actorName || "Hệ thống"}<span className="mt-1 block text-[10px] font-normal text-gray-400 dark:text-gray-500">{log.ipAddress || "—"}</span></td><td className={styles._13}>{actionLabels[log.action] || log.action}</td><td className={styles._11}>{log.targetType}<span className="mt-1 block max-w-40 truncate font-mono text-[10px] text-gray-400 dark:text-gray-500" title={log.targetId || ""}>{log.targetId || "—"}</span></td><td className={`p-4 font-bold ${log.success ? "text-green-600" : "text-red-500"}`}>{log.success ? "THÀNH CÔNG" : "THẤT BẠI"}</td></tr>)}
+              {!loading && data.items.length === 0 && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={5}>Không có nhật ký phù hợp.</td></tr>}
+              {loading && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={5}>Đang tải...</td></tr>}
             </tbody>
           </table>
         </div>

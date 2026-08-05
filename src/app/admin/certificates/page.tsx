@@ -48,7 +48,7 @@ export default function AdminCertificatesPage() {
       const data = await certificateApi.list(filterStatus ? { status: filterStatus } : undefined);
       setCertificates(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load certificates");
+      setError("Đã có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export default function AdminCertificatesPage() {
       setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
       setDeleteTargetId("");
     } catch (err: any) {
-      setDeleteError(err.message || "Delete failed");
+      setDeleteError("Đã có lỗi xảy ra");
     }
   };
 
@@ -80,7 +80,7 @@ export default function AdminCertificatesPage() {
       await fetchData();
       setSelectedIds(new Set());
     } catch (err: any) {
-      setError(err.message || "Batch approve failed");
+      setError("Đã có lỗi xảy ra");
     } finally {
       setBatchApproving(false);
     }
@@ -124,6 +124,18 @@ export default function AdminCertificatesPage() {
 
   return (
     <div className={styles._1}>
+      {batchApproving && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">Đang phát hành văn bằng</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đang ghi dữ liệu &amp; tạo văn bằng. Vui lòng không đóng trang...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmModal
         open={!!deleteTargetId}
         onClose={() => { setDeleteTargetId(""); setDeleteError(""); }}
@@ -192,7 +204,7 @@ export default function AdminCertificatesPage() {
             <div className="max-h-32 overflow-y-auto space-y-1">
               {batchApproveResult.results.filter((r) => r.status === "FAILED").map((r) => (
                 <div key={r.certificateId} className="text-xs text-red-600">
-                  <span className="font-mono">{r.certificateId.slice(0, 8)}...</span>: {r.error}
+                  <span className="font-mono">{r.certificateId.slice(0, 8)}...</span>: Đã có lỗi xảy ra
                 </div>
               ))}
             </div>

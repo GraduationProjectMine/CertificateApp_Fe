@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     const result = await login(email, password);
-    if (!result.success) setError(result.error || "Sai email hoặc mật khẩu");
+    if (!result.success) setError("Đã có lỗi xảy ra");
     setIsSubmitting(false);
   };
 
@@ -72,11 +72,11 @@ export default function LoginPage() {
       // 3. Login with MetaMask
       const result = await loginWithMetaMask(walletAddress, signature, tempToken);
       if (!result.success) {
-        setError(result.error || "Đăng nhập MetaMask thất bại");
+        setError("Đã có lỗi xảy ra");
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Lỗi kết nối hoặc chữ ký bị từ chối.");
+      setError("Đã có lỗi xảy ra");
     } finally {
       setIsWalletSubmitting(false);
     }

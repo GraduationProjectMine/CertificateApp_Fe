@@ -108,5 +108,10 @@ export default function PublicCredentialPage() {
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
-  return <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{value}</dd></div>;
+  return (
+    <div className="overflow-hidden min-w-0">
+      <dt className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 truncate">{label}</dt>
+      <dd className="mt-1 font-semibold text-slate-800 dark:text-slate-100 break-words">{value}</dd>
+    </div>
+  );
 }

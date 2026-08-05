@@ -40,7 +40,7 @@
   @apply space-y-2;
 }
 ._14 {
-  @apply flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors;
+  @apply flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors gap-2 sm:gap-4;
 }
 ._15 {
   @apply flex items-center gap-3;

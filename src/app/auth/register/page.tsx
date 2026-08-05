@@ -86,11 +86,11 @@ export default function RegisterPage() {
         setSuccess("Đăng ký và đăng nhập thành công!");
         router.push("/admin/dashboard");
       } else {
-        setError(result.error || "Đăng ký MetaMask thất bại");
+        setError("Đã có lỗi xảy ra");
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Lỗi kết nối hoặc chữ ký bị từ chối.");
+      setError("Đã có lỗi xảy ra");
     } finally {
       setIsWalletSubmitting(false);
     }
