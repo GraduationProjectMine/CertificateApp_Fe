@@ -60,14 +60,14 @@ export default function AdminOnlineCertificatesPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 900, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>
-              Văn bằng số (Online Certificates)
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white m-0 tracking-tight">
+              Văn bằng số
             </h1>
-            <span style={{ background: "#e8f5e9", color: "#09561eff", border: "1px solid #bfdbfe", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: "rgba(20, 125, 116, 0.1)", color: "#147D74", border: "1px solid rgba(20, 125, 116, 0.3)", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
               {certificates.length} văn bằng
             </span>
           </div>
-          <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+          <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
             Danh sách văn bằng phát hành trực tiếp từ mẫu và nạp dữ liệu online, được lưu tại bảng <code>online_certificates</code>, Pinata IPFS &amp; Blockchain.
           </p>
         </div>
@@ -79,14 +79,14 @@ export default function AdminOnlineCertificatesPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              background: "#10766Eff",
+              background: "#147D74",
               color: "#fff",
               padding: "10px 18px",
               borderRadius: 12,
               fontWeight: 700,
               fontSize: 13,
               textDecoration: "none",
-              boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
+              boxShadow: "0 4px 12px rgba(20,125,116,0.25)",
               transition: "all 0.2s"
             }}
           >
@@ -97,79 +97,62 @@ export default function AdminOnlineCertificatesPage() {
 
       {/* Stats Counter Bar */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Tổng văn bằng số</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a" }}>{certificates.length}</div>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tổng văn bằng số</div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{certificates.length}</div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã ghi Blockchain</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#16a34a" }}>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#147D74", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã ghi Blockchain</div>
+          <div style={{ fontSize: 26, fontWeight: 900, color: "#147D74" }}>
             {certificates.filter(c => !!c.tx_hash).length}
           </div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px 20px", borderRadius: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#0284c7", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Đã lưu IPFS JSON</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#0284c7" }}>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+          <div className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-1">Đã lưu IPFS JSON</div>
+          <div className="text-2xl font-black text-sky-600 dark:text-sky-400">
             {certificates.filter(c => !!c.ipfs_cid).length}
           </div>
         </div>
       </div>
 
       {/* Control / Search Panel */}
-      <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: 16, borderRadius: 16, marginBottom: 20, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-5 flex gap-3 items-center flex-wrap shadow-2xs">
         <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên văn bằng, sinh viên, số hiệu, số vào sổ, Tx Hash..."
-            style={{
-              width: "100%",
-              padding: "10px 14px 10px 38px",
-              borderRadius: 10,
-              border: "1px solid #cbd5e1",
-              fontSize: 13,
-              outline: "none",
-              background: "#f8fafc"
-            }}
+            className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none"
           />
           <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: 14 }}>🔍</span>
         </div>
 
         <button
           onClick={fetchData}
-          style={{
-            padding: "10px 16px",
-            background: "#f1f5f9",
-            color: "#334155",
-            border: "1px solid #cbd5e1",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer"
-          }}
+          className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-colors"
         >
           🔄 Tải lại
         </button>
       </div>
 
       {/* Main Data Table */}
-      <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-2xs">
         {loading ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#64748b", fontSize: 14 }}>
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs">
             ⏳ Đang tải danh sách văn bằng số...
           </div>
         ) : error ? (
-          <div style={{ padding: 32, textAlign: "center", color: "#dc2626", fontSize: 14 }}>
+          <div className="p-8 text-center text-red-500 text-xs">
             ⚠️ {error}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#64748b" }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#334155" }}>Không tìm thấy văn bằng số nào</div>
-            <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400">
+            <div className="text-3xl mb-2">📭</div>
+            <div className="font-bold text-sm text-slate-800 dark:text-slate-200">Không tìm thấy văn bằng số nào</div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
               {searchQuery ? "Thử tìm kiếm với từ khóa khác" : "Hãy tạo văn bằng số đầu tiên trong mục Tạo & Xuất bằng"}
             </p>
           </div>
@@ -178,32 +161,32 @@ export default function AdminOnlineCertificatesPage() {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
                 <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: 700 }}>
+                  <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                     <th style={{ padding: "14px 16px" }}>Mã &amp; Tên văn bằng</th>
                     <th style={{ padding: "14px 16px" }}>Sinh viên / Người nhận</th>
                     <th style={{ padding: "14px 16px" }}>Số hiệu / Số sổ</th>
                     <th style={{ padding: "14px 16px" }}>IPFS (JSON)</th>
                     <th style={{ padding: "14px 16px" }}>Blockchain Hash</th>
                     <th style={{ padding: "14px 16px" }}>Ngày cấp</th>
-                    <th style={{ padding: "14px 16px", textAlign: "right" }}>Hành động</th>
+                    <th style={{ padding: "14px 16px", textAlign: "center" }}>Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((cert) => (
-                    <tr key={cert.certificate_id} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}>
+                    <tr key={cert.certificate_id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                       <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#0f172a" }}>{cert.certificate_title}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace", marginTop: 2 }}>ID: {cert.certificate_id}</div>
+                        <div className="font-bold text-slate-900 dark:text-white">{cert.certificate_title}</div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">ID: {cert.certificate_id}</div>
                       </td>
 
                       <td style={{ padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, color: "#334155" }}>{cert.student_fullName}</div>
-                        {cert.student_id && <div style={{ fontSize: 11, color: "#64748b" }}>SV: {cert.student_id}</div>}
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{cert.student_fullName}</div>
+                        {cert.student_id && <div className="text-[11px] text-slate-500 dark:text-slate-400">SV: {cert.student_id}</div>}
                       </td>
 
                       <td style={{ padding: "14px 16px" }}>
-                        <div><strong style={{ color: "#475569" }}>SH:</strong> {cert.serialNumber || "—"}</div>
-                        <div><strong style={{ color: "#475569" }}>Sổ:</strong> {cert.registryNumber || "—"}</div>
+                        <div className="text-slate-700 dark:text-slate-300"><strong className="text-slate-500 dark:text-slate-400">SH:</strong> {cert.serialNumber || "—"}</div>
+                        <div className="text-slate-700 dark:text-slate-300"><strong className="text-slate-500 dark:text-slate-400">Sổ:</strong> {cert.registryNumber || "—"}</div>
                       </td>
 
                       <td style={{ padding: "14px 16px" }}>
@@ -212,24 +195,12 @@ export default function AdminOnlineCertificatesPage() {
                             href={`https://gateway.pinata.cloud/ipfs/${cert.ipfs_cid}`}
                             target="_blank"
                             rel="noreferrer"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                              background: "#f0f9ff",
-                              color: "#0284c7",
-                              border: "1px solid #bae6fd",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              textDecoration: "none"
-                            }}
+                            className="inline-flex items-center gap-1 bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800 px-2 py-1 rounded-md text-[11px] font-bold no-underline"
                           >
                             🌐 IPFS Gateway
                           </a>
                         ) : (
-                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa lưu</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px]">Chưa lưu</span>
                         )}
                       </td>
 
@@ -237,42 +208,23 @@ export default function AdminOnlineCertificatesPage() {
                         {cert.tx_hash ? (
                           <span
                             title={cert.tx_hash}
-                            style={{
-                              display: "inline-block",
-                              background: "#f0fdf4",
-                              color: "#16a34a",
-                              border: "1px solid #bbf7d0",
-                              padding: "3px 8px",
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              fontFamily: "monospace"
-                            }}
+                            className="inline-block bg-emerald-50 dark:bg-emerald-950/30 text-[#147D74] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-1 rounded-md text-[11px] font-bold font-mono"
                           >
                             ✓ {cert.tx_hash.slice(0, 10)}...{cert.tx_hash.slice(-6)}
                           </span>
                         ) : (
-                          <span style={{ color: "#cbd5e1", fontSize: 11 }}>Chưa ghi</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px]">Chưa ghi</span>
                         )}
                       </td>
 
-                      <td style={{ padding: "14px 16px", color: "#64748b", fontSize: 12 }}>
+                      <td className="p-4 text-xs text-slate-500 dark:text-slate-400">
                         {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
                       </td>
 
-                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                      <td style={{ padding: "14px 16px", textAlign: "center" }}>
                         <button
                           onClick={() => setSelectedCert(cert)}
-                          style={{
-                            background: "#f1f5f9",
-                            color: "#2563eb",
-                            border: "1px solid #cbd5e1",
-                            padding: "6px 12px",
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer"
-                          }}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#147D74] dark:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold cursor-pointer transition-colors"
                         >
                           Chi tiết
                         </button>
@@ -296,54 +248,54 @@ export default function AdminOnlineCertificatesPage() {
       {/* Detail Modal */}
       {selectedCert && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 20, maxWidth: 600, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, borderBottom: "1px solid #f1f5f9", paddingBottom: 12 }}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
+            <div className="flex justify-between items-start mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                <span style={{ background: "#eff6ff", color: "#2563eb", fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>Văn bằng số</span>
-                <h2 style={{ fontSize: 18, fontWeight: 900, color: "#0f172a", margin: "4px 0 0 0" }}>{selectedCert.certificate_title}</h2>
+                <span style={{ background: "rgba(20, 125, 116, 0.1)", color: "#147D74", fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>Văn bằng số</span>
+                <h2 className="text-lg font-black text-slate-900 dark:text-white mt-1 m-0">{selectedCert.certificate_title}</h2>
               </div>
-              <button onClick={() => setSelectedCert(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>✕</button>
+              <button onClick={() => setSelectedCert(null)} className="bg-none border-none text-xl cursor-pointer text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">✕</button>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13 }}>
-              <div style={{ background: "#f8fafc", padding: 14, borderRadius: 12, border: "1px solid #e2e8f0" }}>
-                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700, marginBottom: 2 }}>MÃ VĂN BẰNG (ID)</div>
-                <code style={{ fontSize: 12, color: "#0f172a", wordBreak: "break-all" }}>{selectedCert.certificate_id}</code>
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold mb-0.5">MÃ VĂN BẰNG (ID)</div>
+                <code className="text-xs text-slate-900 dark:text-slate-100 break-all">{selectedCert.certificate_id}</code>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SINH VIÊN</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.student_fullName}</div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">SINH VIÊN</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white mt-0.5">{selectedCert.student_fullName}</div>
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>MÃ SINH VIÊN</div>
-                  <div style={{ fontWeight: 700, color: "#334155", marginTop: 2 }}>{selectedCert.student_id || "Không gắn thẻ"}</div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">MÃ SINH VIÊN</div>
+                  <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedCert.student_id || "Không gắn thẻ"}</div>
                 </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SỐ HIỆU (SERIAL)</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.serialNumber || "—"}</div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">SỐ HIỆU (SERIAL)</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white mt-0.5">{selectedCert.serialNumber || "—"}</div>
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: 12, borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>SỐ VÀO SỔ</div>
-                  <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{selectedCert.registryNumber || "—"}</div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">SỐ VÀO SỔ</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white mt-0.5">{selectedCert.registryNumber || "—"}</div>
                 </div>
               </div>
 
               {selectedCert.ipfs_cid && (
-                <div style={{ background: "#f0f9ff", padding: 12, borderRadius: 10, border: "1px solid #bae6fd" }}>
-                  <div style={{ color: "#0369a1", fontSize: 11, fontWeight: 700 }}>IPFS CID &amp; GATEWAY</div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: "#0c4a6e", wordBreak: "break-all", margin: "4px 0 8px 0" }}>{selectedCert.ipfs_cid}</div>
+                <div className="bg-sky-50 dark:bg-sky-950/30 p-3 rounded-xl border border-sky-200 dark:border-sky-800">
+                  <div className="text-sky-700 dark:text-sky-300 text-[11px] font-bold">IPFS CID &amp; GATEWAY</div>
+                  <div className="text-[11px] font-mono text-sky-900 dark:text-sky-200 break-all my-1.5">{selectedCert.ipfs_cid}</div>
                   <a
                     href={`https://gateway.pinata.cloud/ipfs/${selectedCert.ipfs_cid}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontSize: 12, fontWeight: 800, color: "#0284c7", textDecoration: "none" }}
+                    className="text-xs font-extrabold text-sky-600 dark:text-sky-400 no-underline"
                   >
                     🔗 Mở JSON gốc trên Pinata IPFS Gateway →
                   </a>
@@ -351,9 +303,9 @@ export default function AdminOnlineCertificatesPage() {
               )}
 
               {selectedCert.tx_hash && (
-                <div style={{ background: "#f0fdf4", padding: 12, borderRadius: 10, border: "1px solid #bbf7d0" }}>
-                  <div style={{ color: "#15803d", fontSize: 11, fontWeight: 700 }}>BLOCKCHAIN TRANSACTION HASH</div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: "#14532d", wordBreak: "break-all", marginTop: 4 }}>{selectedCert.tx_hash}</div>
+                <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                  <div className="text-[#147D74] dark:text-emerald-300 text-[11px] font-bold">BLOCKCHAIN TRANSACTION HASH</div>
+                  <div className="text-[11px] font-mono text-emerald-900 dark:text-emerald-200 break-all mt-1">{selectedCert.tx_hash}</div>
                 </div>
               )}
 
@@ -364,7 +316,7 @@ export default function AdminOnlineCertificatesPage() {
                   style={{
                     flex: 1,
                     textAlign: "center",
-                    background: "#2563eb",
+                    background: "#147D74",
                     color: "#fff",
                     padding: "10px",
                     borderRadius: 10,
@@ -377,16 +329,7 @@ export default function AdminOnlineCertificatesPage() {
                 </Link>
                 <button
                   onClick={() => setSelectedCert(null)}
-                  style={{
-                    background: "#f1f5f9",
-                    color: "#334155",
-                    border: "1px solid #cbd5e1",
-                    padding: "10px 18px",
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: "pointer"
-                  }}
+                  className="px-4.5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-xs cursor-pointer transition-colors"
                 >
                   Đóng
                 </button>

@@ -46,7 +46,7 @@ export default function CertificateDetailPage() {
       await certificateApi.updateStatus(id, "PENDING");
       await fetchCert();
     } catch (err: any) {
-      alert(err.message || "Failed to submit");
+      alert("Đã có lỗi xảy ra");
     } finally {
       setActionLoading(false);
     }
@@ -59,7 +59,7 @@ export default function CertificateDetailPage() {
       await certificateApi.approve(id);
       await fetchCert();
     } catch (err: any) {
-      alert(err.message || "Failed to approve");
+      alert("Đã có lỗi xảy ra");
     } finally {
       setActionLoading(false);
     }
@@ -115,6 +115,18 @@ export default function CertificateDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
+      {actionLoading && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">Đang phát hành văn bằng</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đang ghi dữ liệu &amp; tạo văn bằng. Vui lòng không đóng trang...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <Link href="/admin/certificates" className="text-xs text-primary hover:underline">&larr; Quay lại danh sách</Link>

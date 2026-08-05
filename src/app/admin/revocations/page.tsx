@@ -90,7 +90,7 @@ export default function AdminRevocationsPage() {
         <div className={styles._9}><input aria-label="Tìm văn bằng" className={styles._10} placeholder="Số hiệu, số vào sổ, tên sinh viên..." value={query} onChange={(event) => setQuery(event.target.value)} /><button className={styles._11} type="button">Tìm kiếm</button></div>
         {query && <div className="divide-y rounded-2xl border border-gray-100 dark:border-gray-800">{matches.map((certificate) => <button className="flex w-full items-center justify-between gap-4 p-4 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-800" key={certificate.certificate_id} onClick={() => setSelected(certificate)}><span><strong className="block text-gray-900 dark:text-white">{certificate.student_fullName}</strong><span className="text-gray-500 dark:text-gray-400">{certificate.certificate_title}</span></span><span className="font-mono font-bold text-teal-600">{certificate.serialNumber || certificate.registryNumber}</span></button>)}{matches.length === 0 && <p className="p-4 text-xs text-gray-400 dark:text-gray-500">Không tìm thấy văn bằng ISSUED phù hợp.</p>}</div>}
 
-        {selected && <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5 dark:border-teal-900 dark:bg-teal-950/10"><div className="grid gap-3 text-xs sm:grid-cols-2"><p><span className="block text-gray-400 dark:text-gray-500">Sinh viên</span><strong>{selected.student_fullName}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">Văn bằng</span><strong>{selected.certificate_title}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">Số hiệu / Số vào sổ</span><strong>{selected.serialNumber} / {selected.registryNumber}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">Transaction cấp</span><strong className="break-all font-mono">{selected.tx_hash}</strong></p></div><label className="mt-4 block text-xs font-bold text-gray-700 dark:text-gray-300">2. Lý do thu hồi<textarea className="mt-2 min-h-24 w-full rounded-xl border border-gray-200 bg-white p-3 font-normal dark:border-gray-700 dark:bg-gray-900" maxLength={500} placeholder="Mô tả quyết định thu hồi (bắt buộc)..." value={reason} onChange={(event) => setReason(event.target.value)} /></label><div className="mt-4 flex justify-end gap-2"><button className="rounded-xl border px-4 py-2 text-xs font-bold" onClick={() => setSelected(null)}>Hủy</button><button className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={submitting || reason.trim().length < 5} onClick={requestRevoke}>{submitting ? "Đang xác nhận Web3..." : "Xác nhận thu hồi"}</button></div></div>}
+        {selected && <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5 dark:border-teal-900 dark:bg-teal-950/10"><div className="grid gap-3 text-xs sm:grid-cols-2"><p><span className="block text-gray-400 dark:text-gray-500">Sinh viên</span><strong>{selected.student_fullName}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">Văn bằng</span><strong>{selected.certificate_title}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">Số hiệu / Số vào sổ</span><strong>{selected.serialNumber} / {selected.registryNumber}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">Transaction cấp</span><strong className="break-all font-mono">{selected.tx_hash}</strong></p></div><label className="mt-4 block text-xs font-bold text-gray-700 dark:text-gray-300">2. Lý do thu hồi<textarea className="mt-2 min-h-24 w-full rounded-xl border border-gray-200 bg-white p-3 font-normal dark:border-gray-700 dark:bg-gray-900" maxLength={500} placeholder="Mô tả quyết định thu hồi (bắt buộc)..." value={reason} onChange={(event) => setReason(event.target.value)} /></label><div className="mt-4 flex justify-end gap-2"><button className="rounded-xl border px-4 py-2 text-xs font-bold" onClick={() => setSelected(null)}>Hủy</button><button className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={submitting || reason.trim().length < 5} onClick={requestRevoke}>{submitting ? "Đang thu hồi..." : "Xác nhận thu hồi"}</button></div></div>}
       </section>
 
       <section className={styles._13}>
@@ -103,21 +103,22 @@ export default function AdminRevocationsPage() {
                 <th className={styles._18}>Sinh viên</th>
                 <th className={styles._18}>Lý do</th>
                 <th className={styles._18}>Thời gian</th>
-                <th className={styles._19}>Tx thu hồi</th>
               </tr>
             </thead>
             <tbody className={styles._20}>
               {revoked.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((certificate) => (
                 <tr className={styles._21} key={certificate.certificate_id}>
-                  <td className={styles._22}>{certificate.serialNumber || certificate.registryNumber}<span className={styles._27}>REVOKED</span></td>
+                  <td className={styles._22}>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">{certificate.serialNumber || certificate.registryNumber}</span>
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">REVOKED</span>
+                  </td>
                   <td className={styles._23}>{certificate.student_fullName}</td>
-                  <td className={styles._24} title={certificate.revokeReason || ""}>{certificate.revokeReason}</td>
+                  <td className={styles._24} title={certificate.revokeReason || ""}>{certificate.revokeReason || "—"}</td>
                   <td className={styles._25}>{certificate.revokedAt ? new Date(certificate.revokedAt).toLocaleString("vi-VN") : "—"}</td>
-                  <td className={styles._26} title={certificate.revoke_tx_hash || ""}>{certificate.revoke_tx_hash ? `${certificate.revoke_tx_hash.slice(0, 10)}…` : "—"}</td>
                 </tr>
               ))}
-              {!loading && revoked.length === 0 && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={5}>Chưa có văn bằng bị thu hồi.</td></tr>}
-              {loading && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={5}>Đang tải...</td></tr>}
+              {!loading && revoked.length === 0 && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={4}>Chưa có văn bằng bị thu hồi.</td></tr>}
+              {loading && <tr><td className="p-8 text-center text-xs text-gray-400 dark:text-gray-500" colSpan={4}>Đang tải...</td></tr>}
             </tbody>
           </table>
           <Pagination

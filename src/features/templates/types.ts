@@ -15,6 +15,7 @@ export interface TemplateField {
   binding?: string;
   text?: string;
   label?: string;
+  src?: string;
 }
 
 export interface PageSettings {

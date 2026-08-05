@@ -216,12 +216,14 @@ export default function AdminDashboardPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
-              <Link href="/admin/revocations" className={`group ${styles._38}`}>
-                <span>Yêu cầu thu hồi bằng</span>
-                <svg className={styles._39} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+              {user?.role !== "staff" && (
+                <Link href="/admin/revocations" className={`group ${styles._38}`}>
+                  <span>Yêu cầu thu hồi bằng</span>
+                  <svg className={styles._39} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              )}
             </div>
           </div>
         </div>

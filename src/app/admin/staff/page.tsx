@@ -208,12 +208,14 @@ export default function StaffListPage() {
                       <ActionLink onClick={() => router.push(`/admin/staff/${s.staff_id}`)}>
                         Xem / Sửa
                       </ActionLink>
-                      {s.isActive ? (
-                        <ActionButton onClick={() => setLockTarget(s)} disabled={lockingId === s.staff_id}>
-                          {lockingId === s.staff_id ? "Đang khóa..." : "Khóa"}
-                        </ActionButton>
-                      ) : (
-                        <ActionText>Đã khóa</ActionText>
+                      {s.role?.toUpperCase() !== "ISSUER" && (
+                        s.isActive ? (
+                          <ActionButton onClick={() => setLockTarget(s)} disabled={lockingId === s.staff_id}>
+                            {lockingId === s.staff_id ? "Đang khóa..." : "Khóa"}
+                          </ActionButton>
+                        ) : (
+                          <ActionText>Đã khóa</ActionText>
+                        )
                       )}
                     </td>
                   )}
