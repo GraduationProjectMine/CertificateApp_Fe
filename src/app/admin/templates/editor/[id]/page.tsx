@@ -1,8 +1,11 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { templateApi } from "@/features/templates/services/api";
+import { issuerApi } from "@/features/issuer/services/issuer.api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
+import { QRCodeSVG } from "qrcode.react";
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -63,7 +66,46 @@ export default function TemplateEditorPage() {
   const [resizing, setResizing] = useState<{ fieldId: string; dir: string; startX: number; startY: number; origW: number; origH: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Dynamic Manual Input Data & Import File State
+  const [mockData, setMockData] = useState<Record<string, string>>({
+    student_fullName: "Họ và tên",
+    certificate_title: "Tên văn bằng",
+    dob: "Ngày sinh",
+    placeOfBirth: "Nơi sinh",
+    gender: "Giới tính",
+    ethnicity: "Dân tộc",
+    schoolName: "Tên trường",
+    examCohort: "Khóa học",
+    examBoard: "Hội đồng thi",
+    issueLocation: "Nơi cấp",
+    issueDate: "Ngày cấp",
+    serialNumber: "Số hiệu",
+    registryNumber: "Số vào sổ",
+    organization_name: "Tên tổ chức",
+    verification_url: "https://verify.certchain.edu/cert/sample-id",
+  });
+
+  const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
+  const [importedData, setImportedData] = useState<{
+    fileName: string;
+    totalRows: number;
+    rows: Array<{ rowNumber: number; record: Record<string, string>; isValid: boolean }>;
+  } | null>(null);
+  const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
+
   useEffect(() => {
+    // Fetch organization profile for logo
+    issuerApi.getProfile().then((profile) => {
+      if (profile && profile.logo_url) {
+        setOrganizationLogo(profile.logo_url);
+        setMockData((prev) => ({
+          ...prev,
+          organization_name: profile.organization_name || prev.organization_name,
+          organization_logo: profile.logo_url || "",
+        }));
+      }
+    }).catch(() => null);
+
     if (id === "new") {
       setDesign(DEFAULT_DESIGN);
       setTemplateName("Mẫu văn bằng mới");
@@ -95,25 +137,29 @@ export default function TemplateEditorPage() {
     }));
   }, []);
 
-  const addField = useCallback((type: TemplateField["type"]) => {
+  const addField = useCallback((type: TemplateField["type"], binding?: string) => {
     const isLine = type === "line";
     const isRect = type === "rect";
+    const isImage = type === "image" || binding === "organization_logo";
     const newField: TemplateField = {
       id: generateId(),
       type,
       x: 100,
       y: 100,
-      w: type === "qr" ? 70 : isLine ? 150 : isRect ? 150 : 200,
-      h: type === "qr" ? 70 : isLine ? 4 : isRect ? 100 : 40,
+      w: type === "qr" ? 70 : isImage ? 100 : isLine ? 150 : isRect ? 150 : 200,
+      h: type === "qr" ? 70 : isImage ? 100 : isLine ? 4 : isRect ? 100 : 40,
       font: "sans-serif",
       size: 14,
       color: type === "line" || type === "rect" ? "#c9a84c" : "#333333",
       align: "left",
       text: type === "text" ? "Văn bản" : undefined,
+      dynamic: !!binding,
+      binding: binding || (type === "image" ? "organization_logo" : undefined),
+      src: binding === "organization_logo" || type === "image" ? organizationLogo || undefined : undefined,
     };
     setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
     setSelectedId(newField.id);
-  }, []);
+  }, [organizationLogo]);
 
   const deleteField = useCallback((fieldId: string) => {
     setDesign((prev) => ({ ...prev, fields: prev.fields.filter((f) => f.id !== fieldId) }));
@@ -194,30 +240,35 @@ export default function TemplateEditorPage() {
         router.push(`/admin/templates/editor/${created.id}`);
       } else {
         await templateApi.update(id, { name: templateName, design_data: design as any });
-        alert("Đã lưu!");
+        alert("Đã lưu mẫu thành công!");
       }
     } catch (err: any) {
-      alert(err.message || "Save failed");
+      alert(err.message || "Lưu mẫu thất bại");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSelectRowIndex = (index: number) => {
+    if (!importedData || index < 0 || index >= importedData.rows.length) return;
+    setActiveRowIndex(index);
+    setMockData((prev) => ({ ...prev, ...importedData.rows[index].record }));
+  };
+
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 text-xs">Đang tải...</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>;
   }
 
   const renderFieldContent = (field: TemplateField) => {
-    const scale = previewMode ? 1 : zoom;
     const isLine = field.type === "line";
     const isRect = field.type === "rect";
     const styles: React.CSSProperties = {
       position: "absolute",
-      left: field.x * (1 / (previewMode ? 1 : 1)),
-      top: field.y * (1 / (previewMode ? 1 : 1)),
+      left: field.x,
+      top: field.y,
       width: field.w,
       height: field.h,
-      fontSize: (field.size || 14) * (1 / (previewMode ? 1 : 1)),
+      fontSize: field.size || 14,
       fontFamily: field.font || "sans-serif",
       color: field.color || "#333",
       textAlign: field.align || "left",
@@ -232,12 +283,39 @@ export default function TemplateEditorPage() {
       justifyContent: field.align === "center" ? "center" : field.align === "right" ? "flex-end" : "flex-start",
       overflow: "hidden",
       boxSizing: "border-box",
-      background: field.type === "qr" ? "#f8f8f8" : "transparent",
+      background: field.type === "qr" ? "#ffffff" : "transparent",
     };
 
     const content = (() => {
+      if (field.type === "image" || field.binding === "organization_logo") {
+        const rawVal = field.binding ? mockData[field.binding] : field.src;
+        const imgSrc = rawVal || field.src || mockData.organization_logo || organizationLogo;
+        if (imgSrc && (imgSrc.startsWith("http") || imgSrc.startsWith("data:") || imgSrc.startsWith("/"))) {
+          return (
+            <img
+              src={imgSrc}
+              alt={field.label || "Logo tổ chức"}
+              style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
+            />
+          );
+        }
+        return (
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#64748b", fontSize: 10, padding: 4, textAlign: "center" }}>
+            <span style={{ fontSize: 16 }}>🏢 Logo</span>
+            <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}>{organizationLogo ? "Logo tổ chức" : "Chưa có logo trong Cài đặt"}</span>
+          </div>
+        );
+      }
       if (field.type === "qr") {
-        return <span style={{ fontSize: 9, color: "#999" as any, textAlign: "center" as any, width: "100%" }}>QR</span>;
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+        const rawVal = field.binding && mockData[field.binding] ? mockData[field.binding] : mockData.verification_url;
+        const qrVal = rawVal || `${baseUrl}/public/verify`;
+        const qrSize = Math.max(20, Math.min(field.w, field.h) - 4);
+        return (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
+            <QRCodeSVG value={qrVal} size={qrSize} level="M" />
+          </div>
+        );
       }
       if (field.type === "line") {
         return <div style={{ width: "100%", height: "100%", background: field.color || "#c9a84c" }} />;
@@ -246,8 +324,12 @@ export default function TemplateEditorPage() {
         return <div style={{ width: "100%", height: "100%", border: `2px solid ${field.color || "#c9a84c"}`, boxSizing: "border-box" }} />;
       }
       if (field.dynamic && field.binding) {
+        const val = mockData[field.binding];
+        if (val) {
+          return <span>{(field.label ? `${field.label} ` : "") + val}</span>;
+        }
         const label = FIELD_BINDINGS.find((b) => b.value === field.binding)?.label || field.binding;
-        return <span style={{ opacity: 0.7 }}>[{label}]</span>;
+        return <span style={{ opacity: previewMode ? 0.4 : 0.7 }}>[{label}]</span>;
       }
       return <span>{field.text || "Văn bản"}</span>;
     })();
@@ -284,6 +366,7 @@ export default function TemplateEditorPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
+      {/* Top Header Toolbar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#fff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button onClick={() => router.push("/admin/templates")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#64748b", padding: 4 }}>←</button>
@@ -291,36 +374,52 @@ export default function TemplateEditorPage() {
             type="text"
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 300 }}
+            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 280 }}
             placeholder="Tên mẫu văn bằng"
           />
         </div>
+
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Zoom controls */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f1f5f9", borderRadius: 8, padding: "2px" }}>
             <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>−</button>
             <span style={{ fontSize: 11, color: "#64748b", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>+</button>
           </div>
+
+          {/* Mode Switcher */}
           <button
             onClick={() => setPreviewMode(!previewMode)}
             style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: previewMode ? "#3b82f6" : "#fff", color: previewMode ? "#fff" : "#64748b", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
           >
-            {previewMode ? "Chỉnh sửa" : "Xem trước"}
+            {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
           </button>
+
+          {/* Save button */}
           <button
             onClick={handleSave}
             disabled={saving || !templateName.trim()}
             style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving || !templateName.trim() ? 0.6 : 1 }}
           >
-            {saving ? "Đang lưu..." : "Lưu"}
+            {saving ? "Đang lưu..." : "Lưu mẫu"}
           </button>
         </div>
       </div>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {!previewMode && (
+        {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
+        {!previewMode ? (
           <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
             <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
+            <button
+              onClick={() => addField("image", "organization_logo")}
+              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "#eff6ff", cursor: "pointer", fontSize: 13, color: "#1d4ed8", fontWeight: 700, transition: "all 0.15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; }}
+            >
+              <span style={{ fontSize: 16 }}>🏢</span>
+              <span>Logo tổ chức</span>
+            </button>
             {FIELD_TEMPLATES.map((ft) => (
               <button
                 key={ft.type}
@@ -345,8 +444,84 @@ export default function TemplateEditorPage() {
               </div>
             ))}
           </div>
+        ) : (
+          /* Manual Input & Import Record Navigation Side Panel */
+          <div style={{ width: 320, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
+            <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
+              <p style={{ fontSize: 11, color: "#64748b" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
+            </div>
+
+            {/* Imported File Record Selector */}
+            {importedData && (
+              <div style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: 12, borderRadius: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
+                  📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={() => handleSelectRowIndex(activeRowIndex - 1)}
+                    disabled={activeRowIndex <= 0}
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                  >
+                    ◄
+                  </button>
+                  <select
+                    value={activeRowIndex}
+                    onChange={(e) => handleSelectRowIndex(Number(e.target.value))}
+                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#ffffff", color: "#0f172a" }}
+                  >
+                    {importedData.rows.map((r, i) => (
+                      <option key={i} value={i} style={{ background: "#ffffff", color: "#0f172a" }}>
+                        Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => handleSelectRowIndex(activeRowIndex + 1)}
+                    disabled={activeRowIndex >= importedData.rows.length - 1}
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, cursor: "pointer", opacity: activeRowIndex >= importedData.rows.length - 1 ? 0.4 : 1 }}
+                  >
+                    ►
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Form Inputs for Certificate Fields */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { key: "student_fullName", label: "Họ và tên sinh viên" },
+                { key: "certificate_title", label: "Tên văn bằng" },
+                { key: "organization_name", label: "Tên tổ chức / Trường" },
+                { key: "dob", label: "Ngày sinh" },
+                { key: "placeOfBirth", label: "Nơi sinh" },
+                { key: "gender", label: "Giới tính" },
+                { key: "ethnicity", label: "Dân tộc" },
+                { key: "schoolName", label: "Đơn vị đào tạo" },
+                { key: "examCohort", label: "Khóa học" },
+                { key: "examBoard", label: "Hội đồng thi" },
+                { key: "issueLocation", label: "Nơi cấp" },
+                { key: "issueDate", label: "Ngày cấp" },
+                { key: "serialNumber", label: "Số hiệu" },
+                { key: "registryNumber", label: "Số vào sổ" },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{label}</label>
+                  <input
+                    type="text"
+                    value={mockData[key] || ""}
+                    onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#1e293b", outline: "none" }}
+                    placeholder={`Nhập ${label.toLowerCase()}...`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
+        {/* Center Canvas Workspace */}
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "#f1f5f9" }}>
           <div
             ref={canvasRef}
@@ -402,52 +577,67 @@ export default function TemplateEditorPage() {
           </div>
         </div>
 
+        {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
           <div style={{ width: 280, background: "#fff", borderLeft: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính trường</h3>
 
+            {/* Field Type Selector */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại trường</label>
               <select
                 value={selectedField.type}
                 onChange={(e) => updateField(selectedField.id, { type: e.target.value as any })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", background: "#fff", outline: "none" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
               >
-                <option value="text">Văn bản</option>
-                <option value="image">Hình ảnh</option>
-                <option value="qr">Mã QR</option>
-                <option value="line">Đường kẻ</option>
-                <option value="rect">Hình chữ nhật</option>
+                <option value="text" style={{ background: "#ffffff", color: "#0f172a" }}>Văn bản</option>
+                <option value="image" style={{ background: "#ffffff", color: "#0f172a" }}>Hình ảnh / Logo</option>
+                <option value="qr" style={{ background: "#ffffff", color: "#0f172a" }}>Mã QR</option>
+                <option value="line" style={{ background: "#ffffff", color: "#0f172a" }}>Đường kẻ</option>
+                <option value="rect" style={{ background: "#ffffff", color: "#0f172a" }}>Hình chữ nhật</option>
               </select>
             </div>
 
+            {/* Dynamic Binding Selector */}
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", background: "#fff", outline: "none" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
                 >
                   {FIELD_BINDINGS.map((b) => (
-                    <option key={b.value} value={b.value}>{b.label}</option>
+                    <option key={b.value} value={b.value} style={{ background: "#ffffff", color: "#0f172a" }}>{b.label}</option>
                   ))}
                 </select>
               </div>
             )}
 
+            {/* Missing Organization Logo Alert if not configured */}
+            {!organizationLogo && (selectedField.type === "image" || selectedField.binding === "organization_logo") && (
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: 10, borderRadius: 8, fontSize: 11, color: "#b45309", marginBottom: 14 }}>
+                <div>⚠️ Chưa có logo trong Cài đặt tổ chức.</div>
+                <Link href="/admin/settings" target="_blank" style={{ color: "#d97706", fontWeight: 700, textDecoration: "underline", marginTop: 4, display: "inline-block" }}>
+                  👉 Tải logo tại Cài đặt (Settings)
+                </Link>
+              </div>
+            )}
+
+            {/* Static Text Content */}
             {!selectedField.dynamic && selectedField.type === "text" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung văn bản</label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
                   onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", outline: "none" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
                 />
               </div>
             )}
 
+            {/* Line / Rect Colors */}
             {(selectedField.type === "line" || selectedField.type === "rect") && (
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
@@ -462,101 +652,141 @@ export default function TemplateEditorPage() {
                     type="text"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none", fontFamily: "monospace" }}
+                    style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#0f172a", background: "#ffffff", outline: "none", fontFamily: "monospace" }}
                   />
                 </div>
               </div>
             )}
 
+            {/* Text Styling Controls */}
             {selectedField.type === "text" && (
               <>
+                {/* Font Family */}
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Phông chữ</label>
                   <select
                     value={selectedField.font || "sans-serif"}
                     onChange={(e) => updateField(selectedField.id, { font: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", background: "#fff", outline: "none" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
                   >
-                    <option value="sans-serif">Sans-serif</option>
-                    <option value="serif">Serif</option>
-                    <option value="monospace">Monospace</option>
-                    <option value="script">Script</option>
+                    <option value="sans-serif" style={{ background: "#ffffff", color: "#0f172a" }}>Sans-serif (Mặc định)</option>
+                    <option value="serif" style={{ background: "#ffffff", color: "#0f172a" }}>Serif (Cổ điển)</option>
+                    <option value="monospace" style={{ background: "#ffffff", color: "#0f172a" }}>Monospace (Mã số)</option>
+                    <option value="script" style={{ background: "#ffffff", color: "#0f172a" }}>Script (Nghệ thuật)</option>
                   </select>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ</label>
+                {/* Text Size Editor with Stepper & Quick Presets */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ (px)</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <button
+                      onClick={() => updateField(selectedField.id, { size: Math.max(8, (selectedField.size || 14) - 1) })}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+                    >
+                      −
+                    </button>
                     <input
                       type="number"
                       value={selectedField.size || 14}
-                      onChange={(e) => updateField(selectedField.id, { size: Number(e.target.value) })}
+                      onChange={(e) => updateField(selectedField.id, { size: Math.max(8, Number(e.target.value)) })}
                       min={8}
-                      max={72}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#334155", outline: "none" }}
+                      max={120}
+                      style={{ flex: 1, height: 32, textAlign: "center", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, fontWeight: 700, color: "#1e293b", outline: "none" }}
                     />
+                    <button
+                      onClick={() => updateField(selectedField.id, { size: Math.min(120, (selectedField.size || 14) + 1) })}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+                    >
+                      +
+                    </button>
                   </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input
-                        type="color"
-                        value={selectedField.color || "#333333"}
-                        onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                        style={{ width: 36, height: 36, padding: 0, border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
-                      />
-                      <input
-                        type="text"
-                        value={selectedField.color || "#333333"}
-                        onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                        style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none", fontFamily: "monospace" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Căn chỉnh</label>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {(["left", "center", "right"] as const).map((a) => (
+                  {/* Preset font size chips */}
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {[10, 12, 14, 18, 24, 32, 48].map((s) => (
                       <button
-                        key={a}
-                        onClick={() => updateField(selectedField.id, { align: a })}
+                        key={s}
+                        onClick={() => updateField(selectedField.id, { size: s })}
                         style={{
-                          flex: 1, padding: "6px 8px", borderRadius: 6, border: `1px solid ${selectedField.align === a ? "#3b82f6" : "#e2e8f0"}`,
-                          background: selectedField.align === a ? "#eff6ff" : "#fff", cursor: "pointer", fontSize: 11, fontWeight: 600,
-                          color: selectedField.align === a ? "#3b82f6" : "#94a3b8",
+                          padding: "2px 6px", borderRadius: 6, border: `1px solid ${selectedField.size === s ? "#3b82f6" : "#e2e8f0"}`,
+                          background: selectedField.size === s ? "#eff6ff" : "#fff", color: selectedField.size === s ? "#2563eb" : "#64748b",
+                          fontSize: 10, fontWeight: 600, cursor: "pointer"
                         }}
                       >
-                        {a === "left" ? "Trái" : a === "center" ? "Giữa" : "Phải"}
+                        {s}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: "#64748b" }}>
+                {/* Text Color */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu văn bản</label>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <input
-                      type="checkbox"
-                      checked={selectedField.bold || false}
-                      onChange={(e) => updateField(selectedField.id, { bold: e.target.checked })}
-                      style={{ accentColor: "#3b82f6" }}
+                      type="color"
+                      value={selectedField.color || "#333333"}
+                      onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
+                      style={{ width: 36, height: 36, padding: 0, border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
                     />
-                    Đậm
-                  </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: "#64748b" }}>
                     <input
-                      type="checkbox"
-                      checked={selectedField.italic || false}
-                      onChange={(e) => updateField(selectedField.id, { italic: e.target.checked })}
-                      style={{ accentColor: "#3b82f6" }}
+                      type="text"
+                      value={selectedField.color || "#333333"}
+                      onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
+                      style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none", fontFamily: "monospace" }}
                     />
-                    Nghiêng
-                  </label>
+                  </div>
+                </div>
+
+                {/* Style & Alignment Toolbar */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Định dạng & Căn chỉnh</label>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      onClick={() => updateField(selectedField.id, { bold: !selectedField.bold })}
+                      style={{
+                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.bold ? "#3b82f6" : "#e2e8f0"}`,
+                        background: selectedField.bold ? "#eff6ff" : "#fff", color: selectedField.bold ? "#2563eb" : "#475569",
+                        fontWeight: "bold", fontSize: 14, cursor: "pointer"
+                      }}
+                      title="In đậm"
+                    >
+                      B
+                    </button>
+                    <button
+                      onClick={() => updateField(selectedField.id, { italic: !selectedField.italic })}
+                      style={{
+                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.italic ? "#3b82f6" : "#e2e8f0"}`,
+                        background: selectedField.italic ? "#eff6ff" : "#fff", color: selectedField.italic ? "#2563eb" : "#475569",
+                        fontStyle: "italic", fontSize: 14, cursor: "pointer"
+                      }}
+                      title="In nghiêng"
+                    >
+                      I
+                    </button>
+
+                    <div style={{ width: 1, background: "#e2e8f0", margin: "0 2px" }} />
+
+                    {(["left", "center", "right"] as const).map((a) => (
+                      <button
+                        key={a}
+                        onClick={() => updateField(selectedField.id, { align: a })}
+                        style={{
+                          flex: 1, height: 36, borderRadius: 8, border: `1px solid ${selectedField.align === a ? "#3b82f6" : "#e2e8f0"}`,
+                          background: selectedField.align === a ? "#eff6ff" : "#fff", color: selectedField.align === a ? "#2563eb" : "#475569",
+                          fontSize: 12, fontWeight: 700, cursor: "pointer"
+                        }}
+                        title={a === "left" ? "Căn trái" : a === "center" ? "Căn giữa" : "Căn phải"}
+                      >
+                        {a === "left" ? "⬅" : a === "center" ? "↔" : "➡"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
 
+            {/* Position & Size */}
             <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14 }}>
               <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Vị trí & Kích thước</h4>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -571,6 +801,34 @@ export default function TemplateEditorPage() {
                     />
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Quick Actions (Duplicate & Delete) */}
+            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Thao tác trường</h4>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  onClick={() => {
+                    const newField: TemplateField = {
+                      ...selectedField,
+                      id: generateId(),
+                      x: selectedField.x + 15,
+                      y: selectedField.y + 15,
+                    };
+                    setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
+                    setSelectedId(newField.id);
+                  }}
+                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 11, fontWeight: 600, color: "#334155", cursor: "pointer" }}
+                >
+                  📋 Nhân bản
+                </button>
+                <button
+                  onClick={() => deleteField(selectedField.id)}
+                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fef2f2", fontSize: 11, fontWeight: 700, color: "#dc2626", cursor: "pointer" }}
+                >
+                  🗑 Xóa trường
+                </button>
               </div>
             </div>
           </div>

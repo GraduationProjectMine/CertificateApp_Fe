@@ -36,6 +36,15 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
+    title: "Văn bằng số (Online)",
+    path: "/admin/online-certificates",
+    icon: (
+      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+      </svg>
+    )
+  },
+  {
     title: "Cấp bằng mới",
     path: "/admin/certificates/issue",
     icon: (
@@ -63,6 +72,15 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
+    title: "Tạo & Xuất bằng PDF",
+    path: "/admin/templates/generator",
+    icon: (
+      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+      </svg>
+    )
+  },
+  {
     title: "Lô cấp phát",
     path: "/admin/batches",
     icon: (
@@ -81,15 +99,6 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Giám sát Web3",
-    path: "/admin/blockchain",
-    icon: (
-      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-      </svg>
-    )
-  },
-  {
     title: "Hoạt động (Audit)",
     path: "/admin/audit-logs",
     icon: (
@@ -99,6 +108,15 @@ export const menuItems: MenuItem[] = [
     )
   },
 
+  {
+    title: "Yêu cầu chỉnh sửa",
+    path: "/admin/disputes",
+    icon: (
+      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+      </svg>
+    )
+  },
   {
     title: "Cài đặt",
     path: "/admin/settings",

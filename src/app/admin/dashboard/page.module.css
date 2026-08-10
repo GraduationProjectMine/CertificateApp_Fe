@@ -53,11 +53,11 @@
 }
 
 ._14 {
- @apply block text-[11px] font-semibold dark:text-gray-500;
+ @apply block text-[11px] font-semibold text-gray-500 dark:text-gray-400;
 }
 
 ._15 {
- @apply p-3 dark:bg-gray-800/40 rounded-xl;
+ @apply p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl;
 
 }
 
@@ -90,7 +90,7 @@
 }
 
 ._23 {
- @apply border-b border-gray-100 pb-3 text-xs text-gray-500;
+ @apply border-b border-gray-100 dark:border-gray-800 pb-3 text-xs text-gray-500 dark:text-gray-400;
 }
 
 ._24 {
@@ -102,7 +102,7 @@
 }
 
 ._26 {
- @apply divide-y divide-gray-100 text-xs;
+ @apply divide-y divide-gray-100 dark:divide-gray-800 text-xs;
 }
 
 ._27 {
@@ -122,7 +122,7 @@
 }
 
 ._31 {
- @apply py-4 dark:text-gray-500;
+ @apply py-4 text-gray-500 dark:text-gray-400;
 }
 
 ._32 {
@@ -172,11 +172,11 @@
 }
 
 ._43 {
- @apply bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-lg;
+ @apply bg-gray-100 dark:bg-slate-900 text-gray-900 dark:text-white rounded-3xl p-6 border border-gray-200 dark:border-slate-800 shadow-sm dark:shadow-lg;
 }
 
 ._44 {
- @apply text-xs font-bold uppercase tracking-widest text-teal-400 mb-3;
+ @apply text-xs font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400 mb-3;
 }
 
 ._45 {
@@ -188,15 +188,15 @@
 }
 
 ._47 {
- @apply text-slate-400;
+ @apply text-gray-500 dark:text-slate-400;
 }
 
 ._48 {
- @apply font-semibold text-green-400;
+ @apply font-semibold text-green-600 dark:text-green-400;
 }
 
 ._49 {
- @apply font-mono bg-slate-800 px-2 py-0.5 rounded;
+ @apply font-mono bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded;
 
 }
 

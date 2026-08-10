@@ -4,8 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import QRCodeBox from "@/components/credential/QRCodeBox";
-import BlockchainInfo from "@/components/credential/BlockchainInfo";
-import IPFSInfo from "@/components/credential/IPFSInfo";
+import IssuerBadge from "@/components/credential/IssuerBadge/IssuerBadge";
 import Loading from "@/components/common/Loading";
 import ErrorMessage from "@/components/common/ErrorMessage";
 import { verifierApi, type VerifyCertificateResponse } from "@/features/verification/services/verifier.api";
@@ -17,7 +16,7 @@ export default function PublicCredentialPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    verifierApi.getCertificate(id)
+    verifierApi.getAnyCertificate(id)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : "Không tìm thấy văn bằng."))
       .finally(() => setLoading(false));
@@ -44,6 +43,15 @@ export default function PublicCredentialPage() {
             <p className="mt-1 text-sm opacity-90">{detail.certificateTitle}</p>
           </div>
 
+          {/* Organization Issuer Badge */}
+          <div className="p-6 pb-0">
+            <IssuerBadge
+              organizationName={detail.organizationName}
+              logoUrl={detail.organizationLogo}
+              walletAddress={detail.organizationWallet}
+            />
+          </div>
+
           <div className="grid gap-8 p-6 md:grid-cols-[1fr_auto]">
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
               <Field label="Người được cấp" value={detail.studentFullName} />
@@ -56,17 +64,43 @@ export default function PublicCredentialPage() {
               <Field label="Nơi sinh" value={detail.placeOfBirth} />
               <Field label="Khóa thi" value={detail.examCohort} />
               <Field label="Hội đồng thi" value={detail.examBoard} />
+              {isRevoked && <Field label="Ngày thu hồi" value={detail.revokedAt ? new Date(detail.revokedAt).toLocaleString("vi-VN") : null} />}
+              {isRevoked && <Field label="Lý do thu hồi" value={detail.revokeReason} />}
+              {isRevoked && <Field label="Transaction thu hồi" value={detail.revokeTransactionHash} />}
             </dl>
             {verifyUrl && <QRCodeBox value={verifyUrl} size={140} title="Quét để xem bản xác minh" />}
           </div>
+
+          {(detail.fileUrl || data.blockchain?.cid) && (
+            <div className="border-t border-slate-100 p-6 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Tệp ảnh văn bằng gốc</h2>
+              <div className="flex flex-col items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={detail.fileUrl || `https://gateway.pinata.cloud/ipfs/${data.blockchain?.cid}`}
+                  alt="Original Certificate Scan"
+                  className="max-h-[500px] w-auto object-contain rounded-2xl border border-slate-200 shadow-md dark:border-slate-800"
+                  onError={(e) => {
+                    if (data.blockchain?.cid && !(e.target as HTMLImageElement).src.includes('ipfs.io')) {
+                      (e.target as HTMLImageElement).src = `https://ipfs.io/ipfs/${data.blockchain.cid}`;
+                    }
+                  }}
+                />
+                <a
+                  href={detail.fileUrl || `https://gateway.pinata.cloud/ipfs/${data.blockchain?.cid}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Xem ảnh gốc trực tiếp</span>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          )}
         </section>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <BlockchainInfo transactionHash={detail.txHash || undefined} timestamp={detail.issuedAt || undefined} />
-          <IPFSInfo cid={data.blockchain?.cid} metadataHash={data.blockchain?.sha3Hash} pinStatus={data.ipfsFetchSuccess ? "Pinned" : "Không truy xuất được"} />
-        </div>
-
-        {!data.blockchain && <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-700 dark:bg-amber-950/20">Dịch vụ blockchain chưa trả dữ liệu. Thông tin trên chỉ phản ánh bản ghi hiện có trong hệ thống.</p>}
       </div>
     </main>
   );
@@ -74,5 +108,10 @@ export default function PublicCredentialPage() {
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
-  return <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</dt><dd className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{value}</dd></div>;
+  return (
+    <div className="overflow-hidden min-w-0">
+      <dt className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 truncate">{label}</dt>
+      <dd className="mt-1 font-semibold text-slate-800 dark:text-slate-100 break-words">{value}</dd>
+    </div>
+  );
 }

@@ -1,0 +1,77 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+
+.overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+}
+
+.backdrop {
+  @apply absolute inset-0 bg-black/40 backdrop-blur-sm;
+}
+
+.container {
+  @apply relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 z-10 w-full;
+  animation: modalEnter 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.containerSm { @apply max-w-sm; }
+.containerMd { @apply max-w-md; }
+.containerLg { @apply max-w-lg; }
+.containerXl { @apply max-w-2xl; }
+
+.header {
+  @apply flex items-start justify-between gap-4 px-6 pt-6 pb-0;
+}
+
+.title {
+  @apply text-lg font-black text-gray-900 dark:text-white;
+}
+
+.description {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
+}
+
+.closeBtn {
+  @apply shrink-0 rounded-xl p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.08] hover:text-gray-600 dark:hover:text-gray-300 transition-all;
+}
+
+.body {
+  @apply px-6 py-5;
+}
+
+.footer {
+  @apply flex items-center justify-end gap-3 px-6 pb-6 pt-0;
+}
+
+.iconWrap {
+  @apply mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full;
+}
+
+.iconDanger {
+  @apply bg-red-50 dark:bg-red-950/20;
+}
+
+.iconWarning {
+  @apply bg-amber-50 dark:bg-amber-950/20;
+}
+
+.iconInfo {
+  @apply bg-primary-lighter;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    animation: none;
+  }
+}

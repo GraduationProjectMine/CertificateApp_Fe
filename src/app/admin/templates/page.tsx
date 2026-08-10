@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate } from "@/features/templates/types";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import FormModal from "@/components/common/Modal/FormModal";
 
 const DEFAULT_DESIGN = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -23,6 +25,8 @@ export default function AdminTemplatesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [deleteTargetName, setDeleteTargetName] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -52,11 +56,13 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Xoá mẫu văn bằng này?")) return;
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await templateApi.delete(id);
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
+      await templateApi.delete(deleteTargetId);
+      setTemplates((prev) => prev.filter((t) => t.id !== deleteTargetId));
+      setDeleteTargetId("");
+      setDeleteTargetName("");
     } catch (err: any) {
       alert(err.message || "Delete failed");
     }
@@ -92,59 +98,57 @@ export default function AdminTemplatesPage() {
         </button>
       </div>
 
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 max-w-md w-full">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Tạo mẫu văn bằng mới</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tên mẫu</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="VD: Mẫu bằng tốt nghiệp ĐH"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Mô tả (tuỳ chọn)</label>
-                <textarea
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
-                  rows={3}
-                  placeholder="VD: Mẫu mặc định cho kỹ sư CNTT"
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                className="px-5 py-2.5 text-sm font-bold rounded-xl text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-white/[0.08] transition-all"
-                onClick={() => { setShowCreateModal(false); setNewName(""); setNewDesc(""); }}
-              >
-                Huỷ
-              </button>
-              <button
-                className="px-5 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all disabled:opacity-60"
-                onClick={handleCreate}
-                disabled={!newName.trim()}
-              >
-                Tạo mẫu
-              </button>
-            </div>
-          </div>
+      <FormModal
+        open={showCreateModal}
+        onClose={() => { setShowCreateModal(false); setNewName(""); setNewDesc(""); }}
+        title="Tạo mẫu văn bằng mới"
+        description="Thiết kế mẫu văn bằng chứng chỉ cho tổ chức của bạn."
+        onSubmit={(e) => { e.preventDefault(); void handleCreate(); }}
+        submitLabel="Tạo mẫu"
+        size="md"
+      >
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên mẫu *</label>
+          <input
+            type="text"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs outline-none focus:ring-1 focus:ring-primary"
+            placeholder="VD: Mẫu bằng tốt nghiệp ĐH"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            autoFocus
+          />
         </div>
-      )}
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mô tả (tuỳ chọn)</label>
+          <textarea
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs outline-none focus:ring-1 focus:ring-primary resize-none"
+            rows={3}
+            placeholder="VD: Mẫu mặc định cho kỹ sư CNTT"
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+          />
+        </div>
+      </FormModal>
+
+      <ConfirmModal
+        open={!!deleteTargetId}
+        onClose={() => { setDeleteTargetId(""); setDeleteTargetName(""); }}
+        title="Xóa mẫu văn bằng"
+        message={`Bạn có chắc chắn muốn xóa mẫu "${deleteTargetName}"? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        variant="danger"
+        icon="danger"
+        onConfirm={() => void handleDelete()}
+      />
 
       <div className={styles._6}>
         {loading ? (
-          <div className="p-8 text-center text-gray-400 text-xs">Đang tải...</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
         ) : error ? (
-          <div className="p-8 text-center text-red-500 text-xs">{error}</div>
+          <div className="p-8 text-center text-red-500 dark:text-red-400 text-xs">{error}</div>
         ) : templates.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-xs">Chưa có mẫu văn bằng nào. Hãy tạo mẫu đầu tiên!</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Chưa có mẫu văn bằng nào. Hãy tạo mẫu đầu tiên!</div>
         ) : (
           templates.map((template) => (
             <div key={template.id} className={styles._7}>
@@ -170,14 +174,14 @@ export default function AdminTemplatesPage() {
                 </Link>
                 {!template.is_default && (
                   <button
-                    className="text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     onClick={() => handleSetDefault(template.id)}
                   >
                     Đặt mặc định
                   </button>
                 )}
                 <button
-                  className="text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   onClick={() => handleDuplicate(template.id)}
                 >
                   Nhân bản
@@ -185,7 +189,7 @@ export default function AdminTemplatesPage() {
                 {!template.is_default && (
                   <button
                     className="text-[10px] font-bold text-danger hover:text-red-600 transition-colors"
-                    onClick={() => handleDelete(template.id)}
+                    onClick={() => { setDeleteTargetId(template.id); setDeleteTargetName(template.name); }}
                   >
                     Xoá
                   </button>

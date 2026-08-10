@@ -10,6 +10,15 @@ interface AuthContextType {
   isLoading: boolean;
   isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithMetaMask: (walletAddress: string, signature: string, tempToken: string) => Promise<{ success: boolean; error?: string }>;
+  registerWithMetaMask: (data: {
+    walletAddress: string;
+    signature: string;
+    tempToken: string;
+    email: string;
+    name: string;
+    adminName?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -69,32 +78,93 @@ function beUserToAppUser(data: {
   };
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('auth_user');
-    if (token && savedUser && isTokenValid(token)) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.warn('Unable to restore the stored authentication user.', error);
+    async function initAuth() {
+      const token = localStorage.getItem('token');
+      const savedUserStr = localStorage.getItem('auth_user');
+      const loginTimeStr = localStorage.getItem('auth_login_time');
+
+      let savedUser: User | null = null;
+      if (savedUserStr) {
+        try {
+          savedUser = JSON.parse(savedUserStr);
+        } catch {
+          savedUser = null;
+        }
+      }
+
+      let loginTime = loginTimeStr ? parseInt(loginTimeStr, 10) : NaN;
+
+      if (token && isNaN(loginTime)) {
+        loginTime = Date.now();
+        localStorage.setItem('auth_login_time', loginTime.toString());
+      }
+
+      // Check if session has exceeded 1 hour
+      if (!isNaN(loginTime) && Date.now() - loginTime >= SESSION_TIMEOUT_MS) {
         localStorage.removeItem('token');
         localStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_login_time');
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
-    } else if (token || savedUser) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('auth_user');
+
+      if (token && savedUser && isTokenValid(token)) {
+        setUser(savedUser);
+        setIsLoading(false);
+        return;
+      }
+
+      // If token is missing/expired or savedUser exists, try to silently refresh token via HTTP-only cookie
+      if (token || savedUser) {
+        try {
+          const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            const newToken = refreshData.accessToken;
+            localStorage.setItem('token', newToken);
+            if (savedUser) {
+              setUser(savedUser);
+            }
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_user');
+            localStorage.removeItem('auth_login_time');
+            setUser(null);
+          }
+        } catch {
+          localStorage.removeItem('token');
+          localStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_login_time');
+          setUser(null);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
     }
-    setIsLoading(false);
+
+    initAuth();
   }, []);
 
   const saveSession = (token: string, user: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('auth_user', JSON.stringify(user));
+    localStorage.setItem('auth_login_time', Date.now().toString());
     setUser(user);
   };
 
@@ -109,6 +179,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loginWithMetaMask = useCallback(async (walletAddress: string, signature: string, tempToken: string) => {
+    try {
+      const data = await authApi.loginWithMetaMask(walletAddress, signature, tempToken);
+      const { token, user: appUser } = beUserToAppUser(data);
+      saveSession(token, appUser);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Đăng nhập với MetaMask thất bại' };
+    }
+  }, []);
+
+  const registerWithMetaMask = useCallback(async (data: {
+    walletAddress: string;
+    signature: string;
+    tempToken: string;
+    email: string;
+    name: string;
+    adminName?: string;
+  }) => {
+    try {
+      const resData = await authApi.registerWithMetaMask(data);
+      const { token, user: appUser } = beUserToAppUser(resData);
+      saveSession(token, appUser);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Đăng ký với MetaMask thất bại' };
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
@@ -118,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_login_time');
       setUser(null);
       // Tear down the protected tree atomically. Unlike pathname-based state,
       // this also completes correctly when logout starts while already on `/`.
@@ -125,8 +225,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // 1-Hour Session Expiry Timer and Visibility/Focus Listener
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSessionExpiry = () => {
+      const loginTimeStr = localStorage.getItem('auth_login_time');
+      if (!loginTimeStr) return;
+      const loginTime = parseInt(loginTimeStr, 10);
+      if (isNaN(loginTime) || Date.now() - loginTime >= SESSION_TIMEOUT_MS) {
+        logout();
+      }
+    };
+
+    checkSessionExpiry();
+
+    const loginTimeStr = localStorage.getItem('auth_login_time');
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (loginTimeStr) {
+      const loginTime = parseInt(loginTimeStr, 10);
+      if (!isNaN(loginTime)) {
+        const timeElapsed = Date.now() - loginTime;
+        const remainingTime = Math.max(0, SESSION_TIMEOUT_MS - timeElapsed);
+        timeoutId = setTimeout(() => {
+          logout();
+        }, remainingTime);
+      }
+    }
+
+    const intervalId = setInterval(checkSessionExpiry, 10000);
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkSessionExpiry();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [user, logout]);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, loginWithMetaMask, registerWithMetaMask, logout }}>
       {children}
     </AuthContext.Provider>
   );

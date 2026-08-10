@@ -5,7 +5,7 @@ export interface StaffDto {
   name: string;
   email: string;
   role: string;
-  status: string;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -18,7 +18,7 @@ export interface CreateStaffPayload {
 export interface UpdateStaffPayload {
   name?: string;
   email?: string;
-  status?: string;
+  isActive?: boolean;
   role?: string;
   password?: string;
 }

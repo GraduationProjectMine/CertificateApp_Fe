@@ -22,6 +22,8 @@ type FormData = {
   issueDate: string;
   serialNumber: string;
   registryNumber: string;
+  ipfs_cid: string;
+  file_url: string;
 };
 
 const initialForm: FormData = {
@@ -39,6 +41,8 @@ const initialForm: FormData = {
   issueDate: "",
   serialNumber: "",
   registryNumber: "",
+  ipfs_cid: "",
+  file_url: "",
 };
 
 export default function IssueCertificatePage() {
@@ -119,6 +123,17 @@ export default function IssueCertificatePage() {
       if (d.issue_date) updateField("issueDate", d.issue_date.split("/").reverse().join("-"));
       if (d.serial_number) updateField("serialNumber", d.serial_number);
       if (d.registry_number) updateField("registryNumber", d.registry_number);
+      if (res.ipfs_cid) updateField("ipfs_cid", res.ipfs_cid);
+      if (res.ipfs_url) updateField("file_url", res.ipfs_url);
+
+      // Convert original image file to base64 for IPFS upload upon createDraft
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          updateField("file_url", reader.result);
+        }
+      };
+      reader.readAsDataURL(ocrFile);
     } catch (err) {
       setOcrError(err instanceof Error ? err.message : "OCR thất bại");
     } finally {
@@ -148,6 +163,8 @@ export default function IssueCertificatePage() {
         issueDate: formData.issueDate || undefined,
         serialNumber: formData.serialNumber || undefined,
         registryNumber: formData.registryNumber || undefined,
+        ipfs_cid: formData.ipfs_cid || undefined,
+        file_url: formData.file_url || undefined,
       });
       setResult({ id: created.certificate_id, status: created.status });
       setStep("result");
@@ -166,11 +183,11 @@ export default function IssueCertificatePage() {
           <h2 className="text-xl font-black text-gray-900 dark:text-white">Tạo văn bằng thành công!</h2>
           <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-2xl p-6 space-y-2 text-left">
             <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Mã văn bằng:</span>
+              <span className="text-gray-500 dark:text-gray-400">Mã văn bằng:</span>
               <span className="font-mono text-gray-900 dark:text-white">{result.id}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Trạng thái:</span>
+              <span className="text-gray-500 dark:text-gray-400">Trạng thái:</span>
               <span className="text-amber-600 font-bold">{result.status}</span>
             </div>
           </div>
@@ -189,6 +206,18 @@ export default function IssueCertificatePage() {
 
   return (
     <div className={styles._1}>
+      {submitting && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">Đang phát hành văn bằng</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đang ghi dữ liệu &amp; tạo văn bằng. Vui lòng không đóng trang...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className={styles._2}>Cấp phát văn bằng mới</h1>
         <p className={styles._3}>Nhập thông tin văn bằng và lưu nháp trước khi gửi duyệt.</p>
@@ -200,7 +229,7 @@ export default function IssueCertificatePage() {
           onClick={() => setInputMode("manual")}
           className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${inputMode === "manual"
               ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           Nhập tay
@@ -209,7 +238,7 @@ export default function IssueCertificatePage() {
           onClick={() => setInputMode("ocr")}
           className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${inputMode === "ocr"
               ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +279,7 @@ export default function IssueCertificatePage() {
                     </span>
                   ) : "Quét văn bằng"}
                 </button>
-                <button onClick={() => { setOcrFile(null); setOcrPreview(null); setOcrError(""); }} className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
+                <button onClick={() => { setOcrFile(null); setOcrPreview(null); setOcrError(""); }} className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
                   Làm lại
                 </button>
               </div>
@@ -265,7 +294,7 @@ export default function IssueCertificatePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Kéo thả ảnh vào đây</div>
-              <div className="text-[10px] text-gray-400">hoặc nhấp để chọn file (JPEG, PNG, WebP, TIFF)</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500">hoặc nhấp để chọn file (JPEG, PNG, WebP, TIFF)</div>
               {ocrError && <div className="text-[11px] text-red-500">{ocrError}</div>}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/tiff" onChange={handleOcrFileSelect} className="hidden" />
             </label>
@@ -380,7 +409,7 @@ export default function IssueCertificatePage() {
         </button>
         <button
           onClick={() => router.push("/admin/certificates")}
-          className="px-4 py-2.5 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+          className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
         >
           Hủy
         </button>

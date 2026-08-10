@@ -19,13 +19,23 @@ export interface CertificateDto {
   serialNumber: string | null;
   registryNumber: string | null;
   ipfs_cid: string | null;
+  file_url?: string | null;
   tx_hash: string | null;
+  block_number?: number | null;
+  gas_used?: string | null;
   status: string;
   issuedAt: string;
+  revokedAt?: string | null;
+  revokedById?: string | null;
+  revokeReason?: string | null;
+  revoke_tx_hash?: string | null;
+  revoke_block_number?: number | null;
 }
 
 export interface CreateCertificatePayload {
   student_id: string;
+  student_fullName?: string;
+  template_id?: string;
   certificate_title: string;
   dob?: string;
   placeOfBirth?: string;
@@ -38,6 +48,26 @@ export interface CreateCertificatePayload {
   issueDate?: string;
   serialNumber?: string;
   registryNumber?: string;
+  ipfs_cid?: string;
+  file_url?: string;
+}
+
+export interface OnlineCertificateDto {
+  certificate_id: string;
+  organization_id: string;
+  student_id: string;
+  template_id?: string | null;
+  certificate_title: string;
+  student_fullName: string;
+  serialNumber?: string | null;
+  registryNumber?: string | null;
+  ipfs_cid?: string | null;
+  file_url?: string | null;
+  tx_hash?: string | null;
+  block_number?: number | null;
+  gas_used?: string | null;
+  status: string;
+  issuedAt: string;
 }
 
 export const certificateApi = {
@@ -47,6 +77,9 @@ export const certificateApi = {
       : '';
     return request<CertificateDto[]>(`/certificates${query}`);
   },
+
+  listOnline: () => request<OnlineCertificateDto[]>('/certificates/online'),
+
 
   get: (id: string) =>
     request<CertificateDto>(`/certificates/${id}`),
@@ -68,11 +101,49 @@ export const certificateApi = {
       method: 'POST',
     }),
 
+  batchApprove: (ids: string[]) =>
+    request<{
+      results: { certificateId: string; status: 'SUCCESS' | 'FAILED'; error?: string }[];
+      successCount: number;
+      failCount: number;
+      total: number;
+    }>('/certificates/batch-approve', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+
   delete: (id: string) =>
     request<{ message: string }>(`/certificates/${id}`, {
       method: 'DELETE',
     }),
+
+  templateIssueSingle: (data: CreateCertificatePayload) =>
+    request<CertificateDto>('/certificates/template-issue/single', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  templateIssueBatch: (data: { rows: CreateCertificatePayload[]; template_id?: string }) =>
+    request<{
+      total: number;
+      successCount: number;
+      failCount: number;
+      results: Array<{
+        index: number;
+        student_fullName: string;
+        certificate_id?: string;
+        status: 'SUCCESS' | 'FAILED';
+        cid?: string;
+        file_url?: string;
+        tx_hash?: string;
+        error?: string;
+      }>;
+    }>('/certificates/template-issue/batch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
+
 
 export function mapCertificateDtoToStudentCert(
   dto: CertificateDto,
@@ -83,6 +154,10 @@ export function mapCertificateDtoToStudentCert(
     PENDING: "VALID",
     DRAFT: "VALID",
   };
+  const titleLower = (dto.certificate_title || "").toLowerCase();
+  const isCertType = titleLower.includes("chứng chỉ") || titleLower.includes("certificate") || titleLower.includes("chứng nhận");
+  const inferredType = isCertType ? "CERTIFICATE" : "BACHELOR_DEGREE";
+
   return {
     id: dto.certificate_id,
     credentialCode: dto.serialNumber || dto.certificate_id,
@@ -90,14 +165,15 @@ export function mapCertificateDtoToStudentCert(
     studentName: dto.student_fullName,
     studentCode: "",
     credentialTitle: dto.certificate_title,
-    type: "BACHELOR_DEGREE",
+    type: inferredType,
     major: "",
     classification: "",
     gpa: "",
-    issueDate: dto.issueDate || dto.issuedAt?.split("T")[0] || "",
+    issueDate: dto.issueDate || (dto.issuedAt ? dto.issuedAt.split("T")[0] : ""),
     issuerName: dto.organization_name,
     issuerLogo: "",
     status: statusMap[dto.status] || "VALID",
+    rawStatus: (dto.status as any) || "DRAFT",
     onChain: !!dto.tx_hash,
     ipfsCid: dto.ipfs_cid || "",
     metadataHash: "",
@@ -105,5 +181,14 @@ export function mapCertificateDtoToStudentCert(
     contractAddress: "",
     network: "",
     credentialHash: "",
+    dob: dto.dob,
+    placeOfBirth: dto.placeOfBirth,
+    gender: dto.gender,
+    ethnicity: dto.ethnicity,
+    schoolName: dto.schoolName,
+    examCohort: dto.examCohort,
+    examBoard: dto.examBoard,
+    issueLocation: dto.issueLocation,
+    registryNumber: dto.registryNumber,
   };
 }
