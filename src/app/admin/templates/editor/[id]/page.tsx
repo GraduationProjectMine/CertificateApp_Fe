@@ -410,11 +410,11 @@ export default function TemplateEditorPage() {
         {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
         {!previewMode ? (
           <div style={{ width: 220, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, #94a3b8)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
             <button
               onClick={() => addField("image", "organization_logo")}
               style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "var(--surface-active)", cursor: "pointer", fontSize: 13, color: "var(--surface-active-text)", fontWeight: 700, transition: "all 0.15s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.25)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-active)"; }}
             >
               <span style={{ fontSize: 16 }}>🏢</span>
@@ -432,7 +432,7 @@ export default function TemplateEditorPage() {
                 <span>{ft.label}</span>
               </button>
             ))}
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, #94a3b8)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
             {design.fields.map((f) => (
               <div
                 key={f.id}
@@ -440,7 +440,7 @@ export default function TemplateEditorPage() {
                 style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "var(--text-secondary)", background: selectedId === f.id ? "var(--surface-active)" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
               >
                 <span style={{ fontWeight: 500 }}>{f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}</span>
-                <span style={{ fontSize: 10, color: "var(--text-muted, #94a3b8)" }}>{f.type}</span>
+                <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{f.type}</span>
               </div>
             ))}
           </div>
@@ -579,36 +579,36 @@ export default function TemplateEditorPage() {
 
         {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
-          <div style={{ width: 280, background: "#fff", borderLeft: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính trường</h3>
+          <div style={{ width: 280, background: "var(--surface)", borderLeft: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-body)", marginBottom: 16 }}>Thuộc tính trường</h3>
 
             {/* Field Type Selector */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại trường</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại trường</label>
               <select
                 value={selectedField.type}
                 onChange={(e) => updateField(selectedField.id, { type: e.target.value as any })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
               >
-                <option value="text" style={{ background: "#ffffff", color: "#0f172a" }}>Văn bản</option>
-                <option value="image" style={{ background: "#ffffff", color: "#0f172a" }}>Hình ảnh / Logo</option>
-                <option value="qr" style={{ background: "#ffffff", color: "#0f172a" }}>Mã QR</option>
-                <option value="line" style={{ background: "#ffffff", color: "#0f172a" }}>Đường kẻ</option>
-                <option value="rect" style={{ background: "#ffffff", color: "#0f172a" }}>Hình chữ nhật</option>
+                <option value="text" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Văn bản</option>
+                <option value="image" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Hình ảnh / Logo</option>
+                <option value="qr" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Mã QR</option>
+                <option value="line" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Đường kẻ</option>
+                <option value="rect" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Hình chữ nhật</option>
               </select>
             </div>
 
             {/* Dynamic Binding Selector */}
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
                 >
                   {FIELD_BINDINGS.map((b) => (
-                    <option key={b.value} value={b.value} style={{ background: "#ffffff", color: "#0f172a" }}>{b.label}</option>
+                    <option key={b.value} value={b.value} style={{ background: "var(--surface)", color: "var(--text-main)" }}>{b.label}</option>
                   ))}
                 </select>
               </div>
@@ -616,9 +616,9 @@ export default function TemplateEditorPage() {
 
             {/* Missing Organization Logo Alert if not configured */}
             {!organizationLogo && (selectedField.type === "image" || selectedField.binding === "organization_logo") && (
-              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: 10, borderRadius: 8, fontSize: 11, color: "#b45309", marginBottom: 14 }}>
+              <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning-border)", padding: 10, borderRadius: 8, fontSize: 11, color: "var(--warning-text)", marginBottom: 14 }}>
                 <div>⚠️ Chưa có logo trong Cài đặt tổ chức.</div>
-                <Link href="/admin/settings" target="_blank" style={{ color: "#d97706", fontWeight: 700, textDecoration: "underline", marginTop: 4, display: "inline-block" }}>
+                <Link href="/admin/settings" target="_blank" style={{ color: "var(--warning-text)", fontWeight: 700, textDecoration: "underline", marginTop: 4, display: "inline-block" }}>
                   👉 Tải logo tại Cài đặt (Settings)
                 </Link>
               </div>
@@ -627,12 +627,12 @@ export default function TemplateEditorPage() {
             {/* Static Text Content */}
             {!selectedField.dynamic && selectedField.type === "text" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung văn bản</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung văn bản</label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
                   onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
                 />
               </div>
             )}
@@ -640,19 +640,19 @@ export default function TemplateEditorPage() {
             {/* Line / Rect Colors */}
             {(selectedField.type === "line" || selectedField.type === "rect") && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <input
                     type="color"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ width: 36, height: 36, padding: 0, border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
+                    style={{ width: 36, height: 36, padding: 0, border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", background: "var(--surface)" }}
                   />
                   <input
                     type="text"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#0f172a", background: "#ffffff", outline: "none", fontFamily: "monospace" }}
+                    style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 11, color: "var(--text-main)", background: "var(--surface)", outline: "none", fontFamily: "monospace" }}
                   />
                 </div>
               </div>
@@ -663,26 +663,26 @@ export default function TemplateEditorPage() {
               <>
                 {/* Font Family */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Phông chữ</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Phông chữ</label>
                   <select
                     value={selectedField.font || "sans-serif"}
                     onChange={(e) => updateField(selectedField.id, { font: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
                   >
-                    <option value="sans-serif" style={{ background: "#ffffff", color: "#0f172a" }}>Sans-serif (Mặc định)</option>
-                    <option value="serif" style={{ background: "#ffffff", color: "#0f172a" }}>Serif (Cổ điển)</option>
-                    <option value="monospace" style={{ background: "#ffffff", color: "#0f172a" }}>Monospace (Mã số)</option>
-                    <option value="script" style={{ background: "#ffffff", color: "#0f172a" }}>Script (Nghệ thuật)</option>
+                    <option value="sans-serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Sans-serif (Mặc định)</option>
+                    <option value="serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Serif (Cổ điển)</option>
+                    <option value="monospace" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Monospace (Mã số)</option>
+                    <option value="script" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Script (Nghệ thuật)</option>
                   </select>
                 </div>
 
                 {/* Text Size Editor with Stepper & Quick Presets */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ (px)</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ (px)</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.max(8, (selectedField.size || 14) - 1) })}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-faint)" }}
                     >
                       −
                     </button>
@@ -692,11 +692,11 @@ export default function TemplateEditorPage() {
                       onChange={(e) => updateField(selectedField.id, { size: Math.max(8, Number(e.target.value)) })}
                       min={8}
                       max={120}
-                      style={{ flex: 1, height: 32, textAlign: "center", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, fontWeight: 700, color: "#1e293b", outline: "none" }}
+                      style={{ flex: 1, height: 32, textAlign: "center", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, fontWeight: 700, color: "var(--text-body)", background: "var(--surface)", outline: "none" }}
                     />
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.min(120, (selectedField.size || 14) + 1) })}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-faint)" }}
                     >
                       +
                     </button>
@@ -708,8 +708,8 @@ export default function TemplateEditorPage() {
                         key={s}
                         onClick={() => updateField(selectedField.id, { size: s })}
                         style={{
-                          padding: "2px 6px", borderRadius: 6, border: `1px solid ${selectedField.size === s ? "#3b82f6" : "#e2e8f0"}`,
-                          background: selectedField.size === s ? "#eff6ff" : "#fff", color: selectedField.size === s ? "#2563eb" : "#64748b",
+                          padding: "2px 6px", borderRadius: 6, border: `1px solid ${selectedField.size === s ? "var(--accent)" : "var(--border)"}`,
+                          background: selectedField.size === s ? "var(--surface-active)" : "var(--surface)", color: selectedField.size === s ? "var(--surface-active-text)" : "var(--text-secondary)",
                           fontSize: 10, fontWeight: 600, cursor: "pointer"
                         }}
                       >
@@ -721,32 +721,32 @@ export default function TemplateEditorPage() {
 
                 {/* Text Color */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu văn bản</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu văn bản</label>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <input
                       type="color"
                       value={selectedField.color || "#333333"}
                       onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                      style={{ width: 36, height: 36, padding: 0, border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
+                      style={{ width: 36, height: 36, padding: 0, border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", background: "var(--surface)" }}
                     />
                     <input
                       type="text"
                       value={selectedField.color || "#333333"}
                       onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                      style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none", fontFamily: "monospace" }}
+                      style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 11, color: "var(--text-faint)", background: "var(--surface)", outline: "none", fontFamily: "monospace" }}
                     />
                   </div>
                 </div>
 
                 {/* Style & Alignment Toolbar */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Định dạng & Căn chỉnh</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Định dạng & Căn chỉnh</label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button
                       onClick={() => updateField(selectedField.id, { bold: !selectedField.bold })}
                       style={{
-                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.bold ? "#3b82f6" : "#e2e8f0"}`,
-                        background: selectedField.bold ? "#eff6ff" : "#fff", color: selectedField.bold ? "#2563eb" : "#475569",
+                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.bold ? "var(--accent)" : "var(--border)"}`,
+                        background: selectedField.bold ? "var(--surface-active)" : "var(--surface)", color: selectedField.bold ? "var(--surface-active-text)" : "var(--text-faint)",
                         fontWeight: "bold", fontSize: 14, cursor: "pointer"
                       }}
                       title="In đậm"
@@ -756,8 +756,8 @@ export default function TemplateEditorPage() {
                     <button
                       onClick={() => updateField(selectedField.id, { italic: !selectedField.italic })}
                       style={{
-                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.italic ? "#3b82f6" : "#e2e8f0"}`,
-                        background: selectedField.italic ? "#eff6ff" : "#fff", color: selectedField.italic ? "#2563eb" : "#475569",
+                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.italic ? "var(--accent)" : "var(--border)"}`,
+                        background: selectedField.italic ? "var(--surface-active)" : "var(--surface)", color: selectedField.italic ? "var(--surface-active-text)" : "var(--text-faint)",
                         fontStyle: "italic", fontSize: 14, cursor: "pointer"
                       }}
                       title="In nghiêng"
@@ -765,15 +765,15 @@ export default function TemplateEditorPage() {
                       I
                     </button>
 
-                    <div style={{ width: 1, background: "#e2e8f0", margin: "0 2px" }} />
+                    <div style={{ width: 1, background: "var(--border)", margin: "0 2px" }} />
 
                     {(["left", "center", "right"] as const).map((a) => (
                       <button
                         key={a}
                         onClick={() => updateField(selectedField.id, { align: a })}
                         style={{
-                          flex: 1, height: 36, borderRadius: 8, border: `1px solid ${selectedField.align === a ? "#3b82f6" : "#e2e8f0"}`,
-                          background: selectedField.align === a ? "#eff6ff" : "#fff", color: selectedField.align === a ? "#2563eb" : "#475569",
+                          flex: 1, height: 36, borderRadius: 8, border: `1px solid ${selectedField.align === a ? "var(--accent)" : "var(--border)"}`,
+                          background: selectedField.align === a ? "var(--surface-active)" : "var(--surface)", color: selectedField.align === a ? "var(--surface-active-text)" : "var(--text-faint)",
                           fontSize: 12, fontWeight: 700, cursor: "pointer"
                         }}
                         title={a === "left" ? "Căn trái" : a === "center" ? "Căn giữa" : "Căn phải"}
@@ -787,17 +787,17 @@ export default function TemplateEditorPage() {
             )}
 
             {/* Position & Size */}
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Vị trí & Kích thước</h4>
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
+              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Vị trí & Kích thước</h4>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 {(["x", "y", "w", "h"] as const).map((prop) => (
                   <div key={prop}>
-                    <label style={{ display: "block", fontSize: 9, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", marginBottom: 2 }}>{prop}</label>
+                    <label style={{ display: "block", fontSize: 9, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 2 }}>{prop}</label>
                     <input
                       type="number"
                       value={selectedField[prop]}
                       onChange={(e) => updateField(selectedField.id, { [prop]: Number(e.target.value) })}
-                      style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none" }}
+                      style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 11, color: "var(--text-faint)", background: "var(--surface)", outline: "none" }}
                     />
                   </div>
                 ))}
@@ -805,8 +805,8 @@ export default function TemplateEditorPage() {
             </div>
 
             {/* Quick Actions (Duplicate & Delete) */}
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Thao tác trường</h4>
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Thao tác trường</h4>
               <div style={{ display: "flex", gap: 6 }}>
                 <button
                   onClick={() => {
@@ -819,13 +819,13 @@ export default function TemplateEditorPage() {
                     setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
                     setSelectedId(newField.id);
                   }}
-                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 11, fontWeight: 600, color: "#334155", cursor: "pointer" }}
+                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 11, fontWeight: 600, color: "var(--text-faint)", cursor: "pointer" }}
                 >
                   📋 Nhân bản
                 </button>
                 <button
                   onClick={() => deleteField(selectedField.id)}
-                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fef2f2", fontSize: 11, fontWeight: 700, color: "#dc2626", cursor: "pointer" }}
+                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid var(--danger-border)", background: "var(--danger-bg)", fontSize: 11, fontWeight: 700, color: "var(--danger-text)", cursor: "pointer" }}
                 >
                   🗑 Xóa trường
                 </button>
