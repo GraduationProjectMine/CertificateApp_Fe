@@ -22,6 +22,20 @@ const initialForm: RegisterForm = {
   adminName: "",
 };
 
+function isUserRejectedError(err: any): boolean {
+  if (!err) return false;
+  if (err.code === 4001 || err.code === "ACTION_REJECTED") return true;
+  if (err.info?.error?.code === 4001) return true;
+  const msg = (err.message || "").toLowerCase();
+  return (
+    msg.includes("user rejected") ||
+    msg.includes("action_rejected") ||
+    msg.includes("user denied") ||
+    msg.includes("ethers-user-denied") ||
+    msg.includes("rejected the request")
+  );
+}
+
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Đăng ký thất bại";
 }
@@ -90,6 +104,9 @@ export default function RegisterPage() {
       }
     } catch (err: any) {
       console.error(err);
+      if (isUserRejectedError(err)) {
+        return;
+      }
       setError("Đã có lỗi xảy ra");
     } finally {
       setIsWalletSubmitting(false);

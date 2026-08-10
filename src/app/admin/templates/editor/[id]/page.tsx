@@ -365,32 +365,32 @@ export default function TemplateEditorPage() {
   const containerHeight = design.page.height;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "var(--page-bg)", fontFamily: "sans-serif", color: "var(--text-main)", transition: "background 0.3s, color 0.3s" }}>
       {/* Top Header Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#fff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "var(--surface)", borderBottom: "1px solid var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => router.push("/admin/templates")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#64748b", padding: 4 }}>←</button>
+          <button onClick={() => router.push("/admin/templates")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-secondary)", padding: 4 }}>←</button>
           <input
             type="text"
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 280 }}
+            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "var(--text-body)", width: 280 }}
             placeholder="Tên mẫu văn bằng"
           />
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* Zoom controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f1f5f9", borderRadius: 8, padding: "2px" }}>
-            <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>−</button>
-            <span style={{ fontSize: 11, color: "#64748b", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>+</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--page-bg)", borderRadius: 8, padding: "2px" }}>
+            <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "var(--text-secondary)" }}>−</button>
+            <span style={{ fontSize: 11, color: "var(--text-secondary)", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "var(--text-secondary)" }}>+</button>
           </div>
 
           {/* Mode Switcher */}
           <button
             onClick={() => setPreviewMode(!previewMode)}
-            style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: previewMode ? "#3b82f6" : "#fff", color: previewMode ? "#fff" : "#64748b", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+            style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border)", background: previewMode ? "#3b82f6" : "var(--surface)", color: previewMode ? "#fff" : "var(--text-secondary)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
           >
             {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
           </button>
@@ -409,13 +409,13 @@ export default function TemplateEditorPage() {
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
         {!previewMode ? (
-          <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
+          <div style={{ width: 220, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, #94a3b8)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
             <button
               onClick={() => addField("image", "organization_logo")}
-              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "#eff6ff", cursor: "pointer", fontSize: 13, color: "#1d4ed8", fontWeight: 700, transition: "all 0.15s" }}
+              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "var(--surface-active)", cursor: "pointer", fontSize: 13, color: "var(--surface-active-text)", fontWeight: 700, transition: "all 0.15s" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-active)"; }}
             >
               <span style={{ fontSize: 16 }}>🏢</span>
               <span>Logo tổ chức</span>
@@ -424,55 +424,55 @@ export default function TemplateEditorPage() {
               <button
                 key={ft.type}
                 onClick={() => addField(ft.type)}
-                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 6, borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", fontSize: 13, color: "#334155", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "#f8faff"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.background = "#fff"; }}
+                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 6, borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: 13, color: "var(--text-body)", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "var(--surface-active)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
               >
                 <span style={{ fontSize: 16 }}>{ft.icon}</span>
                 <span>{ft.label}</span>
               </button>
             ))}
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, #94a3b8)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
             {design.fields.map((f) => (
               <div
                 key={f.id}
                 onClick={() => setSelectedId(f.id)}
-                style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "#64748b", background: selectedId === f.id ? "#f0f7ff" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "var(--text-secondary)", background: selectedId === f.id ? "var(--surface-active)" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
               >
                 <span style={{ fontWeight: 500 }}>{f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}</span>
-                <span style={{ fontSize: 10, color: "#94a3b8" }}>{f.type}</span>
+                <span style={{ fontSize: 10, color: "var(--text-muted, #94a3b8)" }}>{f.type}</span>
               </div>
             ))}
           </div>
         ) : (
           /* Manual Input & Import Record Navigation Side Panel */
-          <div style={{ width: 320, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
-              <p style={{ fontSize: 11, color: "#64748b" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
+          <div style={{ width: 320, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
+            <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid var(--border-subtle)" }}>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
+              <p style={{ fontSize: 11, color: "var(--text-secondary)" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
             </div>
 
             {/* Imported File Record Selector */}
             {importedData && (
-              <div style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: 12, borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
+              <div style={{ marginBottom: 16, background: "var(--success-bg)", border: "1px solid var(--success-border)", padding: 12, borderRadius: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--success-text)", marginBottom: 6 }}>
                   📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
                     onClick={() => handleSelectRowIndex(activeRowIndex - 1)}
                     disabled={activeRowIndex <= 0}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontSize: 11, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
                   >
                     ◄
                   </button>
                   <select
                     value={activeRowIndex}
                     onChange={(e) => handleSelectRowIndex(Number(e.target.value))}
-                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#ffffff", color: "#0f172a" }}
+                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: 11, background: "var(--surface)", color: "var(--text-main)" }}
                   >
                     {importedData.rows.map((r, i) => (
-                      <option key={i} value={i} style={{ background: "#ffffff", color: "#0f172a" }}>
+                      <option key={i} value={i} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
                         Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
                       </option>
                     ))}
@@ -480,7 +480,7 @@ export default function TemplateEditorPage() {
                   <button
                     onClick={() => handleSelectRowIndex(activeRowIndex + 1)}
                     disabled={activeRowIndex >= importedData.rows.length - 1}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, cursor: "pointer", opacity: activeRowIndex >= importedData.rows.length - 1 ? 0.4 : 1 }}
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontSize: 11, cursor: "pointer", opacity: activeRowIndex >= importedData.rows.length - 1 ? 0.4 : 1 }}
                   >
                     ►
                   </button>
@@ -507,12 +507,12 @@ export default function TemplateEditorPage() {
                 { key: "registryNumber", label: "Số vào sổ" },
               ].map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{label}</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 3 }}>{label}</label>
                   <input
                     type="text"
                     value={mockData[key] || ""}
                     onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
-                    style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#1e293b", outline: "none" }}
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, color: "var(--text-body)", background: "var(--surface)", outline: "none" }}
                     placeholder={`Nhập ${label.toLowerCase()}...`}
                   />
                 </div>
@@ -522,7 +522,7 @@ export default function TemplateEditorPage() {
         )}
 
         {/* Center Canvas Workspace */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "#f1f5f9" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "var(--page-bg)" }}>
           <div
             ref={canvasRef}
             onClick={() => { if (!previewMode) setSelectedId(null); }}
