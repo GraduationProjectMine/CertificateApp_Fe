@@ -1,11 +1,12 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { templateApi } from "@/features/templates/services/api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
 import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
 import { QRCodeSVG } from "qrcode.react";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -19,33 +20,56 @@ const DEFAULT_DESIGN: DesignData = {
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
 
-const FIELD_TEMPLATES = [
-  { type: "text" as const, label: "Văn bản", icon: "T" },
-  { type: "image" as const, label: "Hình ảnh", icon: "🖼" },
-  { type: "qr" as const, label: "Mã QR", icon: "▦" },
-  { type: "line" as const, label: "Đường kẻ", icon: "▬" },
-  { type: "rect" as const, label: "Hình chữ nhật", icon: "▮" },
-];
+function getFieldTemplates(t: ReturnType<typeof useI18n>["t"]): Array<{ type: "text" | "image" | "qr" | "line" | "rect"; label: string; icon: string }> {
+  return [
+    { type: "text", label: t("adminTemplateEditor.fieldTypeText"), icon: "T" },
+    { type: "image", label: t("adminTemplateEditor.fieldTypeImage"), icon: "🖼" },
+    { type: "qr", label: t("adminTemplateEditor.fieldTypeQr"), icon: "▦" },
+    { type: "line", label: t("adminTemplateEditor.fieldTypeLine"), icon: "▬" },
+    { type: "rect", label: t("adminTemplateEditor.fieldTypeRect"), icon: "▮" },
+  ];
+}
 
-const FIELD_BINDINGS = [
-  { value: "", label: "--- Văn bản tĩnh ---" },
-  { value: "student_fullName", label: "Họ tên sinh viên" },
-  { value: "certificate_title", label: "Tên văn bằng" },
-  { value: "organization_name", label: "Tên tổ chức" },
-  { value: "organization_logo", label: "Logo tổ chức" },
-  { value: "dob", label: "Ngày sinh" },
-  { value: "placeOfBirth", label: "Nơi sinh" },
-  { value: "gender", label: "Giới tính" },
-  { value: "ethnicity", label: "Dân tộc" },
-  { value: "schoolName", label: "Tên trường" },
-  { value: "examCohort", label: "Khóa học" },
-  { value: "examBoard", label: "Hội đồng thi" },
-  { value: "issueLocation", label: "Nơi cấp" },
-  { value: "issueDate", label: "Ngày cấp" },
-  { value: "serialNumber", label: "Số hiệu" },
-  { value: "registryNumber", label: "Số vào sổ" },
-  { value: "verification_url", label: "URL xác minh (QR)" },
-];
+function getFieldBindings(t: ReturnType<typeof useI18n>["t"]): Array<{ value: string; label: string }> {
+  return [
+    { value: "", label: t("adminTemplateEditor.bindingStatic") },
+    { value: "student_fullName", label: t("adminTemplateEditor.bindingStudentFullName") },
+    { value: "certificate_title", label: t("adminTemplateEditor.bindingCertificateTitle") },
+    { value: "organization_name", label: t("adminTemplateEditor.bindingOrganizationName") },
+    { value: "organization_logo", label: t("adminTemplateEditor.bindingOrganizationLogo") },
+    { value: "dob", label: t("adminTemplateEditor.bindingDob") },
+    { value: "placeOfBirth", label: t("adminTemplateEditor.bindingPlaceOfBirth") },
+    { value: "gender", label: t("adminTemplateEditor.bindingGender") },
+    { value: "ethnicity", label: t("adminTemplateEditor.bindingEthnicity") },
+    { value: "schoolName", label: t("adminTemplateEditor.bindingSchoolName") },
+    { value: "examCohort", label: t("adminTemplateEditor.bindingExamCohort") },
+    { value: "examBoard", label: t("adminTemplateEditor.bindingExamBoard") },
+    { value: "issueLocation", label: t("adminTemplateEditor.bindingIssueLocation") },
+    { value: "issueDate", label: t("adminTemplateEditor.bindingIssueDate") },
+    { value: "serialNumber", label: t("adminTemplateEditor.bindingSerialNumber") },
+    { value: "registryNumber", label: t("adminTemplateEditor.bindingRegistryNumber") },
+    { value: "verification_url", label: t("adminTemplateEditor.bindingVerificationUrl") },
+  ];
+}
+
+function getManualInputFields(t: ReturnType<typeof useI18n>["t"]): Array<{ key: string; label: string }> {
+  return [
+    { key: "student_fullName", label: t("adminTemplateEditor.manualStudentFullName") },
+    { key: "certificate_title", label: t("adminTemplateEditor.manualCertificateTitle") },
+    { key: "organization_name", label: t("adminTemplateEditor.manualOrganizationName") },
+    { key: "dob", label: t("adminTemplateEditor.manualDob") },
+    { key: "placeOfBirth", label: t("adminTemplateEditor.manualPlaceOfBirth") },
+    { key: "gender", label: t("adminTemplateEditor.manualGender") },
+    { key: "ethnicity", label: t("adminTemplateEditor.manualEthnicity") },
+    { key: "schoolName", label: t("adminTemplateEditor.manualSchoolName") },
+    { key: "examCohort", label: t("adminTemplateEditor.manualExamCohort") },
+    { key: "examBoard", label: t("adminTemplateEditor.manualExamBoard") },
+    { key: "issueLocation", label: t("adminTemplateEditor.manualIssueLocation") },
+    { key: "issueDate", label: t("adminTemplateEditor.manualIssueDate") },
+    { key: "serialNumber", label: t("adminTemplateEditor.manualSerialNumber") },
+    { key: "registryNumber", label: t("adminTemplateEditor.manualRegistryNumber") },
+  ];
+}
 
 function generateId() { return `fld_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`; }
 
@@ -53,6 +77,7 @@ export default function TemplateEditorPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const { t } = useI18n();
 
   const [template, setTemplate] = useState<CertificateTemplate | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +118,10 @@ export default function TemplateEditorPage() {
   } | null>(null);
   const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
 
+  const fieldTemplates = useMemo(() => getFieldTemplates(t), [t]);
+  const fieldBindings = useMemo(() => getFieldBindings(t), [t]);
+  const manualInputFields = useMemo(() => getManualInputFields(t), [t]);
+
   useEffect(() => {
     // Fetch organization profile for logo
     issuerApi.getProfile().then((profile) => {
@@ -108,7 +137,7 @@ export default function TemplateEditorPage() {
 
     if (id === "new") {
       setDesign(DEFAULT_DESIGN);
-      setTemplateName("Mẫu văn bằng mới");
+      setTemplateName(t("adminTemplateEditor.newTemplateName"));
       setLoading(false);
       return;
     }
@@ -119,14 +148,14 @@ export default function TemplateEditorPage() {
         setDesign(data.design_data || DEFAULT_DESIGN);
         setTemplateName(data.name);
       } catch (err: any) {
-        alert(err.message || "Failed to load template");
+        alert(err.message || t("adminTemplateEditor.error.load"));
         router.push("/admin/templates");
       } finally {
         setLoading(false);
       }
     };
     fetchTemplate();
-  }, [id, router]);
+  }, [id, router, t]);
 
   const selectedField = design.fields.find((f) => f.id === selectedId) || null;
 
@@ -240,10 +269,10 @@ export default function TemplateEditorPage() {
         router.push(`/admin/templates/editor/${created.id}`);
       } else {
         await templateApi.update(id, { name: templateName, design_data: design as any });
-        alert("Đã lưu mẫu thành công!");
+        alert(t("adminTemplateEditor.saveSuccess"));
       }
     } catch (err: any) {
-      alert(err.message || "Lưu mẫu thất bại");
+      alert(err.message || t("adminTemplateEditor.error.save"));
     } finally {
       setSaving(false);
     }
@@ -256,7 +285,7 @@ export default function TemplateEditorPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminTemplateEditor.loading")}</div>;
   }
 
   const renderFieldContent = (field: TemplateField) => {
@@ -294,15 +323,15 @@ export default function TemplateEditorPage() {
           return (
             <img
               src={imgSrc}
-              alt={field.label || "Logo tổ chức"}
+              alt={field.label || t("adminTemplateEditor.logoLabel")}
               style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
             />
           );
         }
         return (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#64748b", fontSize: 10, padding: 4, textAlign: "center" }}>
-            <span style={{ fontSize: 16 }}>🏢 Logo</span>
-            <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}>{organizationLogo ? "Logo tổ chức" : "Chưa có logo trong Cài đặt"}</span>
+            <span style={{ fontSize: 16 }}>🏢 {t("adminTemplateEditor.logoLabel")}</span>
+            <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}>{organizationLogo ? t("adminTemplateEditor.logoLabel") : t("adminTemplateEditor.noLogoInSettings")}</span>
           </div>
         );
       }
@@ -328,10 +357,10 @@ export default function TemplateEditorPage() {
         if (val) {
           return <span>{(field.label ? `${field.label} ` : "") + val}</span>;
         }
-        const label = FIELD_BINDINGS.find((b) => b.value === field.binding)?.label || field.binding;
+        const label = fieldBindings.find((b) => b.value === field.binding)?.label || field.binding;
         return <span style={{ opacity: previewMode ? 0.4 : 0.7 }}>[{label}]</span>;
       }
-      return <span>{field.text || "Văn bản"}</span>;
+      return <span>{field.text || t("adminTemplateEditor.textDefault")}</span>;
     })();
 
     return (
@@ -375,7 +404,7 @@ export default function TemplateEditorPage() {
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "var(--text-body)", width: 280 }}
-            placeholder="Tên mẫu văn bằng"
+            placeholder={t("adminTemplateEditor.namePlaceholder")}
           />
         </div>
 
@@ -392,7 +421,7 @@ export default function TemplateEditorPage() {
             onClick={() => setPreviewMode(!previewMode)}
             style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border)", background: previewMode ? "#3b82f6" : "var(--surface)", color: previewMode ? "#fff" : "var(--text-secondary)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
           >
-            {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
+            {previewMode ? t("adminTemplateEditor.modeDesign") : t("adminTemplateEditor.modePreview")}
           </button>
 
           {/* Save button */}
@@ -401,7 +430,7 @@ export default function TemplateEditorPage() {
             disabled={saving || !templateName.trim()}
             style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving || !templateName.trim() ? 0.6 : 1 }}
           >
-            {saving ? "Đang lưu..." : "Lưu mẫu"}
+            {saving ? t("adminTemplateEditor.saving") : t("adminTemplateEditor.save")}
           </button>
         </div>
       </div>
@@ -410,7 +439,7 @@ export default function TemplateEditorPage() {
         {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
         {!previewMode ? (
           <div style={{ width: 220, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>{t("adminTemplateEditor.addFieldTitle")}</h3>
             <button
               onClick={() => addField("image", "organization_logo")}
               style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "var(--surface-active)", cursor: "pointer", fontSize: 13, color: "var(--surface-active-text)", fontWeight: 700, transition: "all 0.15s" }}
@@ -418,9 +447,9 @@ export default function TemplateEditorPage() {
               onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-active)"; }}
             >
               <span style={{ fontSize: 16 }}>🏢</span>
-              <span>Logo tổ chức</span>
+              <span>{t("adminTemplateEditor.logoLabel")}</span>
             </button>
-            {FIELD_TEMPLATES.map((ft) => (
+            {fieldTemplates.map((ft) => (
               <button
                 key={ft.type}
                 onClick={() => addField(ft.type)}
@@ -432,14 +461,14 @@ export default function TemplateEditorPage() {
                 <span>{ft.label}</span>
               </button>
             ))}
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>{t("adminTemplateEditor.fieldsTitle")} ({design.fields.length})</h3>
             {design.fields.map((f) => (
               <div
                 key={f.id}
                 onClick={() => setSelectedId(f.id)}
                 style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "var(--text-secondary)", background: selectedId === f.id ? "var(--surface-active)" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
               >
-                <span style={{ fontWeight: 500 }}>{f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}</span>
+                <span style={{ fontWeight: 500 }}>{f.binding ? fieldBindings.find((b) => b.value === f.binding)?.label || f.binding : f.text || t("adminTemplateEditor.textDefault")}</span>
                 <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{f.type}</span>
               </div>
             ))}
@@ -448,15 +477,15 @@ export default function TemplateEditorPage() {
           /* Manual Input & Import Record Navigation Side Panel */
           <div style={{ width: 320, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
             <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid var(--border-subtle)" }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
-              <p style={{ fontSize: 11, color: "var(--text-secondary)" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)", marginBottom: 4 }}>{t("adminTemplateEditor.inputDataTitle")}</h3>
+              <p style={{ fontSize: 11, color: "var(--text-secondary)" }}>{t("adminTemplateEditor.inputDataDescription")}</p>
             </div>
 
             {/* Imported File Record Selector */}
             {importedData && (
               <div style={{ marginBottom: 16, background: "var(--success-bg)", border: "1px solid var(--success-border)", padding: 12, borderRadius: 10 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--success-text)", marginBottom: 6 }}>
-                  📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
+                  📁 {importedData.fileName} ({importedData.totalRows} {t("adminTemplateEditor.recordUnit")})
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
@@ -473,7 +502,7 @@ export default function TemplateEditorPage() {
                   >
                     {importedData.rows.map((r, i) => (
                       <option key={i} value={i} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
-                        Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
+                        {t("adminTemplateEditor.rowLabel")} {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `${t("adminTemplateEditor.recordLabel")} ${r.rowNumber}`}
                       </option>
                     ))}
                   </select>
@@ -490,22 +519,7 @@ export default function TemplateEditorPage() {
 
             {/* Manual Form Inputs for Certificate Fields */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { key: "student_fullName", label: "Họ và tên sinh viên" },
-                { key: "certificate_title", label: "Tên văn bằng" },
-                { key: "organization_name", label: "Tên tổ chức / Trường" },
-                { key: "dob", label: "Ngày sinh" },
-                { key: "placeOfBirth", label: "Nơi sinh" },
-                { key: "gender", label: "Giới tính" },
-                { key: "ethnicity", label: "Dân tộc" },
-                { key: "schoolName", label: "Đơn vị đào tạo" },
-                { key: "examCohort", label: "Khóa học" },
-                { key: "examBoard", label: "Hội đồng thi" },
-                { key: "issueLocation", label: "Nơi cấp" },
-                { key: "issueDate", label: "Ngày cấp" },
-                { key: "serialNumber", label: "Số hiệu" },
-                { key: "registryNumber", label: "Số vào sổ" },
-              ].map(({ key, label }) => (
+              {manualInputFields.map(({ key, label }) => (
                 <div key={key}>
                   <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 3 }}>{label}</label>
                   <input
@@ -513,7 +527,7 @@ export default function TemplateEditorPage() {
                     value={mockData[key] || ""}
                     onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
                     style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, color: "var(--text-body)", background: "var(--surface)", outline: "none" }}
-                    placeholder={`Nhập ${label.toLowerCase()}...`}
+                    placeholder={`${t("adminTemplateEditor.enterPrefix")} ${label.toLowerCase()}...`}
                   />
                 </div>
               ))}
@@ -580,34 +594,34 @@ export default function TemplateEditorPage() {
         {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
           <div style={{ width: 280, background: "var(--surface)", borderLeft: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-body)", marginBottom: 16 }}>Thuộc tính trường</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-body)", marginBottom: 16 }}>{t("adminTemplateEditor.propsTitle")}</h3>
 
             {/* Field Type Selector */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại trường</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.fieldTypeLabel")}</label>
               <select
                 value={selectedField.type}
                 onChange={(e) => updateField(selectedField.id, { type: e.target.value as any })}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
               >
-                <option value="text" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Văn bản</option>
-                <option value="image" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Hình ảnh / Logo</option>
-                <option value="qr" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Mã QR</option>
-                <option value="line" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Đường kẻ</option>
-                <option value="rect" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Hình chữ nhật</option>
+                <option value="text" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeText")}</option>
+                <option value="image" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.typeImageLogo")}</option>
+                <option value="qr" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeQr")}</option>
+                <option value="line" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeLine")}</option>
+                <option value="rect" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeRect")}</option>
               </select>
             </div>
 
             {/* Dynamic Binding Selector */}
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.bindingLabel")}</label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
                   style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
                 >
-                  {FIELD_BINDINGS.map((b) => (
+                  {fieldBindings.map((b) => (
                     <option key={b.value} value={b.value} style={{ background: "var(--surface)", color: "var(--text-main)" }}>{b.label}</option>
                   ))}
                 </select>
@@ -617,9 +631,9 @@ export default function TemplateEditorPage() {
             {/* Missing Organization Logo Alert if not configured */}
             {!organizationLogo && (selectedField.type === "image" || selectedField.binding === "organization_logo") && (
               <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning-border)", padding: 10, borderRadius: 8, fontSize: 11, color: "var(--warning-text)", marginBottom: 14 }}>
-                <div>⚠️ Chưa có logo trong Cài đặt tổ chức.</div>
+                <div>{t("adminTemplateEditor.noLogoAlert")}</div>
                 <Link href="/admin/settings" target="_blank" style={{ color: "var(--warning-text)", fontWeight: 700, textDecoration: "underline", marginTop: 4, display: "inline-block" }}>
-                  👉 Tải logo tại Cài đặt (Settings)
+                  {t("adminTemplateEditor.uploadLogoLink")}
                 </Link>
               </div>
             )}
@@ -627,7 +641,7 @@ export default function TemplateEditorPage() {
             {/* Static Text Content */}
             {!selectedField.dynamic && selectedField.type === "text" && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung văn bản</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.textContentLabel")}</label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
@@ -640,7 +654,7 @@ export default function TemplateEditorPage() {
             {/* Line / Rect Colors */}
             {(selectedField.type === "line" || selectedField.type === "rect") && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
+                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.colorLabel")}</label>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <input
                     type="color"
@@ -663,22 +677,22 @@ export default function TemplateEditorPage() {
               <>
                 {/* Font Family */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Phông chữ</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.fontLabel")}</label>
                   <select
                     value={selectedField.font || "sans-serif"}
                     onChange={(e) => updateField(selectedField.id, { font: e.target.value })}
                     style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
                   >
-                    <option value="sans-serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Sans-serif (Mặc định)</option>
-                    <option value="serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Serif (Cổ điển)</option>
-                    <option value="monospace" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Monospace (Mã số)</option>
-                    <option value="script" style={{ background: "var(--surface)", color: "var(--text-main)" }}>Script (Nghệ thuật)</option>
+                    <option value="sans-serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontSans")}</option>
+                    <option value="serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontSerif")}</option>
+                    <option value="monospace" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontMono")}</option>
+                    <option value="script" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontScript")}</option>
                   </select>
                 </div>
 
                 {/* Text Size Editor with Stepper & Quick Presets */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ (px)</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.fontSizeLabel")}</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.max(8, (selectedField.size || 14) - 1) })}
@@ -721,7 +735,7 @@ export default function TemplateEditorPage() {
 
                 {/* Text Color */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu văn bản</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.textColorLabel")}</label>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <input
                       type="color"
@@ -740,7 +754,7 @@ export default function TemplateEditorPage() {
 
                 {/* Style & Alignment Toolbar */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Định dạng & Căn chỉnh</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.formatAlignLabel")}</label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button
                       onClick={() => updateField(selectedField.id, { bold: !selectedField.bold })}
@@ -749,7 +763,7 @@ export default function TemplateEditorPage() {
                         background: selectedField.bold ? "var(--surface-active)" : "var(--surface)", color: selectedField.bold ? "var(--surface-active-text)" : "var(--text-faint)",
                         fontWeight: "bold", fontSize: 14, cursor: "pointer"
                       }}
-                      title="In đậm"
+                      title={t("adminTemplateEditor.boldTitle")}
                     >
                       B
                     </button>
@@ -760,7 +774,7 @@ export default function TemplateEditorPage() {
                         background: selectedField.italic ? "var(--surface-active)" : "var(--surface)", color: selectedField.italic ? "var(--surface-active-text)" : "var(--text-faint)",
                         fontStyle: "italic", fontSize: 14, cursor: "pointer"
                       }}
-                      title="In nghiêng"
+                      title={t("adminTemplateEditor.italicTitle")}
                     >
                       I
                     </button>
@@ -776,7 +790,7 @@ export default function TemplateEditorPage() {
                           background: selectedField.align === a ? "var(--surface-active)" : "var(--surface)", color: selectedField.align === a ? "var(--surface-active-text)" : "var(--text-faint)",
                           fontSize: 12, fontWeight: 700, cursor: "pointer"
                         }}
-                        title={a === "left" ? "Căn trái" : a === "center" ? "Căn giữa" : "Căn phải"}
+                        title={a === "left" ? t("adminTemplateEditor.alignLeft") : a === "center" ? t("adminTemplateEditor.alignCenter") : t("adminTemplateEditor.alignRight")}
                       >
                         {a === "left" ? "⬅" : a === "center" ? "↔" : "➡"}
                       </button>
@@ -788,7 +802,7 @@ export default function TemplateEditorPage() {
 
             {/* Position & Size */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Vị trí & Kích thước</h4>
+              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("adminTemplateEditor.positionSizeTitle")}</h4>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 {(["x", "y", "w", "h"] as const).map((prop) => (
                   <div key={prop}>
@@ -806,7 +820,7 @@ export default function TemplateEditorPage() {
 
             {/* Quick Actions (Duplicate & Delete) */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Thao tác trường</h4>
+              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>{t("adminTemplateEditor.fieldActionsTitle")}</h4>
               <div style={{ display: "flex", gap: 6 }}>
                 <button
                   onClick={() => {
@@ -821,13 +835,13 @@ export default function TemplateEditorPage() {
                   }}
                   style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 11, fontWeight: 600, color: "var(--text-faint)", cursor: "pointer" }}
                 >
-                  📋 Nhân bản
+                  {t("adminTemplateEditor.duplicateField")}
                 </button>
                 <button
                   onClick={() => deleteField(selectedField.id)}
                   style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid var(--danger-border)", background: "var(--danger-bg)", fontSize: 11, fontWeight: 700, color: "var(--danger-text)", cursor: "pointer" }}
                 >
-                  🗑 Xóa trường
+                  {t("adminTemplateEditor.deleteField")}
                 </button>
               </div>
             </div>

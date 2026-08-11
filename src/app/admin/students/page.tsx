@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
@@ -13,6 +14,7 @@ const ITEMS_PER_PAGE = 10;
 
 export default function AdminStudentsPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,7 +32,7 @@ export default function AdminStudentsPage() {
   useEffect(() => {
     studentApi.list()
       .then(setStudents)
-      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải danh sách sinh viên"))
+      .catch((err) => setError(err instanceof Error ? err.message : t("adminStudents.errors.loadFailed")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -40,7 +42,7 @@ export default function AdminStudentsPage() {
     try {
       setStudents(await studentApi.list());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể tải danh sách sinh viên");
+      setError(err instanceof Error ? err.message : t("adminStudents.errors.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,7 @@ export default function AdminStudentsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createForm.name || !createForm.email || !createForm.password) {
-      setCreateError("Vui lòng điền đầy đủ thông tin");
+      setCreateError(t("adminStudents.errors.fillAllFields"));
       return;
     }
     setCreating(true);
@@ -61,7 +63,7 @@ export default function AdminStudentsPage() {
       setCreateForm({ name: "", email: "", password: "" });
       await refresh();
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : "Tạo sinh viên thất bại");
+      setCreateError(err instanceof Error ? err.message : t("adminStudents.errors.createFailed"));
     } finally {
       setCreating(false);
     }
@@ -79,7 +81,7 @@ export default function AdminStudentsPage() {
         current.map((s) => (s.student_id === id ? { ...s, isActive: false } : s)),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể khóa tài khoản");
+      setError(err instanceof Error ? err.message : t("adminStudents.errors.lockFailed"));
     } finally {
       setLockingId("");
     }
@@ -113,10 +115,10 @@ export default function AdminStudentsPage() {
       <ConfirmModal
         open={!!lockTarget}
         onClose={() => setLockTarget(null)}
-        title="Khóa tài khoản"
-        message={lockTarget ? `Bạn có chắc chắn muốn khóa tài khoản của sinh viên ${lockTarget.student_fullName}? Sinh viên sẽ không thể đăng nhập vào hệ thống.` : ""}
-        confirmLabel="Khóa"
-        cancelLabel="Hủy"
+        title={t("adminStudents.lockModal.title")}
+        message={lockTarget ? `${t("adminStudents.lockModal.message")} ${lockTarget.student_fullName}${t("adminStudents.lockModal.messageSuffix")}` : ""}
+        confirmLabel={t("adminStudents.lockModal.confirmLabel")}
+        cancelLabel={t("adminStudents.lockModal.cancelLabel")}
         variant="warning"
         icon="warning"
         onConfirm={() => void handleLock()}
@@ -125,48 +127,48 @@ export default function AdminStudentsPage() {
       <FormModal
         open={showCreate}
         onClose={() => { setShowCreate(false); setShowPassword(false); setCreateError(""); setCreateForm({ name: "", email: "", password: "" }); }}
-        title="Thêm sinh viên"
-        description="Tạo tài khoản sinh viên mới để cấp văn bằng."
+        title={t("adminStudents.createModal.title")}
+        description={t("adminStudents.createModal.description")}
         onSubmit={(e) => void handleCreate(e)}
         submitting={creating}
-        submitLabel="Tạo sinh viên"
+        submitLabel={t("adminStudents.createModal.submitLabel")}
       >
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Họ và tên *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStudents.createModal.fullNameLabel")} *</label>
           <input
             type="text"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.name}
             onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-            placeholder="Nguyễn Văn A"
+            placeholder={t("adminStudents.createModal.fullNamePlaceholder")}
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStudents.createModal.emailLabel")} *</label>
           <input
             type="email"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.email}
             onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-            placeholder="student@school.edu.vn"
+            placeholder={t("adminStudents.createModal.emailPlaceholder")}
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStudents.createModal.passwordLabel")} *</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               className="w-full px-3 py-2.5 pr-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
               value={createForm.password}
               onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-              placeholder="Tối thiểu 8 ký tự"
+              placeholder={t("adminStudents.createModal.passwordPlaceholder")}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
-              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              title={showPassword ? t("adminStudents.createModal.hidePassword") : t("adminStudents.createModal.showPassword")}
             >
               {showPassword ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -186,12 +188,12 @@ export default function AdminStudentsPage() {
 
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Quản lý Sinh viên</h1>
-          <p className={styles._4}>Quản lý danh sách sinh viên đã tạo để cấp văn bằng.</p>
+          <h1 className={styles._3}>{t("adminStudents.headerTitle")}</h1>
+          <p className={styles._4}>{t("adminStudents.headerDescription")}</p>
         </div>
         <div className={styles._5}>
           <button onClick={() => setShowCreate(true)} className={styles._6}>
-            + Thêm sinh viên
+            + {t("adminStudents.addStudent")}
           </button>
           <button onClick={() => router.push("/admin/students/import")} className={styles._7}>
             Import CSV
@@ -202,7 +204,7 @@ export default function AdminStudentsPage() {
       <div className={styles._8}>
         <input
           type="text"
-          placeholder="Tìm kiếm theo tên, email, ID..."
+          placeholder={t("adminStudents.searchPlaceholder")}
           className={styles._9}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -211,31 +213,31 @@ export default function AdminStudentsPage() {
 
       {error && (
         <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600 dark:bg-red-950/20">
-          {error} <button onClick={() => void refresh()} className="ml-2 underline">Thử lại</button>
+          {error} <button onClick={() => void refresh()} className="ml-2 underline">{t("adminStudents.retry")}</button>
         </div>
       )}
 
       <div className={styles._12}>
         <div className={styles._13}>
           {loading ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải danh sách sinh viên...</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminStudents.loading")}</div>
           ) : students.length === 0 ? (
             <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">
-              Chưa có sinh viên nào.{' '}
-              <button onClick={() => setShowCreate(true)} className="text-primary underline">Tạo sinh viên đầu tiên</button>
+              {t("adminStudents.empty.title")}{' '}
+              <button onClick={() => setShowCreate(true)} className="text-primary underline">{t("adminStudents.empty.createFirst")}</button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không tìm thấy kết quả.</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminStudents.noResults")}</div>
           ) : (
             <>
               <table className={styles._14}>
                 <thead>
                   <tr className={styles._15}>
                     <th className={styles._16}>ID</th>
-                    <th className={styles._16}>Họ tên</th>
-                    <th className={styles._16}>Email</th>
-                    <th className={styles._16}>Trạng thái</th>
-                    <th className={styles._17}>Thao tác</th>
+                    <th className={styles._16}>{t("adminStudents.table.fullName")}</th>
+                    <th className={styles._16}>{t("adminStudents.table.email")}</th>
+                    <th className={styles._16}>{t("adminStudents.table.status")}</th>
+                    <th className={styles._17}>{t("adminStudents.table.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className={styles._18}>
@@ -247,7 +249,7 @@ export default function AdminStudentsPage() {
                           onClick={() => handleCopyId(student.student_id)}
                           className="ml-2 text-[9px] text-primary hover:underline"
                         >
-                          {copiedId === student.student_id ? "✓ Copied" : "Copy ID"}
+                          {copiedId === student.student_id ? t("adminStudents.copied") : t("adminStudents.copyId")}
                         </button>
                       </td>
                       <td className={styles._21}>{student.student_fullName}</td>
@@ -262,14 +264,14 @@ export default function AdminStudentsPage() {
                       </td>
                       <td className={styles._25}>
                         <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
-                          Xem / Sửa
+                          {t("adminStudents.viewEdit")}
                         </ActionLink>
                         {student.isActive ? (
                           <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>
-                            {lockingId === student.student_id ? "Đang khóa..." : "Khóa"}
+                            {lockingId === student.student_id ? t("adminStudents.locking") : t("adminStudents.lock")}
                           </ActionButton>
                         ) : (
-                          <ActionText>Đã khóa</ActionText>
+                          <ActionText>{t("adminStudents.locked")}</ActionText>
                         )}
                       </td>
                     </tr>

@@ -2,9 +2,11 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi } from "@/features/students/services/student.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function CreateStudentPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -13,7 +15,7 @@ export default function CreateStudentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.password) {
-      setError("Vui lòng điền đầy đủ thông tin");
+      setError(t("adminStudentCreate.errors.fillAllFields"));
       return;
     }
     setSubmitting(true);
@@ -22,7 +24,7 @@ export default function CreateStudentPage() {
       await studentApi.create(form);
       router.push("/admin/students");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Tạo sinh viên thất bại");
+      setError(err instanceof Error ? err.message : t("adminStudentCreate.errors.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -31,46 +33,46 @@ export default function CreateStudentPage() {
   return (
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Thêm sinh viên</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tạo tài khoản sinh viên mới để cấp văn bằng.</p>
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("adminStudentCreate.title")}</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("adminStudentCreate.description")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-4">
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Họ và tên *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStudentCreate.fullNameLabel")} *</label>
           <input
             type="text"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="Nguyễn Văn A"
+            placeholder={t("adminStudentCreate.fullNamePlaceholder")}
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStudentCreate.emailLabel")} *</label>
           <input
             type="email"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="student@school.edu.vn"
+            placeholder={t("adminStudentCreate.emailPlaceholder")}
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStudentCreate.passwordLabel")} *</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               className="w-full px-3 py-2.5 pr-10 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="Tối thiểu 8 ký tự, 1 hoa, 1 thường, 1 số"
+              placeholder={t("adminStudentCreate.passwordPlaceholder")}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
-              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              title={showPassword ? t("adminStudentCreate.hidePassword") : t("adminStudentCreate.showPassword")}
             >
               {showPassword ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -94,14 +96,14 @@ export default function CreateStudentPage() {
             disabled={submitting}
             className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
           >
-            {submitting ? "Đang tạo..." : "Tạo sinh viên"}
+            {submitting ? t("adminStudentCreate.creating") : t("adminStudentCreate.submitLabel")}
           </button>
           <button
             type="button"
             onClick={() => router.push("/admin/students")}
             className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
           >
-            Hủy
+            {t("adminStudentCreate.cancel")}
           </button>
         </div>
       </form>

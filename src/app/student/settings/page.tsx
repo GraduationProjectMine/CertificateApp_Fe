@@ -3,10 +3,12 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { notificationApi } from "@/features/notifications/services/notification.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
   const [emailNotif, setEmailNotif] = useState(false);
   const [loadingPref, setLoadingPref] = useState(true);
 
@@ -29,20 +31,20 @@ export default function SettingsPage() {
 
   const sections = [
     {
-      title: "Tài khoản",
+      title: t("studentSettings.sections.account.title"),
       items: [
-        { label: "Hồ sơ cá nhân", desc: "Cập nhật thông tin cá nhân của bạn", href: "/student/profile" },
-        { label: "Đổi mật khẩu", desc: "Thay đổi mật khẩu đăng nhập", href: "/student/profile/change-password" },
+        { label: t("studentSettings.sections.account.profileLabel"), desc: t("studentSettings.sections.account.profileDesc"), href: "/student/profile" },
+        { label: t("studentSettings.sections.account.changePasswordLabel"), desc: t("studentSettings.sections.account.changePasswordDesc"), href: "/student/profile/change-password" },
       ],
     },
     {
-      title: "Thông báo",
+      title: t("studentSettings.sections.notifications.title"),
       items: [
-        { label: "Thông báo", desc: "Xem các thông báo về văn bằng", href: "/student/notifications" },
+        { label: t("studentSettings.sections.notifications.notificationsLabel"), desc: t("studentSettings.sections.notifications.notificationsDesc"), href: "/student/notifications" },
       ],
     },
     {
-      title: "Thông tin tài khoản",
+      title: t("studentSettings.sections.accountInfo.title"),
       items: [],
     },
   ];
@@ -50,34 +52,34 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Cài đặt</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Quản lý tài khoản và tùy chỉnh.</p>
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("studentSettings.header.title")}</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("studentSettings.header.description")}</p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-5 text-sm space-y-3">
-        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">Thông tin tài khoản</h3>
+        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">{t("studentSettings.accountInfo.title")}</h3>
         <dl className="space-y-2">
           <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Họ tên</dt>
+            <dt className="text-gray-500 dark:text-gray-400 text-xs">{t("studentSettings.accountInfo.fullName")}</dt>
             <dd className="font-medium text-gray-900 dark:text-white text-xs">{user?.name}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Email</dt>
+            <dt className="text-gray-500 dark:text-gray-400 text-xs">{t("studentSettings.accountInfo.email")}</dt>
             <dd className="font-medium text-gray-900 dark:text-white text-xs">{user?.email}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Vai trò</dt>
-            <dd className="font-medium text-gray-900 dark:text-white text-xs">Sinh viên</dd>
+            <dt className="text-gray-500 dark:text-gray-400 text-xs">{t("studentSettings.accountInfo.role")}</dt>
+            <dd className="font-medium text-gray-900 dark:text-white text-xs">{t("studentSettings.accountInfo.roleValue")}</dd>
           </div>
         </dl>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-5 text-sm space-y-4">
-        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">Tuỳ chọn thông báo</h3>
+        <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider">{t("studentSettings.notifPrefs.title")}</h3>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Thông báo qua email</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Nhận thông báo qua email khi có văn bằng mới</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("studentSettings.notifPrefs.emailLabel")}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t("studentSettings.notifPrefs.emailDesc")}</p>
           </div>
           {loadingPref ? (
             <div className="w-10 h-6 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />

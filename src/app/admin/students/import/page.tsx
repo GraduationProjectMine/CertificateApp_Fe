@@ -2,9 +2,11 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi, type ImportResult } from "@/features/students/services/student.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function ImportStudentsPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -15,12 +17,12 @@ export default function ImportStudentsPage() {
     const f = e.target.files?.[0];
     if (f) {
       if (!f.name.endsWith('.csv')) {
-        setError('Chỉ hỗ trợ file CSV');
+        setError(t("adminStudentImport.errors.onlyCsv"));
         setFile(null);
         return;
       }
       if (f.size > 5 * 1024 * 1024) {
-        setError('File không được quá 5MB');
+        setError(t("adminStudentImport.errors.fileTooLarge"));
         setFile(null);
         return;
       }
@@ -38,7 +40,7 @@ export default function ImportStudentsPage() {
       const res = await studentApi.import(file);
       setResult(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import thất bại");
+      setError(err instanceof Error ? err.message : t("adminStudentImport.errors.importFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -51,28 +53,28 @@ export default function ImportStudentsPage() {
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Import sinh viên từ CSV</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tạo tài khoản hàng loạt cho sinh viên bằng file CSV.</p>
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("adminStudentImport.title")}</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("adminStudentImport.description")}</p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">File mẫu</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tải file mẫu để biết định dạng đúng.</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("adminStudentImport.template.title")}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t("adminStudentImport.template.description")}</p>
           </div>
           <button
             onClick={handleDownloadTemplate}
             className="px-4 py-2 text-xs font-bold text-primary border border-primary/30 rounded-xl hover:bg-primary/5 transition-all"
           >
-            Tải file mẫu
+            {t("adminStudentImport.template.download")}
           </button>
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-800" />
 
         <div>
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Upload file CSV</h3>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">{t("adminStudentImport.upload.title")}</h3>
           <label
             className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-8 cursor-pointer transition-all ${
               file
@@ -90,8 +92,8 @@ export default function ImportStudentsPage() {
               </div>
             ) : (
               <div className="text-center">
-                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Nhấn để chọn file CSV</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Cột bắt buộc: name, email</p>
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">{t("adminStudentImport.upload.clickToSelect")}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t("adminStudentImport.upload.requiredColumns")}</p>
               </div>
             )}
             <input
@@ -110,7 +112,7 @@ export default function ImportStudentsPage() {
             disabled={submitting}
             className="w-full px-5 py-3 text-sm font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
           >
-            {submitting ? "Đang xử lý..." : `Import ${file.name}`}
+            {submitting ? t("adminStudentImport.processing") : `${t("adminStudentImport.importButton")} ${file.name}`}
           </button>
         )}
 
@@ -127,21 +129,21 @@ export default function ImportStudentsPage() {
                 ? "bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50"
                 : "bg-red-50 dark:bg-red-950/20 border border-red-200/50"
             }`}>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Kết quả import</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">{t("adminStudentImport.result.title")}</h3>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
                   <p className="text-2xl font-black text-gray-900 dark:text-white">{result.total_rows}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Tổng dòng</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">{t("adminStudentImport.result.totalRows")}</p>
                 </div>
                 <div>
                   <p className="text-2xl font-black text-green-600">{result.success_rows}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Thành công</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">{t("adminStudentImport.result.success")}</p>
                 </div>
                 <div>
                   <p className={`text-2xl font-black ${result.failed_rows > 0 ? "text-red-600" : "text-gray-400 dark:text-gray-500"}`}>
                     {result.failed_rows}
                   </p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Thất bại</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">{t("adminStudentImport.result.failed")}</p>
                 </div>
               </div>
             </div>
@@ -150,11 +152,11 @@ export default function ImportStudentsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
-                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">Dòng</th>
-                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">Họ tên</th>
-                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">Email</th>
-                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">Trạng thái</th>
-                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">Mật khẩu</th>
+                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImport.result.table.row")}</th>
+                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImport.result.table.name")}</th>
+                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImport.result.table.email")}</th>
+                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImport.result.table.status")}</th>
+                    <th className="text-left px-3 py-2 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImport.result.table.password")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -169,7 +171,7 @@ export default function ImportStudentsPage() {
                             ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400'
                             : 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400'
                         }`}>
-                          {r.status === 'success' ? 'OK' : r.error || 'Lỗi'}
+                          {r.status === 'success' ? t("adminStudentImport.result.statusOk") : r.error || t("adminStudentImport.result.errorLabel")}
                         </span>
                       </td>
                       <td className="px-3 py-2">
@@ -190,13 +192,13 @@ export default function ImportStudentsPage() {
                 onClick={() => { setFile(null); setResult(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                 className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
               >
-                Import tiếp
+                {t("adminStudentImport.importAnother")}
               </button>
               <button
                 onClick={() => router.push("/admin/students")}
                 className="flex-1 px-4 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
               >
-                Xem danh sách sinh viên
+                {t("adminStudentImport.viewStudents")}
               </button>
             </div>
           </div>

@@ -4,8 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
+import { useI18n } from "@/features/i18n/I18nContext";
 import type { User } from "@/features/auth/types";
 import ThemeToggle from "@/components/common/ThemeToggle";
+import LanguageToggle from "@/components/common/LanguageToggle";
 import Tooltip from "@/components/common/Tooltip";
 
 interface AdminTopbarProps {
@@ -14,19 +16,20 @@ interface AdminTopbarProps {
   onLogout: () => void;
 }
 
-function getBreadcrumbs(pathname: string) {
+function getBreadcrumbs(pathname: string, t: (path: string) => string) {
   const segments = pathname.split("/").filter(Boolean);
   return segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
-    const item = menuItems.find((m) => m.path === href) || { title: segment };
-    const displayTitle =
-      segment === "admin"
-        ? "Quản trị"
-        : segment === "certificates"
-        ? "Văn bằng"
-        : segment === "issue"
-        ? "Cấp mới "
-        : item.title;
+    const item = menuItems.find((m) => m.path === href);
+    const displayTitle = item
+      ? t(item.titleKey)
+      : segment === "admin"
+      ? t("adminShell.topbar.breadcrumbAdmin")
+      : segment === "certificates"
+      ? t("adminShell.topbar.breadcrumbCertificates")
+      : segment === "issue"
+      ? t("adminShell.topbar.breadcrumbIssue")
+      : segment;
 
     return {
       title: displayTitle.charAt(0).toUpperCase() + displayTitle.slice(1),
@@ -38,12 +41,13 @@ function getBreadcrumbs(pathname: string) {
 
 export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopbarProps) {
   const pathname = usePathname();
-  const breadcrumbs = getBreadcrumbs(pathname);
+  const { t } = useI18n();
+  const breadcrumbs = getBreadcrumbs(pathname, t);
 
   return (
     <header className={styles._1}>
       <div className={styles._2}>
-        <Tooltip content="Mở danh mục Menu" position="bottom">
+        <Tooltip content={t("adminShell.topbar.openMenuTooltip")} position="bottom">
           <button
             onClick={onMenuToggle}
             className={styles._3}
@@ -56,7 +60,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
         </Tooltip>
 
         <nav className={styles._5}>
-          <span className={styles._6}>Cổng trường</span>
+          <span className={styles._6}>{t("adminShell.topbar.portalLabel")}</span>
           {breadcrumbs.map((crumb) => (
             <React.Fragment key={crumb.href}>
               <span className={styles._7}>/</span>
@@ -74,7 +78,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
 
       <div className={styles._2}>
         {user.loginType === "metamask" && (
-          <Tooltip content={`Ví MetaMask: ${user.walletAddress}`} position="bottom">
+          <Tooltip content={t("adminShell.topbar.walletTooltip").replace("{address}", user.walletAddress || "")} position="bottom">
             <div className={styles._9}>
               <svg className={styles._10} viewBox="0 0 256 238" fill="none">
                 <path d="M247.9 104.8l-15-46.7-56-42.5-44.5 59 4.3.4 35.3-32.9L247.9 104.8z" fill="#E2761B"/>
@@ -89,11 +93,15 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
           </Tooltip>
         )}
 
-        <Tooltip content="Chuyển đổi giao diện Sáng / Tối" position="bottom">
+        <Tooltip content={t("adminShell.topbar.themeTooltip")} position="bottom">
           <ThemeToggle className={styles._15} />
         </Tooltip>
 
-        <Tooltip content="Đăng xuất khỏi hệ thống" position="bottom">
+        <Tooltip content={t("adminShell.topbar.languageTooltip")} position="bottom">
+          <LanguageToggle className={styles._15} />
+        </Tooltip>
+
+        <Tooltip content={t("adminShell.topbar.logoutTooltip")} position="bottom">
           <button
             onClick={onLogout}
             className={styles._18}
@@ -101,7 +109,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1"></path>
             </svg>
-            <span>Đăng xuất</span>
+            <span>{t("adminShell.topbar.logout")}</span>
           </button>
         </Tooltip>
       </div>

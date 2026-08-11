@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "../../features/auth/components/AuthContext";
 
 import ThemeToggle from "@/components/common/ThemeToggle";
+import LanguageToggle from "@/components/common/LanguageToggle";
 import Tooltip from "@/components/common/Tooltip";
 
 export default function EmployerLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,9 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
           <div className={styles._5}>
             <Tooltip content="Chuyển đổi giao diện Sáng / Tối" position="bottom">
               <ThemeToggle />
+            </Tooltip>
+            <Tooltip content="Chuyển đổi ngôn ngữ VI / EN" position="bottom">
+              <LanguageToggle />
             </Tooltip>
             <Tooltip content="Tài khoản Nhà tuyển dụng" position="bottom">
               <span className={styles._6}>{user?.name || "Nhà tuyển dụng"}</span>

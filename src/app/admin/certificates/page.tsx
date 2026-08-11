@@ -5,22 +5,27 @@ import { useRouter } from "next/navigation";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
+import { useI18n } from "@/features/i18n/I18nContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import { ActionLink, ActionButton } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
 
 const ITEMS_PER_PAGE = 10;
 
-const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  DRAFT: { label: "Draft", className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
-  PENDING: { label: "Pending Blockchain", className: "bg-amber-55/10 text-warning border-amber-250/50 animate-pulse" },
-  ISSUED: { label: "Issued", className: "bg-green-55/10 text-green-600 dark:text-green-400 border-green-200/50" },
-  REVOKED: { label: "Revoked", className: "bg-red-50 dark:bg-red-950/20 text-danger border-red-200/50" },
-};
+function statusLabel(s: string, t: ReturnType<typeof useI18n>["t"]): { label: string; className: string } {
+  const map: Record<string, { label: string; className: string }> = {
+    DRAFT: { label: t("adminCertificates.status.draft"), className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
+    PENDING: { label: t("adminCertificates.status.pending"), className: "bg-amber-55/10 text-warning border-amber-250/50 animate-pulse" },
+    ISSUED: { label: t("adminCertificates.status.issued"), className: "bg-green-55/10 text-green-600 dark:text-green-400 border-green-200/50" },
+    REVOKED: { label: t("adminCertificates.status.revoked"), className: "bg-red-50 dark:bg-red-950/20 text-danger border-red-200/50" },
+  };
+  return map[s] || map.DRAFT;
+}
 
 export default function AdminCertificatesPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useI18n();
   const isIssuer = user?.role === "issuer";
   const [certificates, setCertificates] = useState<CertificateDto[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,7 +53,7 @@ export default function AdminCertificatesPage() {
       const data = await certificateApi.list(filterStatus ? { status: filterStatus } : undefined);
       setCertificates(data);
     } catch (err: any) {
-      setError("Đã có lỗi xảy ra");
+      setError(t("adminCertificates.genericError"));
     } finally {
       setLoading(false);
     }
@@ -66,7 +71,7 @@ export default function AdminCertificatesPage() {
       setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
       setDeleteTargetId("");
     } catch (err: any) {
-      setDeleteError("Đã có lỗi xảy ra");
+      setDeleteError(t("adminCertificates.genericError"));
     }
   };
 
@@ -80,7 +85,7 @@ export default function AdminCertificatesPage() {
       await fetchData();
       setSelectedIds(new Set());
     } catch (err: any) {
-      setError("Đã có lỗi xảy ra");
+      setError(t("adminCertificates.genericError"));
     } finally {
       setBatchApproving(false);
     }
@@ -129,8 +134,8 @@ export default function AdminCertificatesPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
             <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-white">Đang phát hành văn bằng</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đang ghi dữ liệu &amp; tạo văn bằng. Vui lòng không đóng trang...</p>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">{t("adminCertificates.processing.title")}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t("adminCertificates.processing.message")}</p>
             </div>
           </div>
         </div>
@@ -139,10 +144,10 @@ export default function AdminCertificatesPage() {
       <ConfirmModal
         open={!!deleteTargetId}
         onClose={() => { setDeleteTargetId(""); setDeleteError(""); }}
-        title="Xóa văn bằng"
-        message="Bạn có chắc chắn muốn xóa văn bằng này? Hành động này không thể hoàn tác."
-        confirmLabel="Xóa"
-        cancelLabel="Hủy"
+        title={t("adminCertificates.deleteModal.title")}
+        message={t("adminCertificates.deleteModal.message")}
+        confirmLabel={t("adminCertificates.deleteModal.confirm")}
+        cancelLabel={t("adminCertificates.deleteModal.cancel")}
         variant="danger"
         icon="danger"
         onConfirm={() => void handleDelete()}
@@ -150,66 +155,66 @@ export default function AdminCertificatesPage() {
 
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Quản lý Văn bằng</h1>
-          <p className={styles._4}>Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
+          <h1 className={styles._3}>{t("adminCertificates.header.title")}</h1>
+          <p className={styles._4}>{t("adminCertificates.header.description")}</p>
         </div>
         <button onClick={() => router.push("/admin/certificates/issue")} className={styles._5}>
-          + Cấp bằng mới
+          + {t("adminCertificates.actions.createNew")}
         </button>
       </div>
 
       <div className={styles._6}>
         <input
           type="text"
-          placeholder="Tìm kiếm theo mã văn bằng, tên sinh viên, số hiệu..."
+          placeholder={t("adminCertificates.search.placeholder")}
           className={styles._7}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <div className={styles._8}>
           <select className={styles._9} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="DRAFT">Draft</option>
-            <option value="PENDING">Pending Blockchain</option>
-            <option value="ISSUED">Issued</option>
-            <option value="REVOKED">Revoked</option>
+            <option value="">{t("adminCertificates.search.allStatuses")}</option>
+            <option value="DRAFT">{t("adminCertificates.status.draft")}</option>
+            <option value="PENDING">{t("adminCertificates.status.pending")}</option>
+            <option value="ISSUED">{t("adminCertificates.status.issued")}</option>
+            <option value="REVOKED">{t("adminCertificates.status.revoked")}</option>
           </select>
         </div>
       </div>
 
       {isIssuer && selectedIds.size > 0 && (
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/10">
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Đã chọn {selectedIds.size} văn bằng PENDING</span>
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{`${t("adminCertificates.batch.selectedPrefix")} ${selectedIds.size} ${t("adminCertificates.batch.pendingCertificates")}`}</span>
           <button
             onClick={handleBatchApprove}
             disabled={batchApproving}
             className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-hover disabled:opacity-50 transition-all"
           >
-            {batchApproving ? "Đang ký blockchain..." : `Ký hàng loạt (${selectedIds.size})`}
+            {batchApproving ? t("adminCertificates.batch.signing") : `${t("adminCertificates.batch.signAll")} (${selectedIds.size})`}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="rounded-xl border px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400"
           >
-            Bỏ chọn
+            {t("adminCertificates.batch.clearSelection")}
           </button>
         </div>
       )}
 
       {batchApproveResult && (
         <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-2">Kết quả ký hàng loạt</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Thành công: {batchApproveResult.successCount} / Thất bại: {batchApproveResult.failCount}</p>
+          <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-2">{t("adminCertificates.batch.resultTitle")}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{`${t("adminCertificates.batch.success")}: ${batchApproveResult.successCount} / ${t("adminCertificates.batch.fail")}: ${batchApproveResult.failCount}`}</p>
           {batchApproveResult.failCount > 0 && (
             <div className="max-h-32 overflow-y-auto space-y-1">
               {batchApproveResult.results.filter((r) => r.status === "FAILED").map((r) => (
                 <div key={r.certificateId} className="text-xs text-red-600">
-                  <span className="font-mono">{r.certificateId.slice(0, 8)}...</span>: Đã có lỗi xảy ra
+                  <span className="font-mono">{r.certificateId.slice(0, 8)}...</span>: {t("adminCertificates.genericError")}
                 </div>
               ))}
             </div>
           )}
-          <button onClick={() => setBatchApproveResult(null)} className="mt-2 text-xs font-bold text-primary hover:underline">Đóng</button>
+          <button onClick={() => setBatchApproveResult(null)} className="mt-2 text-xs font-bold text-primary hover:underline">{t("adminCertificates.batch.close")}</button>
         </div>
       )}
 
@@ -219,11 +224,11 @@ export default function AdminCertificatesPage() {
       <div className={styles._10}>
         <div className={styles._11}>
           {loading ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminCertificates.loading")}</div>
           ) : error ? (
             <div className="p-8 text-center text-red-500 text-xs">{error}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không có văn bằng nào.</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminCertificates.empty")}</div>
           ) : (
             <>
               <table className={styles._12}>
@@ -234,19 +239,19 @@ export default function AdminCertificatesPage() {
                         <input type="checkbox" checked={selectedIds.size === pendingCount && pendingCount > 0} onChange={toggleSelectAll} className="accent-primary" />
                       </th>
                     )}
-                    <th className={styles._14}>Mã văn bằng</th>
-                    <th className={styles._14}>Sinh viên</th>
-                    <th className={styles._14}>Loại bằng</th>
-                    <th className={styles._14}>Ngày cấp</th>
+                    <th className={styles._14}>{t("adminCertificates.table.certificateId")}</th>
+                    <th className={styles._14}>{t("adminCertificates.table.student")}</th>
+                    <th className={styles._14}>{t("adminCertificates.table.certificateType")}</th>
+                    <th className={styles._14}>{t("adminCertificates.table.issuedDate")}</th>
                     <th className={styles._15}>IPFS Gateway</th>
                     <th className={styles._15}>Blockchain status</th>
-                    <th className={styles._14}>Trạng thái</th>
-                    <th className={styles._16}>Thao tác</th>
+                    <th className={styles._14}>{t("adminCertificates.table.status")}</th>
+                    <th className={styles._16}>{t("adminCertificates.table.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className={styles._17}>
                   {paginatedCerts.map((cert) => {
-                    const statusStyle = STATUS_MAP[cert.status] || STATUS_MAP.DRAFT;
+                    const statusStyle = statusLabel(cert.status, t);
                     const isPending = cert.status === "PENDING";
                     return (
                       <tr key={cert.certificate_id} className={`${styles._18} ${isPending && isIssuer ? "cursor-pointer" : ""}`}>
@@ -284,11 +289,11 @@ export default function AdminCertificatesPage() {
                         </td>
                         <td className={styles._27}>
                           <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
-                            Chi tiết
+                            {t("adminCertificates.actions.detail")}
                           </ActionLink>
                           {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
                             <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
-                              Xóa
+                              {t("adminCertificates.actions.delete")}
                             </ActionButton>
                           )}
                         </td>

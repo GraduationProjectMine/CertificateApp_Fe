@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
 import { certificateApi, type CertificateDto } from "@/features/certificates/services/certificate.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function NewDisputePage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [certs, setCerts] = useState<CertificateDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -27,8 +29,8 @@ export default function NewDisputePage() {
     e.preventDefault();
     setError("");
 
-    if (!formCertId) { setError("Vui lòng chọn văn bằng"); return; }
-    if (formReason.trim().length < 10) { setError("Lý do phải có ít nhất 10 ký tự"); return; }
+    if (!formCertId) { setError(t("studentDisputeNew.error.noCert")); return; }
+    if (formReason.trim().length < 10) { setError(t("studentDisputeNew.error.reasonLength")); return; }
 
     setSubmitting(true);
     try {
@@ -39,7 +41,7 @@ export default function NewDisputePage() {
       });
       router.push("/student/disputes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gửi yêu cầu thất bại");
+      setError(err instanceof Error ? err.message : t("studentDisputeNew.error.failed"));
     } finally {
       setSubmitting(false);
     }
@@ -49,8 +51,8 @@ export default function NewDisputePage() {
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Gửi yêu cầu chỉnh sửa</h1>
-          <p className={styles._4}>Điền thông tin để yêu cầu chỉnh sửa văn bằng</p>
+          <h1 className={styles._3}>{t("studentDisputeNew.header.title")}</h1>
+          <p className={styles._4}>{t("studentDisputeNew.header.description")}</p>
         </div>
       </div>
 
@@ -67,40 +69,40 @@ export default function NewDisputePage() {
           ) : (
             <>
               <div className={styles._42}>
-                <label className={styles._43}>Chọn văn bằng <span className={styles._45}>*</span></label>
+                <label className={styles._43}>{t("studentDisputeNew.form.selectCert")} <span className={styles._45}>*</span></label>
                 <select
                   value={formCertId}
                   onChange={(e) => setFormCertId(e.target.value)}
                   className={styles._44}
                 >
-                  <option value="">-- Chọn văn bằng bản thảo --</option>
+                  <option value="">{t("studentDisputeNew.form.selectPlaceholder")}</option>
                   {certs.filter((c) => c.status === "DRAFT").map((c) => (
                     <option key={c.certificate_id} value={c.certificate_id}>
-                      {c.certificate_title} - {c.student_fullName} (Bản thảo)
+                      {c.certificate_title} - {c.student_fullName} ({t("studentDisputeNew.form.draftBadge")})
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className={styles._42}>
-                <label className={styles._43}>Lý do <span className={styles._45}>*</span></label>
+                <label className={styles._43}>{t("studentDisputeNew.form.reason")} <span className={styles._45}>*</span></label>
                 <textarea
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
                   rows={3}
-                  placeholder="Mô tả lý do yêu cầu chỉnh sửa (tối thiểu 10 ký tự)"
+                  placeholder={t("studentDisputeNew.form.reasonPlaceholder")}
                   className={styles._44}
                 />
-                <p className={styles._51}>{formReason.length}/10 ký tự tối thiểu</p>
+                <p className={styles._51}>{formReason.length}/10 {t("studentDisputeNew.form.minChars")}</p>
               </div>
 
               <div className={styles._42}>
-                <label className={styles._43}>Chi tiết thêm</label>
+                <label className={styles._43}>{t("studentDisputeNew.form.details")}</label>
                 <textarea
                   value={formDetails}
                   onChange={(e) => setFormDetails(e.target.value)}
                   rows={4}
-                  placeholder="Thông tin chi tiết bổ sung (không bắt buộc)"
+                  placeholder={t("studentDisputeNew.form.detailsPlaceholder")}
                   className={styles._44}
                 />
               </div>
@@ -112,14 +114,14 @@ export default function NewDisputePage() {
                   disabled={submitting}
                   className={styles._47}
                 >
-                  Hủy
+                  {t("studentDisputeNew.form.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
                   className={styles._48}
                 >
-                  {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
+                  {submitting ? t("studentDisputeNew.form.submitting") : t("studentDisputeNew.form.submit")}
                 </button>
               </div>
             </>

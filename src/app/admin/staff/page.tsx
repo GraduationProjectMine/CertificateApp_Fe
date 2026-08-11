@@ -7,6 +7,7 @@ import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -24,6 +25,7 @@ export default function StaffListPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const canManageStaff = user?.role === "issuer";
+  const { t } = useI18n();
 
   const fetchStaff = useCallback(async () => {
     setLoading(true);
@@ -32,7 +34,7 @@ export default function StaffListPage() {
       const data = await staffApi.list();
       setStaff(data);
     } catch (err: any) {
-      setError(err.message || "Không thể tải danh sách nhân viên");
+      setError(err.message || t("adminStaff.loadError"));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function StaffListPage() {
         prev.map((s) => (s.staff_id === id ? { ...s, isActive: false } : s)),
       );
     } catch (err: any) {
-      setError(err.message || "Khóa nhân viên thất bại");
+      setError(err.message || t("adminStaff.lockError"));
     } finally {
       setLockingId("");
     }
@@ -62,7 +64,7 @@ export default function StaffListPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createForm.name || !createForm.email || !createForm.password) {
-      setCreateError("Vui lòng điền đầy đủ thông tin");
+      setCreateError(t("adminStaff.form.requiredError"));
       return;
     }
     setCreating(true);
@@ -73,7 +75,7 @@ export default function StaffListPage() {
       setCreateForm({ name: "", email: "", password: "" });
       await fetchStaff();
     } catch (err: any) {
-      setCreateError(err.message || "Tạo nhân viên thất bại");
+      setCreateError(err.message || t("adminStaff.createError"));
     } finally {
       setCreating(false);
     }
@@ -84,10 +86,10 @@ export default function StaffListPage() {
       <ConfirmModal
         open={!!lockTarget}
         onClose={() => setLockTarget(null)}
-        title="Khóa tài khoản"
-        message={lockTarget ? `Bạn có chắc chắn muốn khóa tài khoản của nhân viên ${lockTarget.name}? Nhân viên sẽ không thể đăng nhập vào hệ thống.` : ""}
-        confirmLabel="Khóa"
-        cancelLabel="Hủy"
+        title={t("adminStaff.confirm.title")}
+        message={lockTarget ? `${t("adminStaff.confirm.messagePrefix")} ${lockTarget.name}${t("adminStaff.confirm.messageSuffix")}` : ""}
+        confirmLabel={t("adminStaff.confirm.confirm")}
+        cancelLabel={t("adminStaff.confirm.cancel")}
         variant="warning"
         icon="warning"
         onConfirm={() => void handleLock()}
@@ -96,41 +98,41 @@ export default function StaffListPage() {
       <FormModal
         open={showCreate}
         onClose={() => { setShowCreate(false); setCreateError(""); setCreateForm({ name: "", email: "", password: "" }); }}
-        title="Thêm nhân viên"
-        description="Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng."
+        title={t("adminStaff.form.title")}
+        description={t("adminStaff.form.description")}
         onSubmit={(e) => void handleCreate(e)}
         submitting={creating}
-        submitLabel="Tạo nhân viên"
+        submitLabel={t("adminStaff.form.submit")}
       >
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Họ và tên *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStaff.form.nameLabel")}</label>
           <input
             type="text"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.name}
             onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-            placeholder="Nguyễn Văn B"
+            placeholder={t("adminStaff.form.namePlaceholder")}
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStaff.form.emailLabel")}</label>
           <input
             type="email"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.email}
             onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-            placeholder="staff@school.edu.vn"
+            placeholder={t("adminStaff.form.emailPlaceholder")}
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu *</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminStaff.form.passwordLabel")}</label>
           <input
             type="password"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={createForm.password}
             onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-            placeholder="Tối thiểu 8 ký tự"
+            placeholder={t("adminStaff.form.passwordPlaceholder")}
           />
         </div>
         {createError && <div className="text-[11px] text-red-500 bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{createError}</div>}
@@ -138,33 +140,33 @@ export default function StaffListPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Nhân viên</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Danh sách nhân viên trong trường.</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("adminStaff.headerTitle")}</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("adminStaff.headerDescription")}</p>
         </div>
         {canManageStaff && (
           <button
             onClick={() => setShowCreate(true)}
             className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
           >
-            + Thêm nhân viên
+            + {t("adminStaff.addButton")}
           </button>
         )}
       </div>
 
       {error && (
         <div className="rounded-xl bg-red-50 px-4 py-3 text-xs text-red-600 dark:bg-red-950/20">
-          {error} <button onClick={fetchStaff} className="ml-2 underline">Thử lại</button>
+          {error} <button onClick={fetchStaff} className="ml-2 underline">{t("adminStaff.retry")}</button>
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Đang tải danh sách nhân viên...</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">{t("adminStaff.loading")}</div>
       ) : staff.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p>Chưa có nhân viên nào.</p>
+          <p>{t("adminStaff.emptyState")}</p>
           {canManageStaff && (
             <button onClick={() => setShowCreate(true)} className="text-primary underline text-xs mt-2 inline-block">
-              Tạo nhân viên đầu tiên
+              {t("adminStaff.createFirst")}
             </button>
           )}
         </div>
@@ -173,11 +175,11 @@ export default function StaffListPage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200/60 dark:border-gray-800/60">
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tên</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Email</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Vai trò</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Trạng thái</th>
-                  {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>}
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStaff.table.name")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStaff.table.email")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStaff.table.role")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStaff.table.status")}</th>
+                  {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStaff.table.actions")}</th>}
               </tr>
             </thead>
             <tbody>
@@ -191,7 +193,7 @@ export default function StaffListPage() {
                         ? 'bg-primary/10 text-primary'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}>
-                      {s.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'}
+                      {s.role === 'ISSUER' ? t("adminStaff.role.admin") : t("adminStaff.role.staff")}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -206,15 +208,15 @@ export default function StaffListPage() {
                   {canManageStaff && (
                     <td className="px-4 py-3 text-right space-x-2">
                       <ActionLink onClick={() => router.push(`/admin/staff/${s.staff_id}`)}>
-                        Xem / Sửa
+                        {t("adminStaff.table.viewEdit")}
                       </ActionLink>
                       {s.role?.toUpperCase() !== "ISSUER" && (
                         s.isActive ? (
                           <ActionButton onClick={() => setLockTarget(s)} disabled={lockingId === s.staff_id}>
-                            {lockingId === s.staff_id ? "Đang khóa..." : "Khóa"}
+                            {lockingId === s.staff_id ? t("adminStaff.locking") : t("adminStaff.lock")}
                           </ActionButton>
                         ) : (
-                          <ActionText>Đã khóa</ActionText>
+                          <ActionText>{t("adminStaff.locked")}</ActionText>
                         )
                       )}
                     </td>

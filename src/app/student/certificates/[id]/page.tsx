@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
+import { useI18n } from "@/features/i18n/I18nContext";
 import QRCodeBox from "@/components/credential/QRCodeBox";
 import ShareDialog from "@/features/certificates/components/ShareDialog";
 import Loading from "@/components/common/Loading";
@@ -12,6 +13,7 @@ import ErrorMessage from "@/components/common/ErrorMessage";
 export default function StudentCertificateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cert, setCert] = useState<StudentCertificate | null>(null);
@@ -24,7 +26,7 @@ export default function StudentCertificateDetailPage() {
         const dto = await certificateApi.get(params.id as string);
         setCert(mapCertificateDtoToStudentCert(dto));
       } catch (err: any) {
-        setError(err.message || "Không tìm thấy văn bằng.");
+        setError(err.message || t("studentCertificateDetail.notFound"));
       }
       setLoading(false);
     };
@@ -34,7 +36,7 @@ export default function StudentCertificateDetailPage() {
   if (loading) {
     return (
       <div className={styles._1}>
-        <Loading message="Đang tải thông tin văn bằng..." />
+        <Loading message={t("studentCertificateDetail.loading")} />
       </div>
     );
   }
@@ -59,7 +61,7 @@ export default function StudentCertificateDetailPage() {
           <svg className={styles._4} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
           </svg>
-          Danh sách văn bằng
+          {t("studentCertificateDetail.backToList")}
         </button>
       </div>
 
@@ -70,7 +72,7 @@ export default function StudentCertificateDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p className={styles._8}>Văn bằng đã bị thu hồi</p>
+              <p className={styles._8}>{t("studentCertificateDetail.revokedBanner")}</p>
             </div>
           </div>
         )}
@@ -81,13 +83,13 @@ export default function StudentCertificateDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div className="flex-1 text-xs font-semibold">
-              Văn bằng này đang ở trạng thái bản thảo (chờ duyệt cấp). Nếu có sai sót về thông tin, bạn có thể gửi yêu cầu chỉnh sửa cho nhà trường.
+              {t("studentCertificateDetail.draftBanner")}
             </div>
             <button
               onClick={() => router.push("/student/disputes")}
               className="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all"
             >
-              Gửi yêu cầu chỉnh sửa
+              {t("studentCertificateDetail.requestCorrection")}
             </button>
           </div>
         )}
@@ -115,10 +117,10 @@ export default function StudentCertificateDetailPage() {
             )}
             <div>
               <h1 className={styles._14}>{cert.credentialTitle}</h1>
-              <p className={styles._15}>Mã văn bằng: {cert.credentialCode}</p>
+              <p className={styles._15}>{t("studentCertificateDetail.credentialCode")} {cert.credentialCode}</p>
             </div>
             <span className={`${styles._0} ${isRevoked ? styles._16 : isDraft ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" : styles._17}`}>
-              {isRevoked ? "Đã thu hồi" : isDraft ? "Bản thảo / Chờ cấp" : "Hợp lệ"}
+              {isRevoked ? t("studentCertificateDetail.statusRevoked") : isDraft ? t("studentCertificateDetail.statusDraft") : t("studentCertificateDetail.statusValid")}
             </span>
           </div>
 
@@ -133,10 +135,10 @@ export default function StudentCertificateDetailPage() {
                 <p className={styles._23}>{cert.studentName}</p>
               </div>
               <div className={styles._24}>
-                <p className={styles._25}>Mã SV: {cert.studentCode}</p>
+                <p className={styles._25}>{t("studentCertificateDetail.studentCode")} {cert.studentCode}</p>
                 <p className={styles._25}>{cert.major}</p>
                 {cert.classification && (
-                  <p className={styles._25}>Xếp loại: {cert.classification}</p>
+                  <p className={styles._25}>{t("studentCertificateDetail.classification")} {cert.classification}</p>
                 )}
               </div>
             </div>
@@ -145,7 +147,7 @@ export default function StudentCertificateDetailPage() {
                 <QRCodeBox
                   value={`${typeof window !== "undefined" ? window.location.origin : ""}/public/certificate/${cert.id}`}
                   size={140}
-                  title="Quét để xác minh"
+                  title={t("studentCertificateDetail.qrTitle")}
                 />
               </div>
             )}
@@ -153,78 +155,78 @@ export default function StudentCertificateDetailPage() {
 
           <dl className={styles._27}>
             <div className={styles._28}>
-              <dt className={styles._29}>Họ và tên sinh viên</dt>
+              <dt className={styles._29}>{t("studentCertificateDetail.dlStudentName")}</dt>
               <dd className={styles._30}>{cert.studentName}</dd>
             </div>
             <div className={styles._28}>
-              <dt className={styles._29}>Tên văn bằng</dt>
+              <dt className={styles._29}>{t("studentCertificateDetail.dlTitle")}</dt>
               <dd className={styles._30}>{cert.credentialTitle}</dd>
             </div>
             <div className={styles._28}>
-              <dt className={styles._29}>Trường cấp</dt>
+              <dt className={styles._29}>{t("studentCertificateDetail.dlIssuer")}</dt>
               <dd className={styles._30}>{cert.issuerName || cert.schoolName}</dd>
             </div>
             {cert.dob && (
               <div className={styles._28}>
-                <dt className={styles._29}>Ngày sinh</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlDob")}</dt>
                 <dd className={styles._30}>{cert.dob}</dd>
               </div>
             )}
             {cert.placeOfBirth && (
               <div className={styles._28}>
-                <dt className={styles._29}>Nơi sinh</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlPlaceOfBirth")}</dt>
                 <dd className={styles._30}>{cert.placeOfBirth}</dd>
               </div>
             )}
             {cert.gender && (
               <div className={styles._28}>
-                <dt className={styles._29}>Giới tính</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlGender")}</dt>
                 <dd className={styles._30}>{cert.gender}</dd>
               </div>
             )}
             {cert.ethnicity && (
               <div className={styles._28}>
-                <dt className={styles._29}>Dân tộc</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlEthnicity")}</dt>
                 <dd className={styles._30}>{cert.ethnicity}</dd>
               </div>
             )}
             {cert.schoolName && (
               <div className={styles._28}>
-                <dt className={styles._29}>Trường đào tạo</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlSchool")}</dt>
                 <dd className={styles._30}>{cert.schoolName}</dd>
               </div>
             )}
             {cert.examCohort && (
               <div className={styles._28}>
-                <dt className={styles._29}>Khóa thi</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlExamCohort")}</dt>
                 <dd className={styles._30}>{cert.examCohort}</dd>
               </div>
             )}
             {cert.examBoard && (
               <div className={styles._28}>
-                <dt className={styles._29}>Hội đồng thi</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlExamBoard")}</dt>
                 <dd className={styles._30}>{cert.examBoard}</dd>
               </div>
             )}
             {cert.issueLocation && (
               <div className={styles._28}>
-                <dt className={styles._29}>Nơi cấp</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlIssueLocation")}</dt>
                 <dd className={styles._30}>{cert.issueLocation}</dd>
               </div>
             )}
             <div className={styles._28}>
-              <dt className={styles._29}>Ngày cấp</dt>
-              <dd className={styles._30}>{cert.issueDate || "Đang chờ phát hành"}</dd>
+              <dt className={styles._29}>{t("studentCertificateDetail.dlIssueDate")}</dt>
+              <dd className={styles._30}>{cert.issueDate || t("studentCertificateDetail.pendingIssue")}</dd>
             </div>
             {cert.serialNumber && (
               <div className={styles._28}>
-                <dt className={styles._29}>Số hiệu văn bằng</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlSerialNumber")}</dt>
                 <dd className={styles._30}>{cert.serialNumber}</dd>
               </div>
             )}
             {cert.registryNumber && (
               <div className={styles._28}>
-                <dt className={styles._29}>Số vào sổ</dt>
+                <dt className={styles._29}>{t("studentCertificateDetail.dlRegistryNumber")}</dt>
                 <dd className={styles._30}>{cert.registryNumber}</dd>
               </div>
             )}
@@ -233,13 +235,13 @@ export default function StudentCertificateDetailPage() {
 
         {!isDraft && (
           <div className={styles._32}>
-            <h3 className={styles._33}>Thao tác</h3>
+            <h3 className={styles._33}>{t("studentCertificateDetail.actionsTitle")}</h3>
             <div className="flex flex-wrap gap-3">
               <button onClick={() => setShowShare(true)} className={styles._35}>
                 <svg className={styles._36} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
-                Chia sẻ văn bằng
+                {t("studentCertificateDetail.shareCertificate")}
               </button>
             </div>
           </div>
