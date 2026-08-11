@@ -3,6 +3,7 @@ import styles from "./page.module.css";
 import React, { useState } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import AppControls from "@/components/common/AppControls";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -45,12 +46,15 @@ export default function ForgotPasswordPage() {
           <div className={`motion-float ${styles._6}`} />
           <div className={`motion-float-slow ${styles._7}`} />
 
-          <Link href="/" className={styles._8}>
-            <span className={styles._9}>
-              C
-            </span>
-            <span className={styles._10}>CertiChain</span>
-          </Link>
+          <div className="flex w-full items-center justify-between">
+            <Link href="/" className={styles._8}>
+              <span className={styles._9}>
+                C
+              </span>
+              <span className={styles._10}>CertiChain</span>
+            </Link>
+            <AppControls />
+          </div>
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
@@ -82,9 +86,12 @@ export default function ForgotPasswordPage() {
               </span>
               <span className={styles._23}>CertiChain</span>
             </Link>
-            <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
-              Đăng nhập
-            </Link>
+            <div className="flex items-center gap-3">
+              <AppControls />
+              <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
+                Đăng nhập
+              </Link>
+            </div>
           </div>
 
           <div className={`auth-card-surface ${styles._25}`}>

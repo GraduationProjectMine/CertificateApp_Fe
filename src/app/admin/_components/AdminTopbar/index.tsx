@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
 import { useI18n } from "@/features/i18n/I18nContext";
 import type { User } from "@/features/auth/types";
-import ThemeToggle from "@/components/common/ThemeToggle";
-import LanguageToggle from "@/components/common/LanguageToggle";
+import AppControls from "@/components/common/AppControls";
 import Tooltip from "@/components/common/Tooltip";
 
 interface AdminTopbarProps {
@@ -93,13 +92,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
           </Tooltip>
         )}
 
-        <Tooltip content={t("adminShell.topbar.themeTooltip")} position="bottom">
-          <ThemeToggle className={styles._15} />
-        </Tooltip>
-
-        <Tooltip content={t("adminShell.topbar.languageTooltip")} position="bottom">
-          <LanguageToggle className={styles._15} />
-        </Tooltip>
+        <AppControls />
 
         <Tooltip content={t("adminShell.topbar.logoutTooltip")} position="bottom">
           <button

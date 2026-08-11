@@ -6,8 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../../features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
-import ThemeToggle from "@/components/common/ThemeToggle";
-import LanguageToggle from "@/components/common/LanguageToggle";
+import AppControls from "@/components/common/AppControls";
 import Tooltip from "@/components/common/Tooltip";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -50,12 +49,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </Tooltip>
           </div>
           <div className={styles._5}>
-            <Tooltip content={t("studentShell.themeTooltip")} position="bottom">
-              <ThemeToggle />
-            </Tooltip>
-            <Tooltip content={t("studentShell.languageTooltip")} position="bottom">
-              <LanguageToggle />
-            </Tooltip>
+            <AppControls />
             <Tooltip content={t("studentShell.accountTooltip")} position="bottom">
               <span className={`${styles._6} hidden sm:inline`}>{user?.name}</span>
             </Tooltip>

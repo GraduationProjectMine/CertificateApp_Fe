@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
+import AppControls from "@/components/common/AppControls";
 import { BrowserProvider } from "ethers";
 
 type RegisterForm = {
@@ -122,12 +123,15 @@ export default function RegisterPage() {
           <div className={`motion-float ${styles._6}`} />
           <div className={`motion-float-slow ${styles._7}`} />
 
-          <Link href="/" className={styles._8}>
-            <span className={styles._9}>
-              C
-            </span>
-            <span className={styles._10}>CertiChain</span>
-          </Link>
+          <div className="flex w-full items-center justify-between">
+            <Link href="/" className={styles._8}>
+              <span className={styles._9}>
+                C
+              </span>
+              <span className={styles._10}>CertiChain</span>
+            </Link>
+            <AppControls />
+          </div>
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
@@ -163,9 +167,12 @@ export default function RegisterPage() {
               </span>
               <span className={styles._23}>CertiChain</span>
             </Link>
-            <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
-              Đăng nhập
-            </Link>
+            <div className="flex items-center gap-3">
+              <AppControls />
+              <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
+                Đăng nhập
+              </Link>
+            </div>
           </div>
 
           <div className={`auth-card-surface ${styles._25}`}>

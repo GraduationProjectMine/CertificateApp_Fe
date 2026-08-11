@@ -4,6 +4,10 @@ export type TranslationValue = string | { [key: string]: TranslationValue } | Tr
 
 const translations: Record<Locale, Record<string, TranslationValue>> = {
   vi: {
+    common: {
+      themeTooltip: "Chuyển đổi giao diện Sáng / Tối",
+      languageTooltip: "Chuyển đổi ngôn ngữ VI / EN",
+    },
     nav: {
       solutions: "Giải pháp",
       technology: "Công nghệ",
@@ -1583,6 +1587,10 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
     },
   },
   en: {
+    common: {
+      themeTooltip: "Toggle Light / Dark theme",
+      languageTooltip: "Switch VI / EN language",
+    },
     nav: {
       solutions: "Solutions",
       technology: "Technology",
