@@ -133,8 +133,7 @@ export default function StudentCertificateDetailPage() {
                 <p className={styles._23}>{cert.studentName}</p>
               </div>
               <div className={styles._24}>
-                <p className={styles._25}>Mã SV: {cert.studentCode}</p>
-                <p className={styles._25}>{cert.major}</p>
+                {cert.major && <p className={styles._25}>{cert.major}</p>}
                 {cert.classification && (
                   <p className={styles._25}>Xếp loại: {cert.classification}</p>
                 )}

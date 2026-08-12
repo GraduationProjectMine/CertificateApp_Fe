@@ -365,32 +365,53 @@ export default function TemplateEditorPage() {
   const containerHeight = design.page.height;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f1f5f9", fontFamily: "sans-serif" }}>
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
       {/* Top Header Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#fff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => router.push("/admin/templates")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#64748b", padding: 4 }}>←</button>
+      <div className="flex items-center justify-between px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push("/admin/templates")}
+            className="bg-transparent border-none cursor-pointer text-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-1"
+          >
+            ←
+          </button>
           <input
             type="text"
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "#1e293b", width: 280 }}
+            className="text-base font-extrabold border-none outline-none bg-transparent text-slate-900 dark:text-white w-70 placeholder-slate-400 dark:placeholder-slate-500"
             placeholder="Tên mẫu văn bằng"
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="flex items-center gap-3">
           {/* Zoom controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f1f5f9", borderRadius: 8, padding: "2px" }}>
-            <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>−</button>
-            <span style={{ fontSize: 11, color: "#64748b", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "#64748b" }}>+</button>
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
+            <button
+              onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}
+              className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors cursor-pointer"
+            >
+              −
+            </button>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 min-w-[36px] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))}
+              className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors cursor-pointer"
+            >
+              +
+            </button>
           </div>
 
           {/* Mode Switcher */}
           <button
             onClick={() => setPreviewMode(!previewMode)}
-            style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: previewMode ? "#3b82f6" : "#fff", color: previewMode ? "#fff" : "#64748b", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+            className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95 ${
+              previewMode
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+            }`}
           >
             {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
           </button>
@@ -399,80 +420,90 @@ export default function TemplateEditorPage() {
           <button
             onClick={handleSave}
             disabled={saving || !templateName.trim()}
-            style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving || !templateName.trim() ? 0.6 : 1 }}
+            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
             {saving ? "Đang lưu..." : "Lưu mẫu"}
           </button>
         </div>
       </div>
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <div className="flex flex-1 overflow-hidden">
         {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
         {!previewMode ? (
-          <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Thêm trường</h3>
+          <div className="w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto shrink-0">
+            <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+              Thêm trường
+            </h3>
             <button
               onClick={() => addField("image", "organization_logo")}
-              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "#eff6ff", cursor: "pointer", fontSize: 13, color: "#1d4ed8", fontWeight: 700, transition: "all 0.15s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; }}
+              className="flex items-center gap-2.5 w-full p-2.5 mb-2.5 rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs"
             >
-              <span style={{ fontSize: 16 }}>🏢</span>
+              <span className="text-base">🏢</span>
               <span>Logo tổ chức</span>
             </button>
             {FIELD_TEMPLATES.map((ft) => (
               <button
                 key={ft.type}
                 onClick={() => addField(ft.type)}
-                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 6, borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", fontSize: 13, color: "#334155", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "#f8faff"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.background = "#fff"; }}
+                className="flex items-center gap-2.5 w-full p-2.5 mb-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer transition-all active:scale-95 shadow-2xs"
               >
-                <span style={{ fontSize: 16 }}>{ft.icon}</span>
+                <span className="text-base">{ft.icon}</span>
                 <span>{ft.label}</span>
               </button>
             ))}
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>Các trường ({design.fields.length})</h3>
+            <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-5 mb-3">
+              Các trường ({design.fields.length})
+            </h3>
             {design.fields.map((f) => (
               <div
                 key={f.id}
                 onClick={() => setSelectedId(f.id)}
-                style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "#64748b", background: selectedId === f.id ? "#f0f7ff" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                className={`p-2 rounded-xl text-xs font-medium cursor-pointer transition-all flex items-center justify-between mb-1 ${
+                  selectedId === f.id
+                    ? "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                }`}
               >
-                <span style={{ fontWeight: 500 }}>{f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}</span>
-                <span style={{ fontSize: 10, color: "#94a3b8" }}>{f.type}</span>
+                <span className="font-semibold truncate max-w-[120px]">
+                  {f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}
+                </span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">{f.type}</span>
               </div>
             ))}
           </div>
         ) : (
           /* Manual Input & Import Record Navigation Side Panel */
-          <div style={{ width: 320, background: "#fff", borderRight: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Nhập dữ liệu văn bằng</h3>
-              <p style={{ fontSize: 11, color: "#64748b" }}>Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.</p>
+          <div className="w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto shrink-0">
+            <div className="mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-xs font-extrabold text-slate-900 dark:text-white mb-1">
+                Nhập dữ liệu văn bằng
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.
+              </p>
             </div>
 
             {/* Imported File Record Selector */}
             {importedData && (
-              <div style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: 12, borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
+              <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 p-3 rounded-xl shadow-2xs text-emerald-800 dark:text-emerald-300">
+                <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1.5 truncate">
                   📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleSelectRowIndex(activeRowIndex - 1)}
                     disabled={activeRowIndex <= 0}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                    className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs cursor-pointer disabled:opacity-40"
                   >
                     ◄
                   </button>
                   <select
                     value={activeRowIndex}
                     onChange={(e) => handleSelectRowIndex(Number(e.target.value))}
-                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", fontSize: 11, background: "#ffffff", color: "#0f172a" }}
+                    className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer truncate"
                   >
                     {importedData.rows.map((r, i) => (
-                      <option key={i} value={i} style={{ background: "#ffffff", color: "#0f172a" }}>
+                      <option key={i} value={i} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                         Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
                       </option>
                     ))}
@@ -480,7 +511,7 @@ export default function TemplateEditorPage() {
                   <button
                     onClick={() => handleSelectRowIndex(activeRowIndex + 1)}
                     disabled={activeRowIndex >= importedData.rows.length - 1}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: 11, cursor: "pointer", opacity: activeRowIndex >= importedData.rows.length - 1 ? 0.4 : 1 }}
+                    className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs cursor-pointer disabled:opacity-40"
                   >
                     ►
                   </button>
@@ -489,7 +520,7 @@ export default function TemplateEditorPage() {
             )}
 
             {/* Manual Form Inputs for Certificate Fields */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="flex flex-col gap-2.5">
               {[
                 { key: "student_fullName", label: "Họ và tên sinh viên" },
                 { key: "certificate_title", label: "Tên văn bằng" },
@@ -507,12 +538,14 @@ export default function TemplateEditorPage() {
                 { key: "registryNumber", label: "Số vào sổ" },
               ].map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{label}</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    {label}
+                  </label>
                   <input
                     type="text"
                     value={mockData[key] || ""}
                     onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
-                    style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 12, color: "#1e293b", outline: "none" }}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder={`Nhập ${label.toLowerCase()}...`}
                   />
                 </div>
@@ -522,7 +555,7 @@ export default function TemplateEditorPage() {
         )}
 
         {/* Center Canvas Workspace */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "#f1f5f9" }}>
+        <div className="flex-1 flex items-center justify-center overflow-auto p-6 bg-slate-100 dark:bg-slate-950 transition-colors">
           <div
             ref={canvasRef}
             onClick={() => { if (!previewMode) setSelectedId(null); }}
@@ -579,36 +612,44 @@ export default function TemplateEditorPage() {
 
         {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
-          <div style={{ width: 280, background: "#fff", borderLeft: "1px solid #e2e8f0", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Thuộc tính trường</h3>
+          <div className="w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-4 overflow-y-auto text-slate-900 dark:text-slate-100 shrink-0">
+            <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+              Thuộc tính trường
+            </h3>
 
             {/* Field Type Selector */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Loại trường</label>
+            <div className="mb-3.5">
+              <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                Loại trường
+              </label>
               <select
                 value={selectedField.type}
                 onChange={(e) => updateField(selectedField.id, { type: e.target.value as any })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer"
               >
-                <option value="text" style={{ background: "#ffffff", color: "#0f172a" }}>Văn bản</option>
-                <option value="image" style={{ background: "#ffffff", color: "#0f172a" }}>Hình ảnh / Logo</option>
-                <option value="qr" style={{ background: "#ffffff", color: "#0f172a" }}>Mã QR</option>
-                <option value="line" style={{ background: "#ffffff", color: "#0f172a" }}>Đường kẻ</option>
-                <option value="rect" style={{ background: "#ffffff", color: "#0f172a" }}>Hình chữ nhật</option>
+                <option value="text" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Văn bản</option>
+                <option value="image" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Hình ảnh / Logo</option>
+                <option value="qr" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Mã QR</option>
+                <option value="line" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Đường kẻ</option>
+                <option value="rect" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Hình chữ nhật</option>
               </select>
             </div>
 
             {/* Dynamic Binding Selector */}
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Dữ liệu động (Binding)</label>
+              <div className="mb-3.5">
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Dữ liệu động (Binding)
+                </label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer"
                 >
                   {FIELD_BINDINGS.map((b) => (
-                    <option key={b.value} value={b.value} style={{ background: "#ffffff", color: "#0f172a" }}>{b.label}</option>
+                    <option key={b.value} value={b.value} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                      {b.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -616,9 +657,9 @@ export default function TemplateEditorPage() {
 
             {/* Missing Organization Logo Alert if not configured */}
             {!organizationLogo && (selectedField.type === "image" || selectedField.binding === "organization_logo") && (
-              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: 10, borderRadius: 8, fontSize: 11, color: "#b45309", marginBottom: 14 }}>
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 p-2.5 rounded-xl text-xs text-amber-800 dark:text-amber-300 mb-3.5">
                 <div>⚠️ Chưa có logo trong Cài đặt tổ chức.</div>
-                <Link href="/admin/settings" target="_blank" style={{ color: "#d97706", fontWeight: 700, textDecoration: "underline", marginTop: 4, display: "inline-block" }}>
+                <Link href="/admin/settings" target="_blank" className="text-amber-600 dark:text-amber-400 font-bold underline mt-1 inline-block">
                   👉 Tải logo tại Cài đặt (Settings)
                 </Link>
               </div>
@@ -626,33 +667,37 @@ export default function TemplateEditorPage() {
 
             {/* Static Text Content */}
             {!selectedField.dynamic && selectedField.type === "text" && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Nội dung văn bản</label>
+              <div className="mb-3.5">
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Nội dung văn bản
+                </label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
                   onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
                 />
               </div>
             )}
 
             {/* Line / Rect Colors */}
             {(selectedField.type === "line" || selectedField.type === "rect") && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu sắc</label>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <div className="mb-3.5">
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Màu sắc
+                </label>
+                <div className="flex gap-2 items-center">
                   <input
                     type="color"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ width: 36, height: 36, padding: 0, border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
+                    className="w-9 h-9 p-0.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 cursor-pointer overflow-hidden shrink-0"
                   />
                   <input
                     type="text"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#0f172a", background: "#ffffff", outline: "none", fontFamily: "monospace" }}
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:outline-none"
                   />
                 </div>
               </div>
@@ -662,27 +707,31 @@ export default function TemplateEditorPage() {
             {selectedField.type === "text" && (
               <>
                 {/* Font Family */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Phông chữ</label>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Phông chữ
+                  </label>
                   <select
                     value={selectedField.font || "sans-serif"}
                     onChange={(e) => updateField(selectedField.id, { font: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#0f172a", background: "#ffffff", outline: "none" }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer"
                   >
-                    <option value="sans-serif" style={{ background: "#ffffff", color: "#0f172a" }}>Sans-serif (Mặc định)</option>
-                    <option value="serif" style={{ background: "#ffffff", color: "#0f172a" }}>Serif (Cổ điển)</option>
-                    <option value="monospace" style={{ background: "#ffffff", color: "#0f172a" }}>Monospace (Mã số)</option>
-                    <option value="script" style={{ background: "#ffffff", color: "#0f172a" }}>Script (Nghệ thuật)</option>
+                    <option value="sans-serif" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Sans-serif (Mặc định)</option>
+                    <option value="serif" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Serif (Cổ điển)</option>
+                    <option value="monospace" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Monospace (Mã số)</option>
+                    <option value="script" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Script (Nghệ thuật)</option>
                   </select>
                 </div>
 
                 {/* Text Size Editor with Stepper & Quick Presets */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Cỡ chữ (px)</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Cỡ chữ (px)
+                  </label>
+                  <div className="flex items-center gap-1.5 mb-1.5">
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.max(8, (selectedField.size || 14) - 1) })}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+                      className="w-8 h-8 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-base font-bold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer active:scale-95 transition-all"
                     >
                       −
                     </button>
@@ -692,26 +741,26 @@ export default function TemplateEditorPage() {
                       onChange={(e) => updateField(selectedField.id, { size: Math.max(8, Number(e.target.value)) })}
                       min={8}
                       max={120}
-                      style={{ flex: 1, height: 32, textAlign: "center", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, fontWeight: 700, color: "#1e293b", outline: "none" }}
+                      className="flex-1 h-8 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold focus:outline-none"
                     />
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.min(120, (selectedField.size || 14) + 1) })}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+                      className="w-8 h-8 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-base font-bold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer active:scale-95 transition-all"
                     >
                       +
                     </button>
                   </div>
                   {/* Preset font size chips */}
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  <div className="flex gap-1 flex-wrap">
                     {[10, 12, 14, 18, 24, 32, 48].map((s) => (
                       <button
                         key={s}
                         onClick={() => updateField(selectedField.id, { size: s })}
-                        style={{
-                          padding: "2px 6px", borderRadius: 6, border: `1px solid ${selectedField.size === s ? "#3b82f6" : "#e2e8f0"}`,
-                          background: selectedField.size === s ? "#eff6ff" : "#fff", color: selectedField.size === s ? "#2563eb" : "#64748b",
-                          fontSize: 10, fontWeight: 600, cursor: "pointer"
-                        }}
+                        className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold cursor-pointer transition-all ${
+                          selectedField.size === s
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                        }`}
                       >
                         {s}
                       </button>
@@ -720,62 +769,66 @@ export default function TemplateEditorPage() {
                 </div>
 
                 {/* Text Color */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Màu văn bản</label>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Màu văn bản
+                  </label>
+                  <div className="flex gap-2 items-center">
                     <input
                       type="color"
                       value={selectedField.color || "#333333"}
                       onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                      style={{ width: 36, height: 36, padding: 0, border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
+                      className="w-9 h-9 p-0.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 cursor-pointer overflow-hidden shrink-0"
                     />
                     <input
                       type="text"
                       value={selectedField.color || "#333333"}
                       onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                      style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none", fontFamily: "monospace" }}
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Style & Alignment Toolbar */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Định dạng & Căn chỉnh</label>
-                  <div style={{ display: "flex", gap: 6 }}>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Định dạng & Căn chỉnh
+                  </label>
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => updateField(selectedField.id, { bold: !selectedField.bold })}
-                      style={{
-                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.bold ? "#3b82f6" : "#e2e8f0"}`,
-                        background: selectedField.bold ? "#eff6ff" : "#fff", color: selectedField.bold ? "#2563eb" : "#475569",
-                        fontWeight: "bold", fontSize: 14, cursor: "pointer"
-                      }}
+                      className={`w-9 h-9 rounded-xl border text-sm font-bold cursor-pointer transition-all ${
+                        selectedField.bold
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      }`}
                       title="In đậm"
                     >
                       B
                     </button>
                     <button
                       onClick={() => updateField(selectedField.id, { italic: !selectedField.italic })}
-                      style={{
-                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.italic ? "#3b82f6" : "#e2e8f0"}`,
-                        background: selectedField.italic ? "#eff6ff" : "#fff", color: selectedField.italic ? "#2563eb" : "#475569",
-                        fontStyle: "italic", fontSize: 14, cursor: "pointer"
-                      }}
+                      className={`w-9 h-9 rounded-xl border text-sm italic cursor-pointer transition-all ${
+                        selectedField.italic
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      }`}
                       title="In nghiêng"
                     >
                       I
                     </button>
 
-                    <div style={{ width: 1, background: "#e2e8f0", margin: "0 2px" }} />
+                    <div className="w-[1px] bg-slate-200 dark:bg-slate-700 my-1 mx-0.5" />
 
                     {(["left", "center", "right"] as const).map((a) => (
                       <button
                         key={a}
                         onClick={() => updateField(selectedField.id, { align: a })}
-                        style={{
-                          flex: 1, height: 36, borderRadius: 8, border: `1px solid ${selectedField.align === a ? "#3b82f6" : "#e2e8f0"}`,
-                          background: selectedField.align === a ? "#eff6ff" : "#fff", color: selectedField.align === a ? "#2563eb" : "#475569",
-                          fontSize: 12, fontWeight: 700, cursor: "pointer"
-                        }}
+                        className={`flex-1 h-9 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
+                          selectedField.align === a
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                        }`}
                         title={a === "left" ? "Căn trái" : a === "center" ? "Căn giữa" : "Căn phải"}
                       >
                         {a === "left" ? "⬅" : a === "center" ? "↔" : "➡"}
@@ -787,17 +840,21 @@ export default function TemplateEditorPage() {
             )}
 
             {/* Position & Size */}
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Vị trí & Kích thước</h4>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-3.5">
+              <h4 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                Vị trí & Kích thước
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
                 {(["x", "y", "w", "h"] as const).map((prop) => (
                   <div key={prop}>
-                    <label style={{ display: "block", fontSize: 9, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", marginBottom: 2 }}>{prop}</label>
+                    <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+                      {prop}
+                    </label>
                     <input
                       type="number"
                       value={selectedField[prop]}
                       onChange={(e) => updateField(selectedField.id, { [prop]: Number(e.target.value) })}
-                      style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 11, color: "#334155", outline: "none" }}
+                      className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none"
                     />
                   </div>
                 ))}
@@ -805,9 +862,11 @@ export default function TemplateEditorPage() {
             </div>
 
             {/* Quick Actions (Duplicate & Delete) */}
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14, marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Thao tác trường</h4>
-              <div style={{ display: "flex", gap: 6 }}>
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-3.5 space-y-2">
+              <h4 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Thao tác trường
+              </h4>
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     const newField: TemplateField = {
@@ -819,13 +878,13 @@ export default function TemplateEditorPage() {
                     setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
                     setSelectedId(newField.id);
                   }}
-                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: 11, fontWeight: 600, color: "#334155", cursor: "pointer" }}
+                  className="flex-1 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer transition-all active:scale-95"
                 >
                   📋 Nhân bản
                 </button>
                 <button
                   onClick={() => deleteField(selectedField.id)}
-                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fef2f2", fontSize: 11, fontWeight: 700, color: "#dc2626", cursor: "pointer" }}
+                  className="flex-1 py-2 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold cursor-pointer transition-all active:scale-95"
                 >
                   🗑 Xóa trường
                 </button>

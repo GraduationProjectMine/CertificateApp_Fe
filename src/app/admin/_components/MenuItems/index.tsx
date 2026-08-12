@@ -1,8 +1,9 @@
 import React from "react";
 import styles from "./menu-items.module.css";
 
-interface MenuItem {
+export interface MenuItem {
   title: string;
+  translationKey?: string;
   path: string;
   icon: React.ReactNode;
 }
@@ -10,6 +11,7 @@ interface MenuItem {
 export const menuItems: MenuItem[] = [
   {
     title: "Bảng điều khiển",
+    translationKey: "dashboard.adminNav.dashboard",
     path: "/admin/dashboard",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -19,6 +21,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Sinh viên",
+    translationKey: "dashboard.adminNav.students",
     path: "/admin/students",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -27,7 +30,18 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
+    title: "Nhân viên",
+    translationKey: "dashboard.adminNav.staff",
+    path: "/admin/staff",
+    icon: (
+      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+      </svg>
+    )
+  },
+  {
     title: "Văn bằng đã cấp",
+    translationKey: "dashboard.adminNav.certificates",
     path: "/admin/certificates",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -37,6 +51,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Văn bằng số (Online)",
+    translationKey: "dashboard.adminNav.onlineCertificates",
     path: "/admin/online-certificates",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -46,6 +61,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Cấp bằng mới",
+    translationKey: "dashboard.adminNav.issueCertificate",
     path: "/admin/certificates/issue",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -54,16 +70,8 @@ export const menuItems: MenuItem[] = [
     )
   },
   {
-    title: "Nhân viên",
-    path: "/admin/staff",
-    icon: (
-      <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-      </svg>
-    )
-  },
-  {
     title: "Mẫu văn bằng",
+    translationKey: "dashboard.adminNav.templates",
     path: "/admin/templates",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -73,6 +81,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Tạo & Xuất bằng PDF",
+    translationKey: "dashboard.adminNav.generator",
     path: "/admin/templates/generator",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -82,6 +91,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Lô cấp phát",
+    translationKey: "dashboard.adminNav.batches",
     path: "/admin/batches",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -91,6 +101,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Thu hồi bằng",
+    translationKey: "dashboard.adminNav.revocations",
     path: "/admin/revocations",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -100,6 +111,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Hoạt động (Audit)",
+    translationKey: "dashboard.adminNav.auditLogs",
     path: "/admin/audit-logs",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -107,9 +119,9 @@ export const menuItems: MenuItem[] = [
       </svg>
     )
   },
-
   {
     title: "Yêu cầu chỉnh sửa",
+    translationKey: "dashboard.adminNav.disputes",
     path: "/admin/disputes",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -119,6 +131,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     title: "Cài đặt",
+    translationKey: "dashboard.adminNav.settings",
     path: "/admin/settings",
     icon: (
       <svg className={styles._1} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
