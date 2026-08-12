@@ -192,3 +192,40 @@ export function mapCertificateDtoToStudentCert(
     registryNumber: dto.registryNumber,
   };
 }
+
+export function mapOnlineCertificateDtoToStudentCert(
+  dto: OnlineCertificateDto,
+): import("@/features/certificates/types").StudentCertificate {
+  const statusMap: Record<string, "VALID" | "REVOKED"> = {
+    ISSUED: "VALID",
+    REVOKED: "REVOKED",
+    PENDING: "VALID",
+    DRAFT: "VALID",
+  };
+
+  return {
+    id: dto.certificate_id,
+    credentialCode: dto.serialNumber || dto.certificate_id,
+    serialNumber: dto.serialNumber || "",
+    studentName: dto.student_fullName,
+    studentCode: "",
+    credentialTitle: dto.certificate_title || "Chứng chỉ Online",
+    type: "CERTIFICATE",
+    major: "",
+    classification: "",
+    gpa: "",
+    issueDate: dto.issuedAt ? dto.issuedAt.split("T")[0] : "",
+    issuerName: "",
+    issuerLogo: "",
+    status: statusMap[dto.status] || "VALID",
+    rawStatus: (dto.status as any) || "DRAFT",
+    onChain: !!dto.tx_hash,
+    ipfsCid: dto.ipfs_cid || "",
+    metadataHash: "",
+    transactionHash: dto.tx_hash || "",
+    contractAddress: "",
+    network: "",
+    credentialHash: "",
+    registryNumber: dto.registryNumber || "",
+  };
+}

@@ -9,10 +9,13 @@ import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
 
+import { useI18n } from "@/features/i18n/I18nContext";
+
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminStudentsPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [students, setStudents] = useState<StudentDto[]>([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -186,15 +189,15 @@ export default function AdminStudentsPage() {
 
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Quản lý Sinh viên</h1>
-          <p className={styles._4}>Quản lý danh sách sinh viên đã tạo để cấp văn bằng.</p>
+          <h1 className={styles._3}>{t("dashboard.accountManage.studentTitle")}</h1>
+          <p className={styles._4}>{t("dashboard.accountManage.studentSubtitle")}</p>
         </div>
         <div className={styles._5}>
           <button onClick={() => setShowCreate(true)} className={styles._6}>
-            + Thêm sinh viên
+            {t("dashboard.accountManage.addStudent")}
           </button>
           <button onClick={() => router.push("/admin/students/import")} className={styles._7}>
-            Import CSV
+            {t("dashboard.accountManage.importCsv")}
           </button>
         </div>
       </div>
@@ -202,7 +205,7 @@ export default function AdminStudentsPage() {
       <div className={styles._8}>
         <input
           type="text"
-          placeholder="Tìm kiếm theo tên, email, ID..."
+          placeholder={t("dashboard.accountManage.searchPlaceholder")}
           className={styles._9}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -231,11 +234,11 @@ export default function AdminStudentsPage() {
               <table className={styles._14}>
                 <thead>
                   <tr className={styles._15}>
-                    <th className={styles._16}>ID</th>
-                    <th className={styles._16}>Họ tên</th>
-                    <th className={styles._16}>Email</th>
-                    <th className={styles._16}>Trạng thái</th>
-                    <th className={styles._17}>Thao tác</th>
+                    <th className={styles._16}>{t("dashboard.accountManage.table.id")}</th>
+                    <th className={styles._16}>{t("dashboard.accountManage.table.name")}</th>
+                    <th className={styles._16}>{t("dashboard.accountManage.table.email")}</th>
+                    <th className={styles._16}>{t("dashboard.accountManage.table.status")}</th>
+                    <th className={styles._17}>{t("dashboard.accountManage.table.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className={styles._18}>
@@ -247,7 +250,7 @@ export default function AdminStudentsPage() {
                           onClick={() => handleCopyId(student.student_id)}
                           className="ml-2 text-[9px] text-primary hover:underline"
                         >
-                          {copiedId === student.student_id ? "✓ Copied" : "Copy ID"}
+                          {copiedId === student.student_id ? t("dashboard.accountManage.actions.copied") : t("dashboard.accountManage.actions.copyId")}
                         </button>
                       </td>
                       <td className={styles._21}>{student.student_fullName}</td>
@@ -257,19 +260,19 @@ export default function AdminStudentsPage() {
                             ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200/50"
                             : "bg-amber-50 dark:bg-amber-950/20 text-warning border-amber-250/50"
                           }`}>
-                          {student.isActive ? "ACTIVE" : "INACTIVE"}
+                          {student.isActive ? t("dashboard.accountManage.table.active") : t("dashboard.accountManage.table.inactive")}
                         </span>
                       </td>
                       <td className={styles._25}>
                         <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
-                          Xem / Sửa
+                          {t("dashboard.accountManage.actions.viewEdit")}
                         </ActionLink>
                         {student.isActive ? (
                           <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>
-                            {lockingId === student.student_id ? "Đang khóa..." : "Khóa"}
+                            {lockingId === student.student_id ? t("dashboard.accountManage.actions.locking") : t("dashboard.accountManage.actions.lock")}
                           </ActionButton>
                         ) : (
-                          <ActionText>Đã khóa</ActionText>
+                          <ActionText>{t("dashboard.accountManage.actions.locked")}</ActionText>
                         )}
                       </td>
                     </tr>

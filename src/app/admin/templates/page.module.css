@@ -13,7 +13,7 @@
 }
 
 ._4 {
- @apply text-xs text-gray-500 mt-1;
+ @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
 }
 
 ._5 {
@@ -45,11 +45,11 @@
 }
 
 ._12 {
- @apply text-[10px] dark:text-gray-500 block mt-1;
+ @apply text-[10px] text-gray-500 dark:text-gray-400 block mt-1;
 }
 
 ._13 {
- @apply px-6 py-4 bg-slate-50 dark:bg-slate-900 border-t flex items-center justify-between text-[10px];
+ @apply px-6 py-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px];
 }
 
 ._14 {

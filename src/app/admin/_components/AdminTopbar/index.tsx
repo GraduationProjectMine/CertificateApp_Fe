@@ -7,6 +7,7 @@ import { menuItems } from "../MenuItems";
 import type { User } from "@/features/auth/types";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import Tooltip from "@/components/common/Tooltip";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 interface AdminTopbarProps {
   user: User;
@@ -14,19 +15,19 @@ interface AdminTopbarProps {
   onLogout: () => void;
 }
 
-function getBreadcrumbs(pathname: string) {
+function getBreadcrumbs(pathname: string, t: (path: string) => string) {
   const segments = pathname.split("/").filter(Boolean);
   return segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
-    const item = menuItems.find((m) => m.path === href) || { title: segment };
-    const displayTitle =
-      segment === "admin"
-        ? "Quản trị"
-        : segment === "certificates"
-        ? "Văn bằng"
-        : segment === "issue"
-        ? "Cấp mới "
-        : item.title;
+    const item = menuItems.find((m) => m.path === href);
+    let displayTitle = segment;
+    if (segment === "admin") {
+      displayTitle = t("dashboard.adminNav.portalTitle");
+    } else if (item?.translationKey) {
+      displayTitle = t(item.translationKey);
+    } else if (item) {
+      displayTitle = item.title;
+    }
 
     return {
       title: displayTitle.charAt(0).toUpperCase() + displayTitle.slice(1),
@@ -38,7 +39,8 @@ function getBreadcrumbs(pathname: string) {
 
 export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopbarProps) {
   const pathname = usePathname();
-  const breadcrumbs = getBreadcrumbs(pathname);
+  const { locale, toggleLocale, t } = useI18n();
+  const breadcrumbs = getBreadcrumbs(pathname, t);
 
   return (
     <header className={styles._1}>
@@ -56,7 +58,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
         </Tooltip>
 
         <nav className={styles._5}>
-          <span className={styles._6}>Cổng trường</span>
+          <span className={styles._6}>{t("dashboard.adminNav.portalTitle")}</span>
           {breadcrumbs.map((crumb) => (
             <React.Fragment key={crumb.href}>
               <span className={styles._7}>/</span>
@@ -93,6 +95,16 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
           <ThemeToggle className={styles._15} />
         </Tooltip>
 
+        <Tooltip content="Chuyển đổi ngôn ngữ / Switch Language" position="bottom">
+          <button
+            onClick={toggleLocale}
+            className="flex items-center justify-center min-w-[32px] h-8 px-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition-all cursor-pointer shadow-2xs"
+            aria-label="Toggle Language"
+          >
+            {locale === "vi" ? "EN" : "VI"}
+          </button>
+        </Tooltip>
+
         <Tooltip content="Đăng xuất khỏi hệ thống" position="bottom">
           <button
             onClick={onLogout}
@@ -101,10 +113,11 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1"></path>
             </svg>
-            <span>Đăng xuất</span>
+            <span>{t("nav.logout")}</span>
           </button>
         </Tooltip>
       </div>
     </header>
   );
 }
+

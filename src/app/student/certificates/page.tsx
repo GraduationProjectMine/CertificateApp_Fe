@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
-import { certificateApi, mapCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
+import { certificateApi, mapCertificateDtoToStudentCert, mapOnlineCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
 
@@ -43,9 +43,19 @@ export default function StudentCertificatesPage() {
   const fetchCertificates = () => {
     if (!user?.id) return;
     setLoading(true);
-    certificateApi.list({ student_id: user.id })
-      .then((list) => {
-        setCerts(list.map(mapCertificateDtoToStudentCert));
+    setError("");
+    Promise.all([
+      certificateApi.list({ student_id: user.id }),
+      certificateApi.listOnline().catch(() => []),
+    ])
+      .then(([regularList, onlineList]) => {
+        const mappedRegular = regularList.map(mapCertificateDtoToStudentCert);
+        const mappedOnline = onlineList.map(mapOnlineCertificateDtoToStudentCert);
+
+        const existingIds = new Set(mappedRegular.map((c) => c.id));
+        const filteredOnline = mappedOnline.filter((c) => !existingIds.has(c.id));
+
+        setCerts([...mappedRegular, ...filteredOnline]);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

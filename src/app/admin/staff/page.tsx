@@ -8,11 +8,14 @@ import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
 
+import { useI18n } from "@/features/i18n/I18nContext";
+
 const ITEMS_PER_PAGE = 10;
 
 export default function StaffListPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [staff, setStaff] = useState<StaffDto[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -138,15 +141,15 @@ export default function StaffListPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Nhân viên</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Danh sách nhân viên trong trường.</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("dashboard.accountManage.staffTitle")}</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboard.accountManage.staffSubtitle")}</p>
         </div>
         {canManageStaff && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
+            className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all shadow-2xs"
           >
-            + Thêm nhân viên
+            {t("dashboard.accountManage.addStaff")}
           </button>
         )}
       </div>
@@ -169,20 +172,20 @@ export default function StaffListPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden shadow-2xs">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200/60 dark:border-gray-800/60">
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tên</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Email</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Vai trò</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Trạng thái</th>
-                  {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thao tác</th>}
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("dashboard.accountManage.table.name")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("dashboard.accountManage.table.email")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("dashboard.accountManage.table.role")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("dashboard.accountManage.table.status")}</th>
+                {canManageStaff && <th className="text-right px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("dashboard.accountManage.table.actions")}</th>}
               </tr>
             </thead>
             <tbody>
               {staff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((s) => (
-                <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                <tr key={s.staff_id} className="border-b border-gray-100 dark:border-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{s.email}</td>
                   <td className="px-4 py-3">
@@ -191,7 +194,7 @@ export default function StaffListPage() {
                         ? 'bg-primary/10 text-primary'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}>
-                      {s.role === 'ISSUER' ? 'Quản trị' : 'Nhân viên'}
+                      {s.role === 'ISSUER' ? t("dashboard.accountManage.table.adminRole") : t("dashboard.accountManage.table.staffRole")}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -200,21 +203,21 @@ export default function StaffListPage() {
                         ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border border-green-200/50'
                         : 'bg-amber-50 dark:bg-amber-950/20 text-warning border border-amber-250/50'
                     }`}>
-                      {s.isActive ? 'ACTIVE' : 'INACTIVE'}
+                      {s.isActive ? t("dashboard.accountManage.table.active") : t("dashboard.accountManage.table.inactive")}
                     </span>
                   </td>
                   {canManageStaff && (
                     <td className="px-4 py-3 text-right space-x-2">
                       <ActionLink onClick={() => router.push(`/admin/staff/${s.staff_id}`)}>
-                        Xem / Sửa
+                        {t("dashboard.accountManage.actions.viewEdit")}
                       </ActionLink>
                       {s.role?.toUpperCase() !== "ISSUER" && (
                         s.isActive ? (
                           <ActionButton onClick={() => setLockTarget(s)} disabled={lockingId === s.staff_id}>
-                            {lockingId === s.staff_id ? "Đang khóa..." : "Khóa"}
+                            {lockingId === s.staff_id ? t("dashboard.accountManage.actions.locking") : t("dashboard.accountManage.actions.lock")}
                           </ActionButton>
                         ) : (
-                          <ActionText>Đã khóa</ActionText>
+                          <ActionText>{t("dashboard.accountManage.actions.locked")}</ActionText>
                         )
                       )}
                     </td>
