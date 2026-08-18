@@ -12,7 +12,7 @@ import Tooltip from "@/components/common/Tooltip";
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const { t } = useI18n();
+const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -49,7 +49,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </Tooltip>
           </div>
           <div className={styles._5}>
-            <AppControls />
+<AppControls />
             <Tooltip content={t("studentShell.accountTooltip")} position="bottom">
               <span className={`${styles._6} hidden sm:inline`}>{user?.name}</span>
             </Tooltip>
@@ -61,7 +61,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1" />
                 </svg>
-                <span className="hidden sm:inline">{t("studentShell.logout")}</span>
+<span className="hidden sm:inline">{t("studentShell.logout")}</span>
               </button>
             </Tooltip>
           </div>
@@ -85,7 +85,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             }`}
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-200 dark:border-gray-800 md:hidden">
-              <span className="font-bold text-sm text-gray-900 dark:text-white">{t("studentShell.menuTitle")}</span>
+<span className="font-bold text-sm text-gray-900 dark:text-white">{t("studentShell.menuTitle")}</span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -93,20 +93,24 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 ✕
               </button>
             </div>
-            {navItems.map((item) => (
-              <Tooltip key={item.href} content={item.desc} position="right" className="w-full">
-                <Link
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`${getClassName(item.href)} w-full`}
-                >
-                  <svg className={styles._11} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
-                  </svg>
-                  {item.label}
-                </Link>
-              </Tooltip>
-            ))}
+            {navItems.map((item) => {
+              const label = item.label;
+              const desc = item.desc;
+              return (
+                <Tooltip key={item.href} content={desc} position="right" className="w-full">
+                  <Link
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`${getClassName(item.href)} w-full`}
+                  >
+                    <svg className={styles._11} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
+                    </svg>
+                    {label}
+                  </Link>
+                </Tooltip>
+              );
+            })}
           </nav>
 
           <main className={styles._12}>{children}</main>
@@ -115,3 +119,4 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     </div>
   );
 }
+

@@ -59,7 +59,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
         </Tooltip>
 
         <nav className={styles._5}>
-          <span className={styles._6}>{t("adminShell.topbar.portalLabel")}</span>
+<span className={styles._6}>{t("adminShell.topbar.portalLabel")}</span>
           {breadcrumbs.map((crumb) => (
             <React.Fragment key={crumb.href}>
               <span className={styles._7}>/</span>
@@ -94,7 +94,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
 
         <AppControls />
 
-        <Tooltip content={t("adminShell.topbar.logoutTooltip")} position="bottom">
+<Tooltip content={t("adminShell.topbar.logoutTooltip")} position="bottom">
           <button
             onClick={onLogout}
             className={styles._18}
@@ -102,10 +102,11 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1"></path>
             </svg>
-            <span>{t("adminShell.topbar.logout")}</span>
+<span>{t("adminShell.topbar.logout")}</span>
           </button>
         </Tooltip>
       </div>
     </header>
   );
 }
+

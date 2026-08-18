@@ -11,6 +11,7 @@ const emptyProfile = { organization_name: "", contact_email: "", logo_url: "" };
 
 export default function AdminSettingsPage() {
   const { user } = useAuth();
+  const { locale, toggleLocale, t } = useI18n();
   const canEdit = user?.role === "issuer";
   const [profile, setProfile] = useState<IssuerProfile | null>(null);
   const [form, setForm] = useState(emptyProfile);
@@ -19,7 +20,6 @@ export default function AdminSettingsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [profileError, setProfileError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { t } = useI18n();
 
   useEffect(() => {
     issuerApi.getProfile()
@@ -101,15 +101,72 @@ export default function AdminSettingsPage() {
   return (
     <div className={styles._1}>
       <div>
-        <h1 className={styles._2}>{t("adminSettings.title")}</h1>
+<h1 className={styles._2}>{t("adminSettings.title")}</h1>
         <p className={styles._3}>
           {canEdit ? t("adminSettings.descriptionEdit") : t("adminSettings.descriptionReadOnly")}
         </p>
       </div>
 
+      {/* Language Settings Card */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+            </svg>
+            {t("dashboard.settings.languageTitle")}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {t("dashboard.settings.languageDesc")}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => locale !== "vi" && toggleLocale()}
+            className={`p-4 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+              locale === "vi"
+                ? "border-primary bg-primary/5 dark:bg-primary/10 ring-1 ring-primary"
+                : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-slate-300"
+            }`}
+          >
+            <div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white block">🇻🇳 {t("dashboard.settings.vietnamese")}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">Tiếng Việt cho toàn bộ bảng điều khiển</span>
+            </div>
+            {locale === "vi" && (
+              <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                ✓ {t("dashboard.settings.active")}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => locale !== "en" && toggleLocale()}
+            className={`p-4 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+              locale === "en"
+                ? "border-primary bg-primary/5 dark:bg-primary/10 ring-1 ring-primary"
+                : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-slate-300"
+            }`}
+          >
+            <div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white block">🇬🇧 {t("dashboard.settings.english")}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">English interface for dashboard</span>
+            </div>
+            {locale === "en" && (
+              <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                ✓ {t("dashboard.settings.active")}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       <form onSubmit={handleSave} className={styles._4}>
         <div className="flex items-center justify-between gap-4">
-          <h2 className={styles._5}>{t("adminSettings.profileTitle")}</h2>
+<h2 className={styles._5}>{t("adminSettings.profileTitle")}</h2>
           {profile && (
             <span
               className={`rounded-full px-3 py-1 text-[10px] font-bold ${profile.is_verified ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
@@ -125,7 +182,7 @@ export default function AdminSettingsPage() {
         ) : (
           <>
             {/* Logo Section */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl bg-slate-50 dark:bg-gray-800/40 border border-slate-100 dark:border-gray-800 mb-2">
+<div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl bg-slate-50 dark:bg-gray-800/40 border border-slate-100 dark:border-gray-800 mb-2">
               <div className="relative w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
                 {form.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -150,7 +207,7 @@ export default function AdminSettingsPage() {
               </div>
 
               <div className="flex-1 text-center sm:text-left space-y-2">
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">{t("adminSettings.logoTitle")}</h3>
+<h3 className="text-sm font-semibold text-slate-800 dark:text-white">{t("adminSettings.logoTitle")}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t("adminSettings.logoDescription")}
                 </p>
@@ -169,7 +226,7 @@ export default function AdminSettingsPage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingLogo}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -181,7 +238,7 @@ export default function AdminSettingsPage() {
                         type="button"
                         onClick={() => setForm({ ...form, logo_url: "" })}
                         disabled={uploadingLogo}
-                        className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg transition-colors"
+className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg transition-colors"
                       >
                         {t("adminSettings.removeLogo")}
                       </button>

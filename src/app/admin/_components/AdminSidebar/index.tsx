@@ -76,6 +76,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
             return acc;
           }, '');
           const isActive = item.path === activeItemPath;
+
           const linkElement = (
             <Link
               key={item.path}
@@ -90,7 +91,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
               <div className={`${styles._22} ${isActive ? "scale-105" : "group-hover:scale-105"}`}>
                 {item.icon}
               </div>
-              {!collapsed && <span className={styles._9}>{t(item.titleKey)}</span>}
+{!collapsed && <span className={styles._9}>{t(item.titleKey)}</span>}
               {!collapsed && !isActive && (
                 <span className={styles._10}></span>
               )}
@@ -98,7 +99,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
           );
 
           return collapsed ? (
-            <Tooltip key={item.path} content={t(item.titleKey)} position="right" className="w-full">
+<Tooltip key={item.path} content={t(item.titleKey)} position="right" className="w-full">
               {linkElement}
             </Tooltip>
           ) : (
@@ -110,7 +111,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
       <div className={styles._11}>
         {!collapsed ? (
           <div className={styles._12}>
-            <div className={styles._13}>{t("adminShell.sidebar.userLabel")}</div>
+<div className={styles._13}>{t("adminShell.sidebar.userLabel")}</div>
             <div className={styles._14}>
               <div className={styles._15}>
                 {user.name.charAt(0)}

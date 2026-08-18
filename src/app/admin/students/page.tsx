@@ -188,7 +188,7 @@ export default function AdminStudentsPage() {
 
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("adminStudents.headerTitle")}</h1>
+<h1 className={styles._3}>{t("adminStudents.headerTitle")}</h1>
           <p className={styles._4}>{t("adminStudents.headerDescription")}</p>
         </div>
         <div className={styles._5}>
@@ -196,7 +196,7 @@ export default function AdminStudentsPage() {
             + {t("adminStudents.addStudent")}
           </button>
           <button onClick={() => router.push("/admin/students/import")} className={styles._7}>
-            Import CSV
+            {t("dashboard.accountManage.importCsv")}
           </button>
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function AdminStudentsPage() {
       <div className={styles._8}>
         <input
           type="text"
-          placeholder={t("adminStudents.searchPlaceholder")}
+placeholder={t("adminStudents.searchPlaceholder")}
           className={styles._9}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -233,7 +233,7 @@ export default function AdminStudentsPage() {
               <table className={styles._14}>
                 <thead>
                   <tr className={styles._15}>
-                    <th className={styles._16}>ID</th>
+<th className={styles._16}>ID</th>
                     <th className={styles._16}>{t("adminStudents.table.fullName")}</th>
                     <th className={styles._16}>{t("adminStudents.table.email")}</th>
                     <th className={styles._16}>{t("adminStudents.table.status")}</th>
@@ -249,7 +249,7 @@ export default function AdminStudentsPage() {
                           onClick={() => handleCopyId(student.student_id)}
                           className="ml-2 text-[9px] text-primary hover:underline"
                         >
-                          {copiedId === student.student_id ? t("adminStudents.copied") : t("adminStudents.copyId")}
+{copiedId === student.student_id ? t("adminStudents.copied") : t("adminStudents.copyId")}
                         </button>
                       </td>
                       <td className={styles._21}>{student.student_fullName}</td>
@@ -259,12 +259,12 @@ export default function AdminStudentsPage() {
                             ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200/50"
                             : "bg-amber-50 dark:bg-amber-950/20 text-warning border-amber-250/50"
                           }`}>
-                          {student.isActive ? "ACTIVE" : "INACTIVE"}
+                          {student.isActive ? t("dashboard.accountManage.table.active") : t("dashboard.accountManage.table.inactive")}
                         </span>
                       </td>
                       <td className={styles._25}>
                         <ActionLink onClick={() => router.push(`/admin/students/${student.student_id}`)}>
-                          {t("adminStudents.viewEdit")}
+{t("adminStudents.viewEdit")}
                         </ActionLink>
                         {student.isActive ? (
                           <ActionButton onClick={() => setLockTarget(student)} disabled={lockingId === student.student_id}>

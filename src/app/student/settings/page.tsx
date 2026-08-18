@@ -8,7 +8,7 @@ import { useI18n } from "@/features/i18n/I18nContext";
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const { t } = useI18n();
+const { t } = useI18n();
   const [emailNotif, setEmailNotif] = useState(false);
   const [loadingPref, setLoadingPref] = useState(true);
 
@@ -52,7 +52,7 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("studentSettings.header.title")}</h1>
+<h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("studentSettings.header.title")}</h1>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("studentSettings.header.description")}</p>
       </div>
 

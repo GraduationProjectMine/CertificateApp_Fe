@@ -405,13 +405,13 @@ export default function IssueCertificatePage() {
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-6 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
+          className="px-6 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
         >
           {submitting ? t("adminCertificateIssue.submit.saving") : t("adminCertificateIssue.submit.saveDraft")}
         </button>
         <button
           onClick={() => router.push("/admin/certificates")}
-          className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+          className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all cursor-pointer"
         >
           {t("adminCertificateIssue.submit.cancel")}
         </button>

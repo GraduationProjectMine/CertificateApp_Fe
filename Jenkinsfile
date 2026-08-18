@@ -6,7 +6,7 @@ pipeline {
         IMAGE_NAME = "nguyentt07/certificate-app-frontend"   // đổi nếu username khác
         TAG        = "dev-${env.BUILD_NUMBER}"
         // Địa chỉ Backend mà TRÌNH DUYỆT người dùng gọi tới - không phải DNS nội bộ cluster
-        NEXT_PUBLIC_API_URL = "http://100.77.202.105:30300"
+        NEXT_PUBLIC_API_URL = "https://api.100-77-202-105.sslip.io"
     }
 
     options {
