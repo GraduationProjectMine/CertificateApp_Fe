@@ -10,6 +10,7 @@ import { certificateApi, type CreateCertificatePayload } from "@/features/certif
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
 import { QRCodeSVG } from "qrcode.react";
+import toast from "react-hot-toast";
 
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
@@ -48,6 +49,8 @@ const DEFAULT_DESIGN: DesignData = {
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
 
+const OPTIONAL_BINDINGS = ["verification_url", "organization_logo"];
+
 export default function CertificateGeneratorPage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -72,6 +75,7 @@ export default function CertificateGeneratorPage() {
   const [issuingSingle, setIssuingSingle] = useState(false);
   const [issuingBatch, setIssuingBatch] = useState(false);
   const [issueResult, setIssueResult] = useState<{ type: "SINGLE" | "BATCH"; data: any } | null>(null);
+  const [confirmingUpload, setConfirmingUpload] = useState<{ type: "SINGLE" | "BATCH"; count: number } | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -147,6 +151,17 @@ export default function CertificateGeneratorPage() {
     return records[activeRowIndex] || {};
   }, [records, activeRowIndex]);
 
+  const validateRecord = (record: Record<string, string>): { valid: boolean; missingLabel?: string } => {
+    for (const item of boundFields) {
+      if (OPTIONAL_BINDINGS.includes(item.key)) continue;
+      const val = record[item.key];
+      if (!val || !val.trim()) {
+        return { valid: false, missingLabel: item.label };
+      }
+    }
+    return { valid: true };
+  };
+
   const handleUpdateActiveField = (key: string, val: string) => {
     setRecords((prev) => {
       const next = [...prev];
@@ -163,15 +178,15 @@ export default function CertificateGeneratorPage() {
     try {
       const res = await templateApi.importDataFile(file);
       if (!res.rows || res.rows.length === 0) {
-        alert(t("adminTemplateGenerator.fileNoData"));
+        toast.error(t("adminTemplateGenerator.fileNoData"));
         return;
       }
       setImportedFileName(res.fileName);
       setRecords(res.rows.map((r) => r.record));
       setActiveRowIndex(0);
-      alert(`${t("adminTemplateGenerator.importSuccessPrefix")} ${res.totalRows} ${t("adminTemplateGenerator.recordUnit")} ${t("adminTemplateGenerator.importFromFile")} ${res.fileName}`);
+      toast.success(`${t("adminTemplateGenerator.importSuccessPrefix")} ${res.totalRows} ${t("adminTemplateGenerator.recordUnit")} ${t("adminTemplateGenerator.importFromFile")} ${res.fileName}`);
     } catch (err: any) {
-      alert(err.message || t("adminTemplateGenerator.error.import"));
+      toast.error(err.message || t("adminTemplateGenerator.error.import"));
     } finally {
       setImporting(false);
       e.target.value = "";
@@ -180,6 +195,11 @@ export default function CertificateGeneratorPage() {
 
   const exportSinglePdf = async () => {
     if (!canvasRef.current) return;
+    const check = validateRecord(activeRecord);
+    if (!check.valid) {
+      toast.error(t("adminTemplateGenerator.exportPdfMissing").replace("{field}", check.missingLabel || ""));
+      return;
+    }
     setExportingSingle(true);
     try {
       const canvas = await html2canvas(canvasRef.current, {
@@ -201,8 +221,9 @@ export default function CertificateGeneratorPage() {
       const studentName = activeRecord.student_fullName || activeRecord.student_id || selectedTemplate?.name || "van_bang";
       const fileName = `${studentName.replace(/\s+/g, "_")}.pdf`;
       pdf.save(fileName);
+      toast.success(t("adminTemplateGenerator.exportSingleSuccess"));
     } catch (err: any) {
-      alert(err.message || t("adminTemplateGenerator.error.exportPdf"));
+      toast.error(err.message || t("adminTemplateGenerator.error.exportPdf"));
     } finally {
       setExportingSingle(false);
     }
@@ -219,6 +240,12 @@ export default function CertificateGeneratorPage() {
       const isLandscape = activeDesign.page.width >= activeDesign.page.height;
 
       for (let i = 0; i < records.length; i++) {
+        const rowCheck = validateRecord(records[i]);
+        if (!rowCheck.valid) {
+          toast.error(t("adminTemplateGenerator.batchExportMissing").replace("{row}", String(i + 1)).replace("{field}", rowCheck.missingLabel || ""));
+          setActiveRowIndex(i);
+          return;
+        }
         setBatchProgress(`${i + 1} / ${records.length}`);
         setActiveRowIndex(i);
         await new Promise((r) => setTimeout(r, 100));
@@ -252,8 +279,9 @@ export default function CertificateGeneratorPage() {
       link.download = `certificates_batch_${Date.now()}.zip`;
       link.click();
       URL.revokeObjectURL(link.href);
+      toast.success(t("adminTemplateGenerator.exportZipSuccess").replace("{count}", String(records.length)));
     } catch (err: any) {
-      alert(err.message || t("adminTemplateGenerator.error.createZip"));
+      toast.error(err.message || t("adminTemplateGenerator.error.createZip"));
     } finally {
       setExportingBatch(false);
       setBatchProgress("");
@@ -261,7 +289,7 @@ export default function CertificateGeneratorPage() {
   };
 
   // Issue single certificate with JSON file pinned to IPFS & registered on-chain
-  const handleIssueSingle = async () => {
+  const executeIssueSingle = async () => {
     if (!selectedTemplate) return;
     setIssuingSingle(true);
     try {
@@ -293,17 +321,42 @@ export default function CertificateGeneratorPage() {
         type: "SINGLE",
         data: cert,
       });
+      toast.success(t("adminTemplateGenerator.issueSingleSuccess"));
     } catch (err: any) {
-      alert(err.message || t("adminTemplateGenerator.error.issueSingle"));
+      toast.error(err.message || t("adminTemplateGenerator.error.issueSingle"));
     } finally {
       setIssuingSingle(false);
     }
   };
 
-  // Issue batch certificates with JSON files pinned to IPFS & registered on-chain
-  const handleIssueBatch = async () => {
+  // Request confirmation before issuing single certificate
+  const requestIssueSingle = () => {
+    if (!selectedTemplate) return;
+    const check = validateRecord(activeRecord);
+    if (!check.valid) {
+      toast.error(t("adminTemplateGenerator.issueSingleMissing").replace("{field}", check.missingLabel || ""));
+      return;
+    }
+    setConfirmingUpload({ type: "SINGLE", count: 1 });
+  };
+
+  // Request confirmation before issuing batch certificates
+  const requestIssueBatch = () => {
     if (!selectedTemplate || records.length === 0) return;
-    if (!confirm(`${t("adminTemplateGenerator.confirmIssuePrefix")} ${records.length} ${t("adminTemplateGenerator.diplomaUnit")} ${t("adminTemplateGenerator.confirmIssueSuffix")}`)) return;
+    for (let i = 0; i < records.length; i++) {
+      const check = validateRecord(records[i]);
+      if (!check.valid) {
+        toast.error(t("adminTemplateGenerator.batchIssueMissing").replace("{row}", String(i + 1)).replace("{field}", check.missingLabel || ""));
+        setActiveRowIndex(i);
+        return;
+      }
+    }
+    setConfirmingUpload({ type: "BATCH", count: records.length });
+  };
+
+  // Issue batch certificates with JSON files pinned to IPFS & registered on-chain
+  const executeIssueBatch = async () => {
+    if (!selectedTemplate || records.length === 0) return;
 
     setIssuingBatch(true);
     try {
@@ -347,8 +400,9 @@ export default function CertificateGeneratorPage() {
         type: "BATCH",
         data: batchRes,
       });
+      toast.success(t("adminTemplateGenerator.issueBatchSuccess"));
     } catch (err: any) {
-      alert(err.message || t("adminTemplateGenerator.error.issueBatch"));
+      toast.error(err.message || t("adminTemplateGenerator.error.issueBatch"));
     } finally {
       setIssuingBatch(false);
     }
@@ -550,7 +604,7 @@ export default function CertificateGeneratorPage() {
             {/* Group 3: Blockchain Issue Group */}
             <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 p-1 rounded-xl shadow-2xs shrink-0">
               <button
-                onClick={handleIssueSingle}
+                onClick={requestIssueSingle}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
                 className="px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-800 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-900/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.issueSingleTitle")}
@@ -559,7 +613,7 @@ export default function CertificateGeneratorPage() {
                 <span>{issuingSingle ? t("adminTemplateGenerator.issuing") : t("adminTemplateGenerator.issueSingle")}</span>
               </button>
               <button
-                onClick={handleIssueBatch}
+                onClick={requestIssueBatch}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
                 className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.issueBatchTitle")}
@@ -743,7 +797,7 @@ export default function CertificateGeneratorPage() {
                   return (
                     <div key={key}>
                       <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-faint)", marginBottom: 4 }}>
-                        {label} {t("adminTemplateGenerator.selectOrManualSuffix")}
+                        {label}{!OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "#ef4444" }}> *</span>} {t("adminTemplateGenerator.selectOrManualSuffix")}
                       </label>
                       <select
                         value={activeRecord[key] || ""}
@@ -778,14 +832,15 @@ export default function CertificateGeneratorPage() {
                 return (
                   <div key={key}>
                     <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-faint)", marginBottom: 4 }}>
-                      {label}
+                      {label}{!OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "#ef4444" }}> *</span>}
+                      {OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "var(--text-faint)", fontWeight: 400 }}> {t("adminTemplateGenerator.optionalSuffix")}</span>}
                     </label>
                     <input
                       type="text"
                       value={activeRecord[key] || ""}
                       onChange={(e) => handleUpdateActiveField(key, e.target.value)}
                       style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
-                      placeholder={`${t("adminTemplateGenerator.enterPrefix")} ${label.toLowerCase()}...`}
+                      placeholder={OPTIONAL_BINDINGS.includes(key) ? t("adminTemplateGenerator.placeholderOptional").replace("{label}", label.toLowerCase()) : `${t("adminTemplateGenerator.enterPrefix")} ${label.toLowerCase()}...`}
                     />
                   </div>
                 );
@@ -858,6 +913,59 @@ export default function CertificateGeneratorPage() {
               {activeDesign.fields?.map((field) => (
                 <React.Fragment key={field.id}>{renderFieldContent(field)}</React.Fragment>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal before Blockchain Issuance */}
+      {confirmingUpload && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
+          <div style={{ background: "var(--surface)", borderRadius: 20, maxWidth: 440, width: "100%", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
+            <div style={{ textAlign: "center", padding: "24px 20px", borderRadius: 16, background: "rgba(245, 158, 11, 0.08)", border: "1px solid #fcd34d", marginBottom: 20 }}>
+              <div style={{ margin: "0 auto 12px", width: 56, height: 56, borderRadius: "50%", background: "rgba(245, 158, 11, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706" }}>
+                <svg style={{ width: 28, height: 28 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 style={{ fontSize: 16, fontWeight: 900, color: "#b45309", margin: "0 0 8px 0" }}>{t("adminTemplateGenerator.confirmTitle")}</h2>
+              <p style={{ fontSize: 12, color: "#92400e", margin: 0, lineHeight: 1.6 }}>
+                {t("adminTemplateGenerator.confirmBody")}
+              </p>
+              <p style={{ fontSize: 11, color: "#a16207", fontStyle: "italic", margin: "8px 0 0 0" }}>
+                {t("adminTemplateGenerator.confirmBodyEn")}
+              </p>
+            </div>
+
+            {confirmingUpload.type === "BATCH" && (
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", background: "var(--surface-subtle)", padding: "10px 16px", borderRadius: 12, border: "1px solid var(--border)", textAlign: "center", marginBottom: 16 }}>
+                {t("adminTemplateGenerator.confirmBatchCount").replace("{count}", String(confirmingUpload.count))}
+              </div>
+            )}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                onClick={() => setConfirmingUpload(null)}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "background 0.2s" }}
+              >
+                {t("adminTemplateGenerator.confirmBack")}
+              </button>
+              <button
+                onClick={() => {
+                  const targetType = confirmingUpload.type;
+                  setConfirmingUpload(null);
+                  if (targetType === "SINGLE") {
+                    void executeIssueSingle();
+                  } else {
+                    void executeIssueBatch();
+                  }
+                }}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, background: "#059669", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "background 0.2s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#047857"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#059669"; }}
+              >
+                {t("adminTemplateGenerator.confirmSubmit")}
+              </button>
             </div>
           </div>
         </div>
