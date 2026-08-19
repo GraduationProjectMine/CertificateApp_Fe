@@ -50,7 +50,7 @@ const initialForm: FormData = {
 export default function IssueCertificatePage() {
   const router = useRouter();
   const { t } = useI18n();
-  const [step, setStep] = useState<"info" | "confirm" | "result">("info");
+  const [step, setStep] = useState<"info" | "result">("info");
   const [formData, setFormData] = useState<FormData>(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; status: string } | null>(null);

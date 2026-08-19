@@ -46,9 +46,9 @@ export default function LoginPage() {
       return;
     }
 
-    setIsSubmitting(true);
+setIsSubmitting(true);
     const result = await login(normalizedEmail, password);
-    if (!result.success) setError("Đã có lỗi xảy ra");
+    if (!result.success) setError(result.error || "Đã có lỗi xảy ra");
     setIsSubmitting(false);
   };
 
@@ -93,7 +93,7 @@ function isUserRejectedError(err: any): boolean {
       // 3. Login with MetaMask
       const result = await loginWithMetaMask(walletAddress, signature, tempToken);
       if (!result.success) {
-        setError("Đã có lỗi xảy ra");
+        setError(result.error || "Đã có lỗi xảy ra");
       }
     } catch (err: any) {
       console.error(err);

@@ -28,8 +28,9 @@ export default function CertificateDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
+const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
 
   const fetchCert = useCallback(async () => {
     setLoading(true);
@@ -139,6 +140,22 @@ export default function CertificateDetailPage() {
         </div>
       )}
 
+<ConfirmModal
+        open={showSubmitConfirmModal}
+        onClose={() => setShowSubmitConfirmModal(false)}
+        title={t("adminCertificateDetail.submitConfirm.title")}
+        message={t("adminCertificateDetail.submitConfirm.body")}
+        confirmLabel={t("adminCertificateDetail.submitConfirm.confirm")}
+        cancelLabel={t("adminCertificateDetail.submitConfirm.cancel")}
+        variant="primary"
+        icon="info"
+        loading={actionLoading}
+        onConfirm={() => {
+          setShowSubmitConfirmModal(false);
+          void handleSubmit();
+        }}
+      />
+
       <ConfirmModal
         open={showDeleteConfirmModal}
         onClose={() => setShowDeleteConfirmModal(false)}
@@ -224,7 +241,7 @@ export default function CertificateDetailPage() {
       <div className="flex gap-3">
         {cert.status === "DRAFT" && (
           <button
-            onClick={handleSubmit}
+            onClick={() => setShowSubmitConfirmModal(true)}
             disabled={actionLoading}
             className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all cursor-pointer"
           >

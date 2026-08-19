@@ -71,6 +71,7 @@ export default function AdminBatchesPage() {
   const [showConfirmBatch, setShowConfirmBatch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [batchCurrentPage, setBatchCurrentPage] = useState(1);
@@ -320,12 +321,14 @@ export default function AdminBatchesPage() {
   }
 
   async function retry(itemId: string) {
-    if (!selected) return;
+    if (!selected || retryingId) return;
+    setRetryingId(itemId);
     try {
       setSelected(await operationsApi.retryBatchItem(selected.id, itemId));
       await load();
       toast.success(t("adminBatches.retrySuccess"));
     } catch (err) { toast.error(err instanceof Error ? err.message : t("adminBatches.error.retry")); }
+    finally { setRetryingId(null); }
   }
 
   function exportErrors() {
@@ -966,7 +969,7 @@ export default function AdminBatchesPage() {
                     <td className={`p-3 font-bold ${item.status === "SUCCESS" ? "text-green-600" : "text-red-500"}`}>{item.status}</td>
                     <td className="max-w-sm p-3 text-gray-500 dark:text-gray-400">
                       {item.error || item.certificateId || "—"}{" "}
-                      {item.status === "FAILED" && <button className="ml-2 font-bold text-teal-600" onClick={() => retry(item.id)}>{t("adminBatches.retry")}</button>}
+                      {item.status === "FAILED" && <button className="ml-2 font-bold text-teal-600" disabled={retryingId !== null} onClick={() => retry(item.id)}>{retryingId === item.id ? t("common.loading") : t("adminBatches.retry")}</button>}
                     </td>
                   </tr>
                 ))}

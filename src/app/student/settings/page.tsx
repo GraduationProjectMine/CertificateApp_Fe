@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { notificationApi } from "@/features/notifications/services/notification.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -11,6 +12,7 @@ export default function SettingsPage() {
 const { t, locale, toggleLocale } = useI18n();
   const [emailNotif, setEmailNotif] = useState(false);
   const [loadingPref, setLoadingPref] = useState(true);
+  const [savingPref, setSavingPref] = useState(false);
 
   useEffect(() => {
     notificationApi.preferences()
@@ -20,12 +22,18 @@ const { t, locale, toggleLocale } = useI18n();
   }, []);
 
   const toggleEmailNotif = async () => {
+    if (savingPref) return;
     const next = !emailNotif;
     setEmailNotif(next);
+    setSavingPref(true);
     try {
       await notificationApi.updatePreferences(next);
+      toast.success(t("studentSettings.notifPrefs.updateSuccess"));
     } catch {
       setEmailNotif(!next);
+      toast.error(t("studentSettings.notifPrefs.updateError"));
+    } finally {
+      setSavingPref(false);
     }
   };
 
@@ -140,7 +148,8 @@ const { t, locale, toggleLocale } = useI18n();
           ) : (
             <button
               onClick={toggleEmailNotif}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              disabled={savingPref}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                 emailNotif ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
               }`}
             >

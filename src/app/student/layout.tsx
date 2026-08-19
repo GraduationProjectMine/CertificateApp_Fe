@@ -8,12 +8,14 @@ import { useAuth } from "../../features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
 import AppControls from "@/components/common/AppControls";
 import Tooltip from "@/components/common/Tooltip";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
 const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const navItems = [
     { label: t("studentShell.dashboard"), href: "/student/dashboard", desc: t("studentShell.dashboardDesc"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -30,6 +32,20 @@ const { t } = useI18n();
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title={t("common.confirm.logoutTitle")}
+        message={t("common.confirm.logoutBody")}
+        confirmLabel={t("common.confirm.logoutConfirm")}
+        cancelLabel={t("common.confirm.logoutCancel")}
+        variant="danger"
+        icon="danger"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          logout();
+        }}
+      />
       <header className={styles._2}>
         <div className={styles._3}>
           <div className="flex items-center gap-3">
@@ -55,7 +71,7 @@ const { t } = useI18n();
             </Tooltip>
             <Tooltip content={t("studentShell.logoutTooltip")} position="bottom">
               <button
-                onClick={logout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="flex items-center gap-1.5 font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer text-xs sm:text-sm"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

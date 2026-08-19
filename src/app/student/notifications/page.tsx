@@ -3,10 +3,12 @@ import React, { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { notificationApi, type NotificationDto } from "@/features/notifications/services/notification.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import toast from "react-hot-toast";
 
 export default function NotificationsPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const [markingAll, setMarkingAll] = useState(false);
   const getTypeInfo = (type: string): { label: string; color: string } => {
     const TYPE_LABELS: Record<string, { label: string; color: string }> = {
       CERT_ISSUED: { label: t("studentNotifications.type.certIssued"), color: "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400" },
@@ -38,7 +40,9 @@ export default function NotificationsPage() {
       try {
         await notificationApi.markAsRead(n.id);
         setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
-      } catch {}
+      } catch {
+        toast.error(t("studentNotifications.toast.markReadError"));
+      }
     }
     if (n.deep_link) {
       router.push(n.deep_link);
@@ -46,10 +50,16 @@ export default function NotificationsPage() {
   };
 
   const handleMarkAllAsRead = async () => {
+    setMarkingAll(true);
     try {
       await notificationApi.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    } catch {}
+      toast.success(t("studentNotifications.toast.markAllReadSuccess"));
+    } catch {
+      toast.error(t("studentNotifications.toast.markAllReadError"));
+    } finally {
+      setMarkingAll(false);
+    }
   };
 
   return (
@@ -60,8 +70,8 @@ export default function NotificationsPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("studentNotifications.header.description")}</p>
         </div>
         {notifications.some((n) => !n.is_read) && (
-          <button onClick={handleMarkAllAsRead}
-            className="px-4 py-2 text-xs font-bold text-primary border border-primary/30 rounded-xl hover:bg-primary/5 transition-all">
+          <button onClick={handleMarkAllAsRead} disabled={markingAll}
+            className="px-4 py-2 text-xs font-bold text-primary border border-primary/30 rounded-xl hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             {t("studentNotifications.markAllRead")}
           </button>
         )}

@@ -37,6 +37,7 @@ export default function AdminCertificatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchApproving, setBatchApproving] = useState(false);
@@ -65,9 +66,10 @@ export default function AdminCertificatesPage() {
     fetchData();
   }, [fetchData]);
 
-  const handleDelete = async () => {
+const handleDelete = async () => {
     if (!deleteTargetId) return;
     setDeleteError("");
+    setDeleting(true);
     try {
       await certificateApi.delete(deleteTargetId);
       setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
@@ -77,6 +79,8 @@ export default function AdminCertificatesPage() {
       const message = err.message || t("adminCertificates.genericError");
       setDeleteError(message);
       toast.error(message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -162,6 +166,7 @@ export default function AdminCertificatesPage() {
         cancelLabel={t("adminCertificates.deleteModal.cancel")}
         variant="danger"
         icon="danger"
+        loading={deleting}
         onConfirm={() => void handleDelete()}
       />
 

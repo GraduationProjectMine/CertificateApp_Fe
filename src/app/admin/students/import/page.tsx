@@ -3,6 +3,7 @@ import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi, type ImportResult } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 export default function ImportStudentsPage() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function ImportStudentsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
 
@@ -108,13 +110,29 @@ export default function ImportStudentsPage() {
 
         {file && !result && (
           <button
-            onClick={handleImport}
+            onClick={() => setShowConfirm(true)}
             disabled={submitting}
             className="w-full px-5 py-3 text-sm font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all"
           >
             {submitting ? t("adminStudentImport.processing") : `${t("adminStudentImport.importButton")} ${file.name}`}
           </button>
         )}
+
+        <ConfirmModal
+          open={showConfirm}
+          onClose={() => setShowConfirm(false)}
+          title={t("adminStudentImport.confirm.title")}
+          message={t("adminStudentImport.confirm.body").replace("{file}", file?.name || "")}
+          confirmLabel={t("adminStudentImport.confirm.confirm")}
+          cancelLabel={t("adminStudentImport.confirm.cancel")}
+          variant="warning"
+          icon="warning"
+          loading={submitting}
+          onConfirm={() => {
+            setShowConfirm(false);
+            void handleImport();
+          }}
+        />
 
         {error && (
           <div className="text-[11px] text-red-500 bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{error}</div>

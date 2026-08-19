@@ -111,7 +111,7 @@ export default function RegisterPage() {
         setSuccess("Đăng ký và đăng nhập thành công!");
         router.push("/admin/dashboard");
       } else {
-        setError("Đã có lỗi xảy ra");
+        setError(result.error || "Đã có lỗi xảy ra");
       }
     } catch (err: any) {
       console.error(err);
