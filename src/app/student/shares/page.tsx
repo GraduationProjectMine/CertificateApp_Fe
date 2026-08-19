@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { shareApi } from "@/features/share/services/share.api";
@@ -7,6 +7,8 @@ import type { ShareDto } from "@/features/share/services/share.api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import toast from "react-hot-toast";
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
@@ -53,8 +55,10 @@ export default function SharesPage() {
   const [formScope, setFormScope] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [revokeTargetId, setRevokeTargetId] = useState("");
+  const [revokeLoading, setRevokeLoading] = useState(false);
 
-  const fetchShares = () => {
+  const fetchShares = useCallback(() => {
     if (!user?.id) return;
     setLoading(true);
     setError("");
@@ -76,21 +80,26 @@ export default function SharesPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  };
+  }, [t, user?.id]);
 
   useEffect(() => {
     fetchShares();
-  }, [user?.id]);
+  }, [fetchShares]);
 
   const handleCreate = async () => {
-    if (!formCert) return;
+    if (!formCert) {
+      toast.error(t("studentShares.toast.certRequired"));
+      return;
+    }
     setSubmitting(true);
+    setError("");
     try {
       await shareApi.create({
         certificate_id: formCert,
         expires_in_days: formExpiry ? parseInt(formExpiry, 10) : undefined,
         scope: formScope.length > 0 ? formScope : undefined,
       });
+      toast.success(t("studentShares.toast.createSuccess"));
       setShowModal(false);
       setFormCert("");
       setFormExpiry("");
@@ -103,13 +112,20 @@ export default function SharesPage() {
     }
   };
 
-  const handleRevoke = async (id: string) => {
-    if (!confirm(t("studentShares.confirmRevoke"))) return;
+  const handleRevoke = async () => {
+    if (!revokeTargetId) return;
+    setRevokeLoading(true);
+    setError("");
     try {
-      await shareApi.revoke(id);
+      await shareApi.revoke(revokeTargetId);
+      toast.success(t("studentShares.toast.revokeSuccess"));
+      setRevokeTargetId("");
       fetchShares();
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setRevokeLoading(false);
     }
   };
 
@@ -118,6 +134,7 @@ export default function SharesPage() {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
+      toast.success(t("studentShares.toast.copySuccess"));
     } catch {
       const ta = document.createElement("textarea");
       ta.value = url;
@@ -127,6 +144,7 @@ export default function SharesPage() {
       document.body.removeChild(ta);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
+      toast.success(t("studentShares.toast.copySuccess"));
     }
   };
 
@@ -162,6 +180,19 @@ export default function SharesPage() {
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={!!revokeTargetId}
+        onClose={() => setRevokeTargetId("")}
+        title={t("studentShares.revoke")}
+        message={t("studentShares.confirmRevoke")}
+        confirmLabel={t("studentShares.revoke")}
+        cancelLabel={t("studentShares.modal.cancel")}
+        variant="danger"
+        icon="danger"
+        loading={revokeLoading}
+        onConfirm={() => void handleRevoke()}
+      />
+
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>{t("studentShares.header.title")}</h1>
@@ -257,7 +288,7 @@ export default function SharesPage() {
                 <div className={styles._12}>
                   {statusBadge(share)}
                   <button
-                    onClick={() => handleRevoke(share.id)}
+                    onClick={() => setRevokeTargetId(share.id)}
                     className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200/50 hover:bg-red-100 dark:hover:bg-red-950/50 transition-all"
                   >
                     {t("studentShares.revoke")}

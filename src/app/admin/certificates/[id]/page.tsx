@@ -1,11 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import toast from "react-hot-toast";
 
 function statusLabel(s: string, t: ReturnType<typeof useI18n>["t"]): { label: string; className: string } {
   const map: Record<string, { label: string; className: string }> = {
@@ -26,8 +28,10 @@ export default function CertificateDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
-  const fetchCert = async () => {
+  const fetchCert = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -38,11 +42,11 @@ export default function CertificateDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, t]);
 
   useEffect(() => {
     fetchCert();
-  }, [id]);
+  }, [fetchCert]);
 
   const handleSubmit = async () => {
     if (!cert) return;
@@ -50,14 +54,13 @@ export default function CertificateDetailPage() {
     try {
       await certificateApi.updateStatus(id, "PENDING");
       await fetchCert();
+      toast.success(t("adminCertificateDetail.submitSuccess"));
     } catch (err: any) {
-      alert(t("adminCertificateDetail.genericError"));
+      toast.error(err.message || t("adminCertificateDetail.genericError"));
     } finally {
       setActionLoading(false);
     }
   };
-
-  const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
 
   const handleApprove = async () => {
     if (!cert) return;
@@ -65,23 +68,25 @@ export default function CertificateDetailPage() {
     try {
       await certificateApi.approve(id);
       await fetchCert();
+      toast.success(t("adminCertificateDetail.approveSuccess"));
     } catch (err: any) {
-      alert(t("adminCertificateDetail.genericError"));
+      toast.error(err.message || t("adminCertificateDetail.genericError"));
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm(t("adminCertificateDetail.deleteConfirm"))) return;
     setActionLoading(true);
     try {
       await certificateApi.delete(id);
+      toast.success(t("adminCertificateDetail.deleteSuccess"));
       router.push("/admin/certificates");
     } catch (err: any) {
-      alert(err.message || t("adminCertificateDetail.deleteFailed"));
+      toast.error(err.message || t("adminCertificateDetail.deleteFailed"));
     } finally {
       setActionLoading(false);
+      setShowDeleteConfirmModal(false);
     }
   };
 
@@ -134,6 +139,19 @@ export default function CertificateDetailPage() {
         </div>
       )}
 
+      <ConfirmModal
+        open={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        title={t("adminCertificateDetail.delete")}
+        message={t("adminCertificateDetail.deleteConfirm")}
+        confirmLabel={t("adminCertificateDetail.delete")}
+        cancelLabel={t("adminCertificateDetail.confirm.back")}
+        variant="danger"
+        icon="danger"
+        loading={actionLoading}
+        onConfirm={() => void handleDelete()}
+      />
+
       {/* Confirmation Modal before Blockchain Issuance */}
       {showApproveConfirmModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 animate-fadeIn">
@@ -145,13 +163,13 @@ export default function CertificateDetailPage() {
                 </svg>
               </div>
               <h3 className="text-base font-extrabold text-amber-800 dark:text-amber-300">
-                Xác nhận phát hành lên Blockchain
+                {t("adminCertificateDetail.confirm.title")}
               </h3>
               <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
-                Văn bằng sau khi được tải/phát hành lên Blockchain &amp; IPFS sẽ <strong>KHÔNG THỂ CHỈNH SỬA Hoặc THAY ĐỔI</strong> dữ liệu.
+                {t("adminCertificateDetail.confirm.body")}
               </p>
               <p className="text-[11px] text-amber-600 dark:text-amber-500 font-normal italic">
-                &ldquo;The certificate can&apos;t be changed after uploaded to chain&rdquo;
+                {t("adminCertificateDetail.confirm.bodyEn")}
               </p>
             </div>
 
@@ -161,7 +179,7 @@ export default function CertificateDetailPage() {
                 onClick={() => setShowApproveConfirmModal(false)}
                 className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                Quay lại
+                {t("adminCertificateDetail.confirm.back")}
               </button>
               <button
                 type="button"
@@ -171,7 +189,7 @@ export default function CertificateDetailPage() {
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                Xác nhận phát hành
+                {t("adminCertificateDetail.confirm.submit")}
               </button>
             </div>
           </div>
@@ -224,7 +242,7 @@ export default function CertificateDetailPage() {
         )}
         {(cert.status === "DRAFT" || cert.status === "PENDING") && (
           <button
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirmModal(true)}
             disabled={actionLoading}
             className="px-5 py-2.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 disabled:opacity-50 rounded-xl transition-all"
           >

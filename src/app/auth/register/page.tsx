@@ -8,6 +8,7 @@ import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
 import AppControls from "@/components/common/AppControls";
 import { BrowserProvider } from "ethers";
+import { validateEmail, validateMinLength } from "@/lib/validators";
 
 type RegisterForm = {
   institutionName: string;
@@ -37,10 +38,6 @@ function isUserRejectedError(err: any): boolean {
   );
 }
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Đăng ký thất bại";
-}
-
 export default function RegisterPage() {
   const [form, setForm] = useState<RegisterForm>(initialForm);
   const [error, setError] = useState("");
@@ -61,8 +58,21 @@ export default function RegisterPage() {
     setError("");
     setSuccess("");
 
-    if (!form.institutionName || !form.email) {
-      setError("Vui lòng nhập tên trường và email quản trị");
+    const institutionName = form.institutionName.trim();
+    const institutionCode = form.institutionCode.trim();
+    const adminName = form.adminName.trim();
+    const email = form.email.trim();
+
+    if (!institutionName || !institutionCode || !adminName || !email) {
+      setError("Vui lòng nhập đầy đủ thông tin đăng ký");
+      return;
+    }
+    if (!validateMinLength(institutionName, 2) || !validateMinLength(adminName, 2)) {
+      setError("Tên phải có ít nhất 2 ký tự");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Email không hợp lệ");
       return;
     }
 
@@ -92,9 +102,9 @@ export default function RegisterPage() {
         walletAddress,
         signature,
         tempToken,
-        email: form.email,
-        name: form.institutionName,
-        adminName: form.adminName || undefined,
+        email,
+        name: institutionName,
+        adminName,
       });
 
       if (result.success) {

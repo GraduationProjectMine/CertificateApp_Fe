@@ -4,9 +4,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { templateApi } from "@/features/templates/services/api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
-import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
+import type { TemplateField, DesignData } from "@/features/templates/types";
 import { QRCodeSVG } from "qrcode.react";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateMinLength } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -79,7 +81,6 @@ export default function TemplateEditorPage() {
   const id = params.id as string;
   const { t } = useI18n();
 
-  const [template, setTemplate] = useState<CertificateTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [design, setDesign] = useState<DesignData>(DEFAULT_DESIGN);
@@ -111,7 +112,7 @@ export default function TemplateEditorPage() {
   });
 
   const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
-  const [importedData, setImportedData] = useState<{
+  const [importedData] = useState<{
     fileName: string;
     totalRows: number;
     rows: Array<{ rowNumber: number; record: Record<string, string>; isValid: boolean }>;
@@ -144,11 +145,10 @@ export default function TemplateEditorPage() {
     const fetchTemplate = async () => {
       try {
         const data = await templateApi.get(id);
-        setTemplate(data);
         setDesign(data.design_data || DEFAULT_DESIGN);
         setTemplateName(data.name);
       } catch (err: any) {
-        alert(err.message || t("adminTemplateEditor.error.load"));
+        toast.error(err.message || t("adminTemplateEditor.error.load"));
         router.push("/admin/templates");
       } finally {
         setLoading(false);
@@ -262,17 +262,24 @@ export default function TemplateEditorPage() {
   }, [resizing, zoom, updateField]);
 
   const handleSave = async () => {
+    const name = templateName.trim();
+    if (!validateMinLength(name, 2)) {
+      toast.error(t("common.validation.invalidName"));
+      return;
+    }
     setSaving(true);
     try {
       if (id === "new") {
-        const created = await templateApi.create({ name: templateName, design_data: design as any });
+        const created = await templateApi.create({ name, design_data: design as any });
+        toast.success(t("adminTemplateEditor.saveSuccess"));
         router.push(`/admin/templates/editor/${created.id}`);
       } else {
-        await templateApi.update(id, { name: templateName, design_data: design as any });
-        alert(t("adminTemplateEditor.saveSuccess"));
+        await templateApi.update(id, { name, design_data: design as any });
+        setTemplateName(name);
+        toast.success(t("adminTemplateEditor.saveSuccess"));
       }
     } catch (err: any) {
-      alert(err.message || t("adminTemplateEditor.error.save"));
+      toast.error(err.message || t("adminTemplateEditor.error.save"));
     } finally {
       setSaving(false);
     }

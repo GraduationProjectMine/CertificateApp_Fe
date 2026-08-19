@@ -1,13 +1,14 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate } from "@/features/templates/types";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateMinLength } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 const DEFAULT_DESIGN = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -19,7 +20,6 @@ const DEFAULT_DESIGN = {
 };
 
 export default function AdminTemplatesPage() {
-  const router = useRouter();
   const { t } = useI18n();
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +29,10 @@ export default function AdminTemplatesPage() {
   const [newDesc, setNewDesc] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteTargetName, setDeleteTargetName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -41,50 +43,65 @@ export default function AdminTemplatesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    const name = newName.trim();
+    const description = newDesc.trim();
+    if (!validateMinLength(name, 2)) {
+      toast.error(t("common.validation.invalidName"));
+      return;
+    }
+    setCreating(true);
     try {
-      await templateApi.create({ name: newName, description: newDesc, design_data: DEFAULT_DESIGN as any });
+      await templateApi.create({ name, description: description || undefined, design_data: DEFAULT_DESIGN as any });
+      toast.success(t("adminTemplates.createSuccess"));
       setShowCreateModal(false);
       setNewName("");
       setNewDesc("");
       await fetchData();
     } catch (err: any) {
-      alert(err.message || t("adminTemplates.error.create"));
+      toast.error(err.message || t("adminTemplates.error.create"));
+    } finally {
+      setCreating(false);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTargetId) return;
+    setDeleting(true);
     try {
       await templateApi.delete(deleteTargetId);
+      toast.success(t("adminTemplates.deleteSuccess"));
       setTemplates((prev) => prev.filter((t) => t.id !== deleteTargetId));
       setDeleteTargetId("");
       setDeleteTargetName("");
     } catch (err: any) {
-      alert(err.message || t("adminTemplates.error.delete"));
+      toast.error(err.message || t("adminTemplates.error.delete"));
+    } finally {
+      setDeleting(false);
     }
   };
 
   const handleDuplicate = async (id: string) => {
     try {
       await templateApi.duplicate(id);
+      toast.success(t("adminTemplates.duplicateSuccess"));
       await fetchData();
     } catch (err: any) {
-      alert(err.message || t("adminTemplates.error.duplicate"));
+      toast.error(err.message || t("adminTemplates.error.duplicate"));
     }
   };
 
   const handleSetDefault = async (id: string) => {
     try {
       await templateApi.update(id, { is_default: true });
+      toast.success(t("adminTemplates.setDefaultSuccess"));
       await fetchData();
     } catch (err: any) {
-      alert(err.message || t("adminTemplates.error.setDefault"));
+      toast.error(err.message || t("adminTemplates.error.setDefault"));
     }
   };
 
@@ -106,6 +123,7 @@ export default function AdminTemplatesPage() {
         title={t("adminTemplates.createModal.title")}
         description={t("adminTemplates.createModal.description")}
         onSubmit={(e) => { e.preventDefault(); void handleCreate(); }}
+        submitting={creating}
         submitLabel={t("adminTemplates.createModal.submit")}
         size="md"
       >
@@ -141,6 +159,7 @@ export default function AdminTemplatesPage() {
         cancelLabel={t("adminTemplates.deleteModal.cancel")}
         variant="danger"
         icon="danger"
+        loading={deleting}
         onConfirm={() => void handleDelete()}
       />
 

@@ -1,9 +1,10 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { certificateApi, type CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import toast from "react-hot-toast";
 
 const DISPUTES_PER_PAGE = 5;
 
@@ -32,7 +33,7 @@ export default function StudentDisputesPage() {
   const [formDetails, setFormDetails] = useState("");
   const [formError, setFormError] = useState("");
 
-  const fetch = async () => {
+  const fetch = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -47,9 +48,9 @@ export default function StudentDisputesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetch(); }, [fetch]);
 
   // Sort disputes by latest date
   const sortedDisputes = useMemo(() => {
@@ -80,13 +81,16 @@ export default function StudentDisputesPage() {
         reason: formReason.trim(),
         details: formDetails.trim() || undefined,
       });
+      toast.success(t("studentDisputes.successCreated"));
       setShowModal(false);
       setFormCertId("");
       setFormReason("");
       setFormDetails("");
       fetch();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("studentDisputes.formError.failed"));
+      const message = err instanceof Error ? err.message : t("studentDisputes.formError.failed");
+      setFormError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

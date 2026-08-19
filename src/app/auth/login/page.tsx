@@ -8,6 +8,7 @@ import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
 import AppControls from "@/components/common/AppControls";
 import { BrowserProvider } from "ethers";
+import { validateEmail } from "@/lib/validators";
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
@@ -35,13 +36,18 @@ export default function LoginPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-    if (!email || !password) {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || !password) {
       setError("Vui lòng nhập email và mật khẩu");
+      return;
+    }
+    if (!validateEmail(normalizedEmail)) {
+      setError("Email không hợp lệ");
       return;
     }
 
     setIsSubmitting(true);
-    const result = await login(email, password);
+    const result = await login(normalizedEmail, password);
     if (!result.success) setError("Đã có lỗi xảy ra");
     setIsSubmitting(false);
   };

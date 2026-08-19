@@ -31,7 +31,7 @@ export default function StudentCertificateDetailPage() {
       setLoading(false);
     };
     fetchDetail();
-  }, [params.id]);
+  }, [params.id, t]);
 
   if (loading) {
     return (

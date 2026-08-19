@@ -1,6 +1,7 @@
 import React from "react";
 import Modal from "./index";
 import styles from "./modal.module.css";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -62,6 +63,7 @@ export default function ConfirmModal({
   loading = false,
   icon,
 }: ConfirmModalProps) {
+  const { t } = useI18n();
   return (
     <Modal open={open} onClose={onClose} size="sm" hideClose>
       <div className="text-center">
@@ -85,7 +87,7 @@ export default function ConfirmModal({
           disabled={loading}
           className={`px-4 py-2.5 text-sm font-bold rounded-xl shadow-sm transition-all disabled:opacity-50 ${btnStyles[variant]}`}
         >
-          {loading ? "Đang xử lý..." : confirmLabel}
+          {loading ? t("common.loading") : confirmLabel}
         </button>
       </div>
     </Modal>

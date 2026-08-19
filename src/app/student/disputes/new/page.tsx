@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
 import { certificateApi, type CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import toast from "react-hot-toast";
 
 export default function NewDisputePage() {
   const router = useRouter();
@@ -39,9 +40,12 @@ export default function NewDisputePage() {
         reason: formReason.trim(),
         details: formDetails.trim() || undefined,
       });
+      toast.success(t("studentDisputeNew.successCreated"));
       router.push("/student/disputes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("studentDisputeNew.error.failed"));
+      const message = err instanceof Error ? err.message : t("studentDisputeNew.error.failed");
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

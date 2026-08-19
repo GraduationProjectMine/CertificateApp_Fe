@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
+import { validateEmail, validateMinLength, validatePassword } from "@/lib/validators";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -34,7 +35,7 @@ export default function AdminStudentsPage() {
       .then(setStudents)
       .catch((err) => setError(err instanceof Error ? err.message : t("adminStudents.errors.loadFailed")))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const refresh = async () => {
     setLoading(true);
@@ -50,20 +51,38 @@ export default function AdminStudentsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!createForm.name || !createForm.email || !createForm.password) {
+    const name = createForm.name.trim();
+    const email = createForm.email.trim();
+    const password = createForm.password.trim();
+    if (!name || !email || !password) {
       setCreateError(t("adminStudents.errors.fillAllFields"));
+      return;
+    }
+    if (!validateMinLength(name, 2)) {
+      setCreateError(t("common.validation.invalidName"));
+      return;
+    }
+    if (!validateEmail(email)) {
+      setCreateError(t("common.validation.invalidEmail"));
+      return;
+    }
+    if (!validatePassword(password)) {
+      setCreateError(t("common.validation.invalidPassword"));
       return;
     }
     setCreating(true);
     setCreateError("");
     try {
-      await studentApi.create(createForm);
+      await studentApi.create({ name, email, password });
+      toast.success(t("adminStudents.createSuccess"));
       setShowCreate(false);
       setShowPassword(false);
       setCreateForm({ name: "", email: "", password: "" });
       await refresh();
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : t("adminStudents.errors.createFailed"));
+      const message = err instanceof Error ? err.message : t("adminStudents.errors.createFailed");
+      setCreateError(message);
+      toast.error(message);
     } finally {
       setCreating(false);
     }
@@ -80,8 +99,11 @@ export default function AdminStudentsPage() {
       setStudents((current) =>
         current.map((s) => (s.student_id === id ? { ...s, isActive: false } : s)),
       );
+      toast.success(t("adminStudents.lockSuccess"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminStudents.errors.lockFailed"));
+      const message = err instanceof Error ? err.message : t("adminStudents.errors.lockFailed");
+      setError(message);
+      toast.error(message);
     } finally {
       setLockingId("");
     }

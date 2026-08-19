@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { staffApi } from "@/features/staff/services/staff.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateEmail, validateMinLength, validatePassword } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 const emptyForm = { name: "", email: "", role: "", isActive: true, password: "" };
 
@@ -33,17 +35,35 @@ export default function StaffDetailPage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setSaving(true);
     setError("");
     setSuccess("");
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const password = form.password.trim();
+    if (!validateMinLength(name, 2)) {
+      setError(t("common.validation.invalidName"));
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError(t("common.validation.invalidEmail"));
+      return;
+    }
+    if (password && !validatePassword(password)) {
+      setError(t("common.validation.invalidPassword"));
+      return;
+    }
+    setSaving(true);
     try {
-      const payload: any = { name: form.name, email: form.email, isActive: form.isActive };
-      if (form.password) payload.password = form.password;
+      const payload: any = { name, email, isActive: form.isActive };
+      if (password) payload.password = password;
       await staffApi.update(id, payload);
-      setForm((current) => ({ ...current, password: "" }));
+      setForm((current) => ({ ...current, name, email, password: "" }));
       setSuccess(t("adminStaffDetail.updateSuccess"));
+      toast.success(t("adminStaffDetail.updateSuccess"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminStaffDetail.updateError"));
+      const message = err instanceof Error ? err.message : t("adminStaffDetail.updateError");
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

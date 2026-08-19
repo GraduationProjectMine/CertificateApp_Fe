@@ -6,6 +6,7 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import { issuerApi, type IssuerProfile } from "@/features/issuer/services/issuer.api";
 import toast from "react-hot-toast";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateEmail, validateMinLength, validateOptionalUrl } from "@/lib/validators";
 
 const emptyProfile = { organization_name: "", contact_email: "", logo_url: "" };
 
@@ -38,13 +39,28 @@ export default function AdminSettingsPage() {
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!canEdit) return;
+    const organizationName = form.organization_name.trim();
+    const contactEmail = form.contact_email.trim();
+    const logoUrl = form.logo_url.trim();
+    if (!validateMinLength(organizationName, 2)) {
+      toast.error(t("common.validation.invalidName"));
+      return;
+    }
+    if (!validateEmail(contactEmail)) {
+      toast.error(t("common.validation.invalidEmail"));
+      return;
+    }
+    if (!validateOptionalUrl(logoUrl)) {
+      toast.error(t("common.validation.invalidUrl"));
+      return;
+    }
     setSaving(true);
     setProfileError("");
     try {
       const updated = await issuerApi.updateProfile({
-        organization_name: form.organization_name.trim(),
-        contact_email: form.contact_email.trim(),
-        logo_url: form.logo_url.trim(),
+        organization_name: organizationName,
+        contact_email: contactEmail,
+        logo_url: logoUrl,
       });
       setProfile(updated);
       setForm({

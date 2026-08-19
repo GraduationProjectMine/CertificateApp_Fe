@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { staffApi } from "@/features/staff/services/staff.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateEmail, validateMinLength, validatePassword } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 export default function CreateStaffPage() {
   const router = useRouter();
@@ -19,17 +21,35 @@ export default function CreateStaffPage() {
       setError(t("adminStaffCreate.forbiddenError"));
       return;
     }
-    if (!form.name || !form.email || !form.password) {
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const password = form.password.trim();
+    if (!name || !email || !password) {
       setError(t("adminStaffCreate.requiredError"));
+      return;
+    }
+    if (!validateMinLength(name, 2)) {
+      setError(t("common.validation.invalidName"));
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError(t("common.validation.invalidEmail"));
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError(t("common.validation.invalidPassword"));
       return;
     }
     setSubmitting(true);
     setError("");
     try {
-      await staffApi.create(form);
+      await staffApi.create({ name, email, password });
+      toast.success(t("adminStaffCreate.successCreated"));
       router.push("/admin/staff");
     } catch (err: any) {
-      setError(err.message || t("adminStaffCreate.createError"));
+      const message = err.message || t("adminStaffCreate.createError");
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

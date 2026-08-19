@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
@@ -7,6 +7,7 @@ import { useI18n } from "@/features/i18n/I18nContext";
 import { certificateApi, mapCertificateDtoToStudentCert, mapOnlineCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
+import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -41,7 +42,7 @@ export default function StudentCertificatesPage() {
   const [requestError, setRequestError] = useState("");
   const [requestSuccess, setRequestSuccess] = useState("");
 
-  const fetchCertificates = () => {
+  const fetchCertificates = useCallback(() => {
     if (!user?.id) return;
     setLoading(true);
     setError("");
@@ -60,11 +61,11 @@ export default function StudentCertificatesPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     fetchCertificates();
-  }, [user?.id]);
+  }, [fetchCertificates]);
 
   // Reset pagination when active tab, filters or search query change
   useEffect(() => {
@@ -141,12 +142,15 @@ export default function StudentCertificatesPage() {
         details: requestDetails.trim() || undefined,
       });
       setRequestSuccess(t("studentCertificates.modal.success"));
+      toast.success(t("studentCertificates.modal.success"));
       setTimeout(() => {
         setRequestCert(null);
         setRequestSuccess("");
       }, 2000);
     } catch (err: any) {
-      setRequestError(err.message || t("studentCertificates.modal.errorFailed"));
+      const message = err.message || t("studentCertificates.modal.errorFailed");
+      setRequestError(message);
+      toast.error(message);
     } finally {
       setSubmittingRequest(false);
     }

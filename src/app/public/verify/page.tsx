@@ -6,8 +6,9 @@ import toast from "react-hot-toast";
 import styles from "./page.module.css";
 import VerificationResult, { type VerificationData } from "@/components/credential/VerificationResult";
 import { verifierApi, type VerifyCertificateResponse } from "@/features/verification/services/verifier.api";
+import { useI18n } from "@/features/i18n/I18nContext";
 
-function mapVerification(response: VerifyCertificateResponse): VerificationData {
+function mapVerification(response: VerifyCertificateResponse, t: (path: string) => string): VerificationData {
   const detail = response.certificateDetails;
   const status: VerificationData["status"] = response.status === "REVOKED"
     ? "REVOKED"
@@ -37,11 +38,12 @@ function mapVerification(response: VerifyCertificateResponse): VerificationData 
     revokeReason: detail.revokeReason || undefined,
     revokeTransactionHash: detail.revokeTransactionHash || undefined,
     verifiedAt: new Date().toLocaleString("vi-VN"),
-    error: status === "INVALID" ? "Dữ liệu văn bằng không khớp với bản ghi blockchain." : undefined,
+    error: status === "INVALID" ? t("verifyPage.error.mismatch") : undefined,
   };
 }
 
 export default function VerifyPublicPage() {
+  const { t } = useI18n();
   const [serialNumber, setSerialNumber] = useState("");
   const [registryNumber, setRegistryNumber] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -53,15 +55,15 @@ export default function VerifyPublicPage() {
   const handleVerify = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!serialNumber.trim() || !registryNumber.trim()) {
-      setError("Vui lòng nhập đầy đủ số hiệu và số vào sổ cấp bằng.");
+      setError(t("verifyPage.error.required"));
       return;
     }
     setError("");
     setIsVerifying(true);
     try {
-      setResult(mapVerification(await verifierApi.verifyAny(serialNumber.trim(), registryNumber.trim())));
+      setResult(mapVerification(await verifierApi.verifyAny(serialNumber.trim(), registryNumber.trim()), t));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể xác minh văn bằng.");
+      setError(err instanceof Error ? err.message : t("verifyPage.error.verifyFailed"));
     } finally {
       setIsVerifying(false);
     }
@@ -72,7 +74,7 @@ export default function VerifyPublicPage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Vui lòng chụp hoặc chọn tệp hình ảnh.");
+      toast.error(t("verifyPage.toast.needImage"));
       return;
     }
 
@@ -93,15 +95,17 @@ export default function VerifyPublicPage() {
 
       if (found) {
         toast.success(
-          `Đã trích xuất bằng OCR! ${res.serialNumber ? `Số hiệu: ${res.serialNumber}` : ""} ${
-            res.registryNumber ? `Số vào sổ: ${res.registryNumber}` : ""
+          `${t("verifyPage.toast.ocrSuccess")} ${
+            res.serialNumber ? t("verifyPage.toast.serialValue").replace("{value}", res.serialNumber) : ""
+          } ${
+            res.registryNumber ? t("verifyPage.toast.registryValue").replace("{value}", res.registryNumber) : ""
           }`,
         );
       } else {
-        toast.error("Chưa tự động nhận diện được số hiệu / số vào sổ từ ảnh. Vui lòng nhập thủ công.");
+        toast.error(t("verifyPage.toast.ocrFailed"));
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Quét OCR ảnh thất bại.");
+      toast.error(err instanceof Error ? err.message : t("verifyPage.toast.ocrError"));
     } finally {
       setIsScanningOcr(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

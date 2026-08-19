@@ -1,6 +1,6 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
@@ -9,6 +9,7 @@ import { useI18n } from "@/features/i18n/I18nContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import { ActionLink, ActionButton } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
+import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -47,22 +48,22 @@ export default function AdminCertificatesPage() {
     total: number;
   } | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const data = await certificateApi.list(filterStatus ? { status: filterStatus } : undefined);
       setCertificates(data);
     } catch (err: any) {
-      setError(t("adminCertificates.genericError"));
+      setError(err.message || t("adminCertificates.genericError"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus, t]);
 
   useEffect(() => {
     fetchData();
-  }, [filterStatus]);
+  }, [fetchData]);
 
   const handleDelete = async () => {
     if (!deleteTargetId) return;
@@ -70,9 +71,12 @@ export default function AdminCertificatesPage() {
     try {
       await certificateApi.delete(deleteTargetId);
       setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
+      toast.success(t("adminCertificateDetail.deleteSuccess"));
       setDeleteTargetId("");
     } catch (err: any) {
-      setDeleteError(t("adminCertificates.genericError"));
+      const message = err.message || t("adminCertificates.genericError");
+      setDeleteError(message);
+      toast.error(message);
     }
   };
 
@@ -85,8 +89,15 @@ export default function AdminCertificatesPage() {
       setBatchApproveResult(result);
       await fetchData();
       setSelectedIds(new Set());
+      if (result.failCount > 0) {
+        toast.error(`${t("adminCertificates.batch.fail")}: ${result.failCount}`);
+      } else {
+        toast.success(`${t("adminCertificates.batch.success")}: ${result.successCount}`);
+      }
     } catch (err: any) {
-      setError(t("adminCertificates.genericError"));
+      const message = err.message || t("adminCertificates.genericError");
+      setError(message);
+      toast.error(message);
     } finally {
       setBatchApproving(false);
     }
@@ -213,18 +224,18 @@ export default function AdminCertificatesPage() {
                 </svg>
               </div>
               <h3 className="text-base font-extrabold text-amber-800 dark:text-amber-300">
-                Xác nhận phát hành lên Blockchain
+                {t("adminCertificates.batch.confirmTitle")}
               </h3>
               <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
-                Văn bằng sau khi được tải/phát hành lên Blockchain &amp; IPFS sẽ <strong>KHÔNG THỂ CHỈNH SỬA Hoặc THAY ĐỔI</strong> dữ liệu.
+                {t("adminCertificates.batch.confirmBody")}
               </p>
               <p className="text-[11px] text-amber-600 dark:text-amber-500 font-normal italic">
-                &ldquo;The certificate can&apos;t be changed after uploaded to chain&rdquo;
+                {t("adminCertificates.batch.confirmBodyEn")}
               </p>
             </div>
 
             <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
-              Số lượng văn bằng ký hàng loạt: <strong className="text-primary">{selectedIds.size}</strong>
+              {t("adminCertificates.batch.confirmCount").replace("{count}", String(selectedIds.size))}
             </div>
 
             <div className="flex items-center gap-3 pt-1">
@@ -233,7 +244,7 @@ export default function AdminCertificatesPage() {
                 onClick={() => setShowBatchConfirmModal(false)}
                 className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                Quay lại
+                {t("adminCertificates.batch.back")}
               </button>
               <button
                 type="button"
@@ -243,7 +254,7 @@ export default function AdminCertificatesPage() {
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                Xác nhận phát hành
+                {t("adminCertificates.batch.submit")}
               </button>
             </div>
           </div>

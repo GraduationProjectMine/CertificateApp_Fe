@@ -112,7 +112,7 @@ export default function AdminBatchesPage() {
     studentApi.list().then(setStudents).catch(() => {});
   }, [load]);
 
-  async function processOcrFiles(files: File[]) {
+  const processOcrFiles = useCallback(async (files: File[]) => {
     setScanningOcr(true);
     try {
       toast.loading(`${t("adminBatches.ocr.scanning")} ${files.length} ${t("adminBatches.ocr.imageUnit")}...`, { id: "ocr-batch" });
@@ -167,7 +167,7 @@ export default function AdminBatchesPage() {
     } finally {
       setScanningOcr(false);
     }
-  }
+  }, [ocrLang, t]);
 
   // Handle Drag-and-drop OCR scan
   const handleOcrDrop = useCallback((e: React.DragEvent) => {
@@ -175,7 +175,7 @@ export default function AdminBatchesPage() {
     if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
     const files = Array.from(e.dataTransfer.files);
     void processOcrFiles(files);
-  }, [ocrLang]);
+  }, [processOcrFiles]);
 
   // Handle OCR Batch Files Upload
   async function onOcrFiles(event: React.ChangeEvent<HTMLInputElement>) {

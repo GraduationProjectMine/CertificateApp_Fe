@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { notificationApi, type NotificationDto } from "@/features/notifications/services/notification.api";
 import { useI18n } from "@/features/i18n/I18nContext";
@@ -19,7 +19,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetch = async () => {
+  const fetch = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -29,9 +29,9 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetch(); }, [fetch]);
 
   const handleClick = async (n: NotificationDto) => {
     if (!n.is_read) {

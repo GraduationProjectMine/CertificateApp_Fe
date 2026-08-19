@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validatePassword } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -19,9 +21,7 @@ export default function ChangePasswordPage() {
 
     if (!form.currentPassword) { setError(t("studentChangePassword.error.currentPasswordRequired")); return; }
     if (form.newPassword.length < 8) { setError(t("studentChangePassword.error.newPasswordLength")); return; }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.newPassword)) {
-      setError(t("studentChangePassword.error.newPasswordComplexity")); return;
-    }
+    if (!validatePassword(form.newPassword)) { setError(t("studentChangePassword.error.newPasswordComplexity")); return; }
     if (form.newPassword !== form.confirmPassword) { setError(t("studentChangePassword.error.confirmMismatch")); return; }
 
     setSaving(true);
@@ -31,9 +31,12 @@ export default function ChangePasswordPage() {
         newPassword: form.newPassword,
       });
       setSuccess(t("studentChangePassword.success.changed"));
+      toast.success(t("studentChangePassword.success.changed"));
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("studentChangePassword.error.failed"));
+      const message = err instanceof Error ? err.message : t("studentChangePassword.error.failed");
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

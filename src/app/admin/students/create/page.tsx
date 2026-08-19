@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateEmail, validateMinLength, validatePassword } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 export default function CreateStudentPage() {
   const router = useRouter();
@@ -14,17 +16,35 @@ export default function CreateStudentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password) {
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const password = form.password.trim();
+    if (!name || !email || !password) {
       setError(t("adminStudentCreate.errors.fillAllFields"));
+      return;
+    }
+    if (!validateMinLength(name, 2)) {
+      setError(t("common.validation.invalidName"));
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError(t("common.validation.invalidEmail"));
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError(t("common.validation.invalidPassword"));
       return;
     }
     setSubmitting(true);
     setError("");
     try {
-      await studentApi.create(form);
+      await studentApi.create({ name, email, password });
+      toast.success(t("adminStudentCreate.successCreated"));
       router.push("/admin/students");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminStudentCreate.errors.createFailed"));
+      const message = err instanceof Error ? err.message : t("adminStudentCreate.errors.createFailed");
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

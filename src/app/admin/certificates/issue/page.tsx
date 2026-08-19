@@ -7,6 +7,7 @@ import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import toast from "react-hot-toast";
 
 type FormData = {
   student_id: string;
@@ -63,7 +64,7 @@ export default function IssueCertificatePage() {
       .then(setStudents)
       .catch((err) => setStudentsError(err instanceof Error ? err.message : t("adminCertificateIssue.errors.studentsLoad")))
       .finally(() => setStudentsLoading(false));
-  }, []);
+  }, [t]);
 
   // OCR
   const [inputMode, setInputMode] = useState<"manual" | "ocr">("manual");
@@ -85,7 +86,7 @@ export default function IssueCertificatePage() {
     setOcrFile(f);
     setOcrError("");
     setOcrPreview(URL.createObjectURL(f));
-  }, []);
+  }, [t]);
 
   const handleOcrDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -96,7 +97,7 @@ export default function IssueCertificatePage() {
     setOcrFile(f);
     setOcrError("");
     setOcrPreview(URL.createObjectURL(f));
-  }, []);
+  }, [t]);
 
   const handleOcrScan = async () => {
     if (!ocrFile) return;
@@ -144,34 +145,41 @@ export default function IssueCertificatePage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.student_id || !formData.certificate_title) {
+    const studentId = formData.student_id.trim();
+    const certificateTitle = formData.certificate_title.trim();
+    const optional = (value: string) => value.trim() || undefined;
+    if (!studentId || !certificateTitle) {
       setError(t("adminCertificateIssue.errors.validation"));
+      toast.error(t("adminCertificateIssue.errors.validation"));
       return;
     }
     setSubmitting(true);
     setError("");
     try {
       const created = await certificateApi.createDraft({
-        student_id: formData.student_id,
-        certificate_title: formData.certificate_title,
-        dob: formData.dob || undefined,
-        placeOfBirth: formData.placeOfBirth || undefined,
-        gender: formData.gender || undefined,
-        ethnicity: formData.ethnicity || undefined,
-        schoolName: formData.schoolName || undefined,
-        examCohort: formData.examCohort || undefined,
-        examBoard: formData.examBoard || undefined,
-        issueLocation: formData.issueLocation || undefined,
-        issueDate: formData.issueDate || undefined,
-        serialNumber: formData.serialNumber || undefined,
-        registryNumber: formData.registryNumber || undefined,
-        ipfs_cid: formData.ipfs_cid || undefined,
-        file_url: formData.file_url || undefined,
+        student_id: studentId,
+        certificate_title: certificateTitle,
+        dob: optional(formData.dob),
+        placeOfBirth: optional(formData.placeOfBirth),
+        gender: optional(formData.gender),
+        ethnicity: optional(formData.ethnicity),
+        schoolName: optional(formData.schoolName),
+        examCohort: optional(formData.examCohort),
+        examBoard: optional(formData.examBoard),
+        issueLocation: optional(formData.issueLocation),
+        issueDate: optional(formData.issueDate),
+        serialNumber: optional(formData.serialNumber),
+        registryNumber: optional(formData.registryNumber),
+        ipfs_cid: optional(formData.ipfs_cid),
+        file_url: optional(formData.file_url),
       });
       setResult({ id: created.certificate_id, status: created.status });
+      toast.success(t("adminCertificateIssue.result.successTitle"));
       setStep("result");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminCertificateIssue.errors.createFailed"));
+      const message = err instanceof Error ? err.message : t("adminCertificateIssue.errors.createFailed");
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

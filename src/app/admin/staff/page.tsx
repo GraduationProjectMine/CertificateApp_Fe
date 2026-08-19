@@ -8,6 +8,8 @@ import FormModal from "@/components/common/Modal/FormModal";
 import { ActionLink, ActionButton, ActionText } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateEmail, validateMinLength, validatePassword } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -38,7 +40,7 @@ export default function StaffListPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchStaff();
@@ -54,8 +56,11 @@ export default function StaffListPage() {
       setStaff((prev) =>
         prev.map((s) => (s.staff_id === id ? { ...s, isActive: false } : s)),
       );
+      toast.success(t("adminStaff.lockSuccess"));
     } catch (err: any) {
-      setError(err.message || t("adminStaff.lockError"));
+      const message = err.message || t("adminStaff.lockError");
+      setError(message);
+      toast.error(message);
     } finally {
       setLockingId("");
     }
@@ -63,19 +68,37 @@ export default function StaffListPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!createForm.name || !createForm.email || !createForm.password) {
+    const name = createForm.name.trim();
+    const email = createForm.email.trim();
+    const password = createForm.password.trim();
+    if (!name || !email || !password) {
       setCreateError(t("adminStaff.form.requiredError"));
+      return;
+    }
+    if (!validateMinLength(name, 2)) {
+      setCreateError(t("common.validation.invalidName"));
+      return;
+    }
+    if (!validateEmail(email)) {
+      setCreateError(t("common.validation.invalidEmail"));
+      return;
+    }
+    if (!validatePassword(password)) {
+      setCreateError(t("common.validation.invalidPassword"));
       return;
     }
     setCreating(true);
     setCreateError("");
     try {
-      await staffApi.create(createForm);
+      await staffApi.create({ name, email, password });
+      toast.success(t("adminStaff.createSuccess"));
       setShowCreate(false);
       setCreateForm({ name: "", email: "", password: "" });
       await fetchStaff();
     } catch (err: any) {
-      setCreateError(err.message || t("adminStaff.createError"));
+      const message = err.message || t("adminStaff.createError");
+      setCreateError(message);
+      toast.error(message);
     } finally {
       setCreating(false);
     }

@@ -7,6 +7,28 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
     common: {
       themeTooltip: "Chuyển đổi giao diện Sáng / Tối",
       languageTooltip: "Chuyển đổi ngôn ngữ VI / EN",
+      loading: "Đang xử lý...",
+      validation: {
+        invalidEmail: "Email không hợp lệ",
+        invalidPassword: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số",
+        invalidName: "Tên phải có ít nhất 2 ký tự",
+        invalidUrl: "URL phải bắt đầu bằng http:// hoặc https://",
+      },
+    },
+    verifyPage: {
+      error: {
+        required: "Vui lòng nhập đầy đủ số hiệu và số vào sổ cấp bằng.",
+        verifyFailed: "Không thể xác minh văn bằng.",
+        mismatch: "Dữ liệu văn bằng không khớp với bản ghi blockchain.",
+      },
+      toast: {
+        needImage: "Vui lòng chụp hoặc chọn tệp hình ảnh.",
+        ocrSuccess: "Đã trích xuất bằng OCR!",
+        serialValue: "Số hiệu: {value}",
+        registryValue: "Số vào sổ: {value}",
+        ocrFailed: "Chưa tự động nhận diện được số hiệu / số vào sổ từ ảnh. Vui lòng nhập thủ công.",
+        ocrError: "Quét OCR ảnh thất bại.",
+      },
     },
     nav: {
       solutions: "Giải pháp",
@@ -440,6 +462,10 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       setDefault: "Đặt mặc định",
       duplicate: "Nhân bản",
       delete: "Xoá",
+      createSuccess: "Đã tạo mẫu văn bằng",
+      deleteSuccess: "Đã xóa mẫu văn bằng",
+      duplicateSuccess: "Đã nhân bản mẫu văn bằng",
+      setDefaultSuccess: "Đã đặt mẫu mặc định",
     },
     adminTemplateEditor: {
       loading: "Đang tải...",
@@ -675,6 +701,12 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         success: "Thành công",
         fail: "Thất bại",
         close: "Đóng",
+        confirmTitle: "Xác nhận phát hành lên Blockchain",
+        confirmBody: "Văn bằng sau khi được tải/phát hành lên Blockchain & IPFS sẽ KHÔNG THỂ CHỈNH SỬA hoặc THAY ĐỔI dữ liệu.",
+        confirmBodyEn: "\u201CThe certificate can't be changed after uploaded to chain\u201D",
+        confirmCount: "Số lượng văn bằng ký hàng loạt: {count}",
+        back: "Quay lại",
+        submit: "Xác nhận phát hành",
       },
       loading: "Đang tải...",
       empty: "Không có văn bằng nào.",
@@ -794,6 +826,16 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       submitForApproval: "Gửi duyệt (PENDING)",
       approveAndIssue: "Duyệt & Phát hành (IPFS + Blockchain)",
       delete: "Xóa",
+      submitSuccess: "Đã gửi văn bằng sang trạng thái chờ duyệt",
+      approveSuccess: "Đã phát hành văn bằng thành công",
+      deleteSuccess: "Đã xóa văn bằng",
+      confirm: {
+        title: "Xác nhận phát hành lên Blockchain",
+        body: "Văn bằng sau khi được tải/phát hành lên Blockchain & IPFS sẽ KHÔNG THỂ CHỈNH SỬA hoặc THAY ĐỔI dữ liệu.",
+        bodyEn: "\u201CThe certificate can't be changed after uploaded to chain\u201D",
+        back: "Quay lại",
+        submit: "Xác nhận phát hành",
+      },
     },
     adminOnlineCertificates: {
       loadError: "Không thể tải danh sách văn bằng số",
@@ -892,12 +934,15 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       locking: "Đang khóa...",
       lock: "Khóa",
       locked: "Đã khóa",
+      createSuccess: "Đã tạo sinh viên",
+      lockSuccess: "Đã khóa tài khoản sinh viên",
     },
     adminStudentCreate: {
       errors: {
         fillAllFields: "Vui lòng điền đầy đủ thông tin",
-        createFailed: "Tạo sinh viên thất bại",
+      createFailed: "Tạo sinh viên thất bại",
       },
+      successCreated: "Đã tạo sinh viên",
       title: "Thêm sinh viên",
       description: "Tạo tài khoản sinh viên mới để cấp văn bằng.",
       fullNameLabel: "Họ và tên",
@@ -1003,6 +1048,8 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       lock: "Khóa",
       locked: "Đã khóa",
       createError: "Tạo nhân viên thất bại",
+      createSuccess: "Đã tạo nhân viên",
+      lockSuccess: "Đã khóa tài khoản nhân viên",
       confirm: {
         title: "Khóa tài khoản",
         messagePrefix: "Bạn có chắc chắn muốn khóa tài khoản của nhân viên",
@@ -1044,6 +1091,7 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       description: "Tạo tài khoản nhân viên mới để hỗ trợ cấp văn bằng.",
       requiredError: "Vui lòng điền đầy đủ thông tin",
       createError: "Tạo nhân viên thất bại",
+      successCreated: "Đã tạo nhân viên",
       creating: "Đang tạo...",
       submit: "Tạo nhân viên",
       cancel: "Hủy",
@@ -1142,6 +1190,11 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         cancel: "Hủy",
         processing: "Đang xử lý...",
         confirm: "Xác nhận",
+        confirmTitle: "Xác nhận xử lý yêu cầu",
+        confirmApproveMessage: "Bạn có chắc chắn muốn chấp thuận yêu cầu chỉnh sửa này?",
+        confirmRejectMessage: "Bạn có chắc chắn muốn từ chối yêu cầu chỉnh sửa này?",
+        successApproved: "Đã chấp thuận yêu cầu chỉnh sửa",
+        successRejected: "Đã từ chối yêu cầu chỉnh sửa",
       },
     },
     adminRevocations: {
@@ -1361,6 +1414,7 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         reasonLength: "Lý do phải có ít nhất 10 ký tự",
         failed: "Gửi yêu cầu thất bại",
       },
+      successCreated: "Đã gửi yêu cầu chỉnh sửa",
     },
     studentDisputeNew: {
       header: {
@@ -1385,6 +1439,7 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         reasonLength: "Lý do phải có ít nhất 10 ký tự",
         failed: "Gửi yêu cầu thất bại",
       },
+      successCreated: "Đã gửi yêu cầu chỉnh sửa",
     },
     studentNotifications: {
       type: {
@@ -1538,6 +1593,12 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         creating: "Đang tạo...",
         create: "Tạo liên kết",
       },
+      toast: {
+        certRequired: "Vui lòng chọn văn bằng cần chia sẻ",
+        createSuccess: "Đã tạo liên kết chia sẻ",
+        revokeSuccess: "Đã thu hồi liên kết chia sẻ",
+        copySuccess: "Đã sao chép liên kết",
+      },
     },
     adminShell: {
       sidebar: {
@@ -1686,6 +1747,28 @@ dashboard: {
     common: {
       themeTooltip: "Toggle Light / Dark theme",
       languageTooltip: "Switch VI / EN language",
+      loading: "Processing...",
+      validation: {
+        invalidEmail: "Invalid email address",
+        invalidPassword: "Password must be at least 8 characters and include uppercase, lowercase and a number",
+        invalidName: "Name must be at least 2 characters",
+        invalidUrl: "URL must start with http:// or https://",
+      },
+    },
+    verifyPage: {
+      error: {
+        required: "Please enter both the serial and registry numbers.",
+        verifyFailed: "Unable to verify the credential.",
+        mismatch: "Credential data does not match the blockchain record.",
+      },
+      toast: {
+        needImage: "Please capture or choose an image file.",
+        ocrSuccess: "Extracted via OCR!",
+        serialValue: "Serial number: {value}",
+        registryValue: "Registry number: {value}",
+        ocrFailed: "Could not auto-detect the serial / registry number from the image. Please enter it manually.",
+        ocrError: "OCR image scan failed.",
+      },
     },
     nav: {
       solutions: "Solutions",
@@ -2119,6 +2202,10 @@ dashboard: {
       setDefault: "Set as default",
       duplicate: "Duplicate",
       delete: "Delete",
+      createSuccess: "Template created",
+      deleteSuccess: "Template deleted",
+      duplicateSuccess: "Template duplicated",
+      setDefaultSuccess: "Default template updated",
     },
     adminTemplateEditor: {
       loading: "Loading...",
@@ -2354,6 +2441,12 @@ dashboard: {
         success: "Success",
         fail: "Failed",
         close: "Close",
+        confirmTitle: "Confirm blockchain issuance",
+        confirmBody: "Once uploaded/issued to Blockchain & IPFS, the diploma data CANNOT BE EDITED or CHANGED.",
+        confirmBodyEn: "\u201CThe certificate can't be changed after uploaded to chain\u201D",
+        confirmCount: "Number of certificates to sign: {count}",
+        back: "Go back",
+        submit: "Confirm issuance",
       },
       loading: "Loading...",
       empty: "No certificates found.",
@@ -2473,6 +2566,16 @@ dashboard: {
       submitForApproval: "Submit for approval (PENDING)",
       approveAndIssue: "Approve & Issue (IPFS + Blockchain)",
       delete: "Delete",
+      submitSuccess: "Certificate submitted for approval",
+      approveSuccess: "Certificate issued successfully",
+      deleteSuccess: "Certificate deleted",
+      confirm: {
+        title: "Confirm blockchain issuance",
+        body: "Once uploaded/issued to Blockchain & IPFS, the diploma data CANNOT BE EDITED or CHANGED.",
+        bodyEn: "\u201CThe certificate can't be changed after uploaded to chain\u201D",
+        back: "Go back",
+        submit: "Confirm issuance",
+      },
     },
     adminOnlineCertificates: {
       loadError: "Unable to load digital certificates",
@@ -2571,12 +2674,15 @@ dashboard: {
       locking: "Locking...",
       lock: "Lock",
       locked: "Locked",
+      createSuccess: "Student created",
+      lockSuccess: "Student account locked",
     },
     adminStudentCreate: {
       errors: {
         fillAllFields: "Please fill in all required fields",
         createFailed: "Failed to create student",
       },
+      successCreated: "Student created",
       title: "Add Student",
       description: "Create a new student account to issue diplomas.",
       fullNameLabel: "Full name",
@@ -2682,6 +2788,8 @@ dashboard: {
       lock: "Lock",
       locked: "Locked",
       createError: "Failed to create staff member",
+      createSuccess: "Staff member created",
+      lockSuccess: "Staff account locked",
       confirm: {
         title: "Lock Account",
         messagePrefix: "Are you sure you want to lock the account of staff member",
@@ -2723,6 +2831,7 @@ dashboard: {
       description: "Create a new staff account to help issue diplomas.",
       requiredError: "Please fill in all required fields",
       createError: "Failed to create staff member",
+      successCreated: "Staff member created",
       creating: "Creating...",
       submit: "Create Staff",
       cancel: "Cancel",
@@ -2821,6 +2930,11 @@ dashboard: {
         cancel: "Cancel",
         processing: "Processing...",
         confirm: "Confirm",
+        confirmTitle: "Confirm review decision",
+        confirmApproveMessage: "Are you sure you want to approve this correction request?",
+        confirmRejectMessage: "Are you sure you want to reject this correction request?",
+        successApproved: "Correction request approved",
+        successRejected: "Correction request rejected",
       },
     },
     adminRevocations: {
@@ -3040,6 +3154,7 @@ dashboard: {
         reasonLength: "Reason must be at least 10 characters",
         failed: "Failed to send request",
       },
+      successCreated: "Correction request sent",
     },
     studentDisputeNew: {
       header: {
@@ -3064,6 +3179,7 @@ dashboard: {
         reasonLength: "Reason must be at least 10 characters",
         failed: "Failed to send request",
       },
+      successCreated: "Correction request sent",
     },
     studentNotifications: {
       type: {
@@ -3216,6 +3332,12 @@ dashboard: {
         cancel: "Cancel",
         creating: "Creating...",
         create: "Create link",
+      },
+      toast: {
+        certRequired: "Please select a credential to share",
+        createSuccess: "Share link created",
+        revokeSuccess: "Share link revoked",
+        copySuccess: "Link copied",
       },
     },
     adminShell: {

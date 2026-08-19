@@ -5,9 +5,11 @@ import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { studentApi } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { validateEmail } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 export default function StudentProfile() {
-  const { user, login } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { t } = useI18n();
   const [editing, setEditing] = useState(false);
@@ -22,13 +24,20 @@ export default function StudentProfile() {
     setError("");
     setSuccess("");
     if (!name.trim()) { setError(t("studentProfile.error.nameRequired")); return; }
+    if (email.trim() && !validateEmail(email)) {
+      setError(t("common.validation.invalidEmail"));
+      return;
+    }
     setSaving(true);
     try {
-      const res = await studentApi.updateProfile({ name: name.trim(), email: email.trim() || undefined });
+      await studentApi.updateProfile({ name: name.trim(), email: email.trim() || undefined });
       setSuccess(t("studentProfile.success.updated"));
+      toast.success(t("studentProfile.success.updated"));
       setEditing(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("studentProfile.error.failed"));
+      const message = err instanceof Error ? err.message : t("studentProfile.error.failed");
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

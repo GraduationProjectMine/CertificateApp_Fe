@@ -1,8 +1,16 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import toast from "react-hot-toast";
+
+type ReviewPayload = {
+  decision: "APPROVED" | "REJECTED";
+  reviewer_note?: string;
+  new_cert_data?: any;
+};
 
 const STATUS_CLASS: Record<string, string> = {
   PENDING: styles._26,
@@ -31,9 +39,10 @@ export default function AdminDisputesPage() {
   const [reviewerNote, setReviewerNote] = useState("");
   const [newCertData, setNewCertData] = useState("");
   const [reviewError, setReviewError] = useState("");
+  const [pendingReview, setPendingReview] = useState<ReviewPayload | null>(null);
   const { t } = useI18n();
 
-  const fetch = async (status?: string) => {
+  const fetch = useCallback(async (status?: string) => {
     setLoading(true);
     setError("");
     try {
@@ -43,9 +52,9 @@ export default function AdminDisputesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  useEffect(() => { fetch(statusFilter); }, [statusFilter]);
+  useEffect(() => { fetch(statusFilter); }, [fetch, statusFilter]);
 
   const openReview = (d: DisputeDto) => {
     setReviewTarget(d);
@@ -59,7 +68,6 @@ export default function AdminDisputesPage() {
     e.preventDefault();
     if (!reviewTarget) return;
     setReviewError("");
-    setSubmitting(true);
 
     let parsed: any;
     if (decision === "APPROVED" && newCertData.trim()) {
@@ -67,21 +75,36 @@ export default function AdminDisputesPage() {
         parsed = JSON.parse(newCertData);
       } catch {
         setReviewError(t("adminDisputes.invalidJsonError"));
-        setSubmitting(false);
+        toast.error(t("adminDisputes.invalidJsonError"));
         return;
       }
     }
 
+    setPendingReview({
+      decision,
+      reviewer_note: reviewerNote.trim() || undefined,
+      new_cert_data: parsed,
+    });
+  };
+
+  const executeReview = async () => {
+    if (!reviewTarget || !pendingReview) return;
+    setSubmitting(true);
+    setReviewError("");
     try {
-      await disputeApi.review(reviewTarget.id, {
-        decision,
-        reviewer_note: reviewerNote.trim() || undefined,
-        new_cert_data: parsed,
-      });
+      await disputeApi.review(reviewTarget.id, pendingReview);
+      toast.success(
+        pendingReview.decision === "APPROVED"
+          ? t("adminDisputes.review.successApproved")
+          : t("adminDisputes.review.successRejected"),
+      );
+      setPendingReview(null);
       setReviewTarget(null);
       fetch(statusFilter);
     } catch (err) {
-      setReviewError(err instanceof Error ? err.message : t("adminDisputes.reviewError"));
+      const message = err instanceof Error ? err.message : t("adminDisputes.reviewError");
+      setReviewError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -89,6 +112,23 @@ export default function AdminDisputesPage() {
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={!!pendingReview}
+        onClose={() => !submitting && setPendingReview(null)}
+        title={t("adminDisputes.review.confirmTitle")}
+        message={
+          pendingReview?.decision === "APPROVED"
+            ? t("adminDisputes.review.confirmApproveMessage")
+            : t("adminDisputes.review.confirmRejectMessage")
+        }
+        confirmLabel={t("adminDisputes.review.confirm")}
+        cancelLabel={t("adminDisputes.review.cancel")}
+        variant={pendingReview?.decision === "REJECTED" ? "danger" : "primary"}
+        icon={pendingReview?.decision === "REJECTED" ? "danger" : "info"}
+        loading={submitting}
+        onConfirm={() => void executeReview()}
+      />
+
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>{t("adminDisputes.title")}</h1>
