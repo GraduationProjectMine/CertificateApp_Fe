@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import AppControls from "@/components/common/AppControls";
 import { BrowserProvider } from "ethers";
 import { validateEmail } from "@/lib/validators";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
@@ -21,6 +22,7 @@ function getDashboardRedirect(role: string) {
 
 export default function LoginPage() {
   const { user, login, loginWithMetaMask } = useAuth();
+  const { t, tArr } = useI18n();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -127,21 +129,21 @@ function isUserRejectedError(err: any): boolean {
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
-              Bảo mật danh tính học thuật
+              {t("auth.visualPanel.login.badge")}
             </p>
             <h1 className={styles._13}>
-              Truy cập hệ thống cấp phát văn bằng số.
+              {t("auth.visualPanel.login.title")}
             </h1>
             <p className={styles._14}>
-              Quản trị, cấp bằng, xác minh và theo dõi dữ liệu blockchain từ một không gian làm việc thống nhất.
+              {t("auth.visualPanel.login.description")}
             </p>
           </div>
 
           <div className={styles._15} data-reveal>
-            {["JWT bảo vệ", "Tài khoản tổ chức", "Phiên đăng nhập"].map((item) => (
-              <div key={item} className={styles._16}>
+            {tArr("auth.visualPanel.login.features").map((item, index) => (
+              <div key={index} className={styles._16}>
                 <span className={styles._17} />
-                <span className={styles._18}>{item}</span>
+                <span className={styles._18}>{String(item)}</span>
               </div>
             ))}
           </div>
@@ -158,7 +160,7 @@ function isUserRejectedError(err: any): boolean {
             <div className="flex items-center gap-3">
               <AppControls />
               <Link href="/" className={`auth-switch-link ${styles._24}`}>
-                Trang chủ
+                {t("common.home")}
               </Link>
             </div>
           </div>
@@ -166,12 +168,11 @@ function isUserRejectedError(err: any): boolean {
           <div className={`auth-card-surface ${styles._25}`}>
             <div className={styles._26}>
               <p className={styles._27}>
-                Đăng nhập tài khoản
+                {t("auth.login_title")}
               </p>
               <h2 className={styles._28}>
-                Chào mừng trở lại
+                {t("auth.login_subtitle")}
               </h2>
-              <p className={styles._29}>Sử dụng email và mật khẩu đã được cấp trong hệ thống.</p>
             </div>
 
             {error && (
@@ -183,7 +184,7 @@ function isUserRejectedError(err: any): boolean {
             <form className={styles._31} onSubmit={handleSubmit}>
               <label className={styles._32}>
                 <span className={styles._33}>
-                  Email
+                  {t("auth.email")}
                 </span>
                 <input
                   type="email"
@@ -191,13 +192,13 @@ function isUserRejectedError(err: any): boolean {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   className={styles._34}
-                  placeholder="admin@truonghoc.edu.vn"
+                  placeholder={t("auth.email")}
                 />
               </label>
 
               <label className={styles._32}>
                 <span className={styles._33}>
-                  Mật khẩu
+                  {t("auth.password")}
                 </span>
                 <div className="relative">
                   <input
@@ -206,7 +207,7 @@ function isUserRejectedError(err: any): boolean {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className={`${styles._34} pr-10`}
-                    placeholder="Nhập mật khẩu"
+                    placeholder={t("auth.password")}
                   />
                   <button
                     type="button"
@@ -228,13 +229,13 @@ function isUserRejectedError(err: any): boolean {
               </label>
 
               <Button type="submit" disabled={isSubmitting || isWalletSubmitting} className={styles._35}>
-                {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
+                {isSubmitting ? t("auth.loading") : t("auth.login_btn")}
               </Button>
             </form>
 
             <div className="relative flex py-2 items-center">
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-              <span className="flex-shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase">Hoặc</span>
+              <span className="flex-shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase">{t("auth.or")}</span>
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
             </div>
 
@@ -264,15 +265,15 @@ function isUserRejectedError(err: any): boolean {
                 <path d="m159.3 215 46.2 7.8 34.3-36.4-45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
                 <path d="m159.3 215-46.2 7.8-34.3-36.4 45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
               </svg>
-              {isWalletSubmitting ? "Đang kết nối ví..." : "Đăng nhập với MetaMask"}
+              {isWalletSubmitting ? t("auth.loading") : t("auth.metamask")}
             </Button>
 
             <div className={styles._43}>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._44}`}>
-                Đăng ký tài khoản trường học
+                {t("auth.register_link")}
               </Button>
               <Link href="/auth/forgot-password" className={`auth-switch-link ${styles._45}`}>
-                Quên mật khẩu?
+                {t("auth.forgot_password")}
               </Link>
             </div>
           </div>

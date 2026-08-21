@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import AppControls from "@/components/common/AppControls";
 import { BrowserProvider } from "ethers";
 import { validateEmail, validateMinLength } from "@/lib/validators";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 type RegisterForm = {
   institutionName: string;
@@ -45,6 +46,7 @@ export default function RegisterPage() {
   const [isWalletSubmitting, setIsWalletSubmitting] = useState(false);
   const router = useRouter();
   const { registerWithMetaMask } = useAuth();
+  const { t, tArr } = useI18n();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -145,25 +147,21 @@ export default function RegisterPage() {
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
-              Khởi tạo tổ chức phát hành
+              {t("auth.visualPanel.register.badge")}
             </p>
             <h1 className={styles._13}>
-              Một tài khoản cho toàn bộ quy trình cấp bằng.
+              {t("auth.visualPanel.register.title")}
             </h1>
             <p className={styles._14}>
-              Gửi yêu cầu đăng ký trường học, chờ phê duyệt và nhận hợp đồng thông minh riêng cho tổ chức.
+              {t("auth.visualPanel.register.description")}
             </p>
           </div>
 
           <div className={styles._15} data-reveal>
-            {[
-              ["01", "Xác thực trường"],
-              ["02", "Tạo ví tổ chức"],
-              ["03", "Deploy contract"],
-            ].map(([step, label]) => (
-              <div key={step} className={styles._16}>
-                <span className={styles._17}>{step}</span>
-                <span className={styles._18}>{label}</span>
+            {tArr("auth.visualPanel.register.features").map((item, index) => (
+              <div key={index} className={styles._16}>
+                <span className={styles._17} />
+                <span className={styles._18}>{String(item)}</span>
               </div>
             ))}
           </div>
@@ -180,7 +178,7 @@ export default function RegisterPage() {
             <div className="flex items-center gap-3">
               <AppControls />
               <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
-                Đăng nhập
+                {t("auth.login_btn")}
               </Link>
             </div>
           </div>
@@ -188,14 +186,11 @@ export default function RegisterPage() {
           <div className={`auth-card-surface ${styles._25}`}>
             <div className={styles._26}>
               <p className={styles._27}>
-                Đăng ký trường học
+                {t("auth.register_title")}
               </p>
               <h2 className={styles._28}>
-                Tạo hồ sơ tổ chức
+                {t("auth.register_subtitle")}
               </h2>
-              <p className={styles._29}>
-                Thông tin này giúp Super Admin xác minh trường và cấp quyền phát hành văn bằng số.
-              </p>
             </div>
 
             {error && (
@@ -212,7 +207,7 @@ export default function RegisterPage() {
             <form className={styles._32} onSubmit={(event) => { event.preventDefault(); handleMetaMaskRegister(); }}>
               <label className={styles._33}>
                 <span className={styles._34}>
-                  Tên trường / Học viện
+                  {t("auth.institution_name")}
                 </span>
                 <input
                   type="text"
@@ -221,13 +216,13 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   required
                   className={styles._35}
-                  placeholder="Trường Đại học Bách Khoa Hà Nội"
+                  placeholder={t("auth.institution_name")}
                 />
               </label>
 
               <label className={styles._36}>
                 <span className={styles._34}>
-                  Mã trường
+                  {t("auth.institution_code")}
                 </span>
                 <input
                   type="text"
@@ -237,13 +232,13 @@ export default function RegisterPage() {
                   required
                   maxLength={20}
                   className={styles._37}
-                  placeholder="HUST"
+                  placeholder={t("auth.institution_code")}
                 />
               </label>
 
               <label className={styles._36}>
                 <span className={styles._34}>
-                  Tên quản trị
+                  {t("auth.admin_name")}
                 </span>
                 <input
                   type="text"
@@ -252,13 +247,13 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   required
                   className={styles._35}
-                  placeholder="Nguyễn Văn A"
+                  placeholder={t("auth.admin_name")}
                 />
               </label>
 
               <label className={styles._33}>
                 <span className={styles._34}>
-                  Email quản trị
+                  {t("auth.admin_email")}
                 </span>
                 <input
                   type="email"
@@ -267,10 +262,10 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   required
                   className={styles._35}
-                  placeholder="admin@hust.edu.vn"
+                  placeholder={t("auth.admin_email_placeholder")}
                 />
                 <span className={styles._38}>
-                  Không dùng email cá nhân như Gmail, Yahoo hoặc Outlook.
+                  {t("auth.institution_code_hint")}
                 </span>
               </label>
 
@@ -294,14 +289,14 @@ export default function RegisterPage() {
                   <path d="m159.3 215 46.2 7.8 34.3-36.4-45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
                   <path d="m159.3 215-46.2 7.8-34.3-36.4 45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
                 </svg>
-                {isWalletSubmitting ? "Đang đăng ký ví..." : "Đăng ký với MetaMask"}
+                {isWalletSubmitting ? t("auth.loading") : t("auth.metamask")}
               </Button>
             </form>
 
             <div className={styles._40}>
-              Đã có tài khoản?{" "}
+              {t("auth.has_account")}{" "}
               <Button variant="ghost" href="/auth/login" className={`auth-switch-link ${styles._41}`}>
-                Đăng nhập
+                {t("auth.login_btn")}
               </Button>
             </div>
           </div>

@@ -8,6 +8,7 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       themeTooltip: "Chuyển đổi giao diện Sáng / Tối",
       languageTooltip: "Chuyển đổi ngôn ngữ VI / EN",
       loading: "Đang xử lý...",
+      home: "Trang chủ",
       validation: {
         invalidEmail: "Email không hợp lệ",
         invalidPassword: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số",
@@ -230,6 +231,32 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       cookie: "Cookie",
     },
     auth: {
+      activate_error_password_length: "Mật khẩu phải có ít nhất 8 ký tự",
+      activate_error_password_mismatch: "Mật khẩu xác nhận không khớp",
+      activate_error_failed: "Kích hoạt tài khoản thất bại",
+      activate_error_network: "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.",
+      activate_loading: "Đang xác thực token...",
+      activate_fail_title: "Kích hoạt thất bại",
+      activate_fail_subtitle: "Liên kết không hợp lệ",
+      activate_fail_desc: "Liên kết kích hoạt này không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ với tổ chức của bạn để nhận liên kết mới.",
+      activate_fail_invalid_token: "Token không hợp lệ hoặc đã hết hạn",
+      activate_back_login: "Quay lại đăng nhập",
+      activate_title: "Kích hoạt tài khoản",
+      activate_create_password: "Tạo mật khẩu",
+      activate_create_password_desc: "Vui lòng kiểm tra thông tin và tạo mật khẩu mới.",
+      activate_full_name: "Họ và tên",
+      activate_organization: "Tổ chức",
+      activate_submit: "Kích hoạt tài khoản",
+      activate_success_title: "Kích hoạt thành công",
+      activate_success_subtitle: "Tài khoản đã sẵn sàng",
+      activate_success_desc: "Tài khoản của bạn đã được kích hoạt thành công. Giờ đây bạn có thể đăng nhập để xem và quản lý văn bằng số của mình.",
+      activate_success_msg: "Tài khoản đã được kích hoạt thành công",
+      forgot_password_error_email_empty: "Vui lòng nhập email tài khoản",
+      forgot_password_success_msg: "Nếu email thuộc hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi trong vài phút.",
+      forgot_password_subtitle: "Nhận hướng dẫn đặt lại",
+      forgot_password_desc: "Nhập email quản trị đã đăng ký. Hệ thống sẽ gửi hướng dẫn khôi phục nếu tài khoản tồn tại.",
+      forgot_password_submit: "Gửi hướng dẫn khôi phục",
+      forgot_password_back_login: "Quay lại đăng nhập",
       login_title: "Đăng nhập",
       login_subtitle: "Sử dụng tài khoản email hoặc kết nối ví",
       register_title: "Đăng ký tài khoản",
@@ -255,6 +282,32 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       institution_code_hint: "Không dùng email cá nhân (gmail, yahoo...)",
       admin_email_placeholder: "admin@truonghoc.edu.vn",
       hello: "Xin chào",
+      visualPanel: {
+        login: {
+          badge: "Hệ thống cấp phát văn bằng số",
+          title: "Truy cập hệ thống quản trị văn bằng số an toàn.",
+          description: "Quản trị, cấp phát, xác minh và theo dõi dữ liệu blockchain từ một không gian làm việc thống nhất.",
+          features: ["Xác thực JWT", "Tài khoản tổ chức", "Quản lý phiên"]
+        },
+        register: {
+          badge: "Đăng ký tổ chức phát hành",
+          title: "Một tài khoản cho toàn bộ quy trình cấp bằng.",
+          description: "Gửi yêu cầu đăng ký trường học, chờ phê duyệt và nhận hợp đồng thông minh riêng cho tổ chức.",
+          features: ["Xác thực trường", "Tạo ví tổ chức", "Triển khai hợp đồng"]
+        },
+        forgotPassword: {
+          badge: "Khôi phục quyền truy cập",
+          title: "Lấy lại tài khoản quản trị một cách an toàn.",
+          description: "Gửi yêu cầu đặt lại mật khẩu qua email đã đăng ký, sau đó quay lại hệ thống để tiếp tục cấp phát và xác minh văn bằng.",
+          features: ["Email xác minh", "Liên kết giới hạn", "Bảo vệ phiên"]
+        },
+        activate: {
+          badge: "Kích hoạt tài khoản sinh viên",
+          title: "Hoàn tất kích hoạt tài khoản để nhận văn bằng số.",
+          description: "Thiết lập mật khẩu để hoàn tất quy trình kích hoạt tài khoản và bắt đầu nhận văn bằng số từ tổ chức của bạn.",
+          features: ["Xác thực danh tính", "Tạo mật khẩu", "Nhận văn bằng số"]
+        }
+      }
     },
     studentDashboard: {
       header: {
@@ -1748,6 +1801,7 @@ dashboard: {
       themeTooltip: "Toggle Light / Dark theme",
       languageTooltip: "Switch VI / EN language",
       loading: "Processing...",
+      home: "Home",
       validation: {
         invalidEmail: "Invalid email address",
         invalidPassword: "Password must be at least 8 characters and include uppercase, lowercase and a number",
@@ -1970,6 +2024,32 @@ dashboard: {
       cookie: "Cookie",
     },
     auth: {
+      activate_error_password_length: "Password must be at least 8 characters",
+      activate_error_password_mismatch: "Passwords do not match",
+      activate_error_failed: "Account activation failed",
+      activate_error_network: "Could not connect to server. Please try again later.",
+      activate_loading: "Verifying token...",
+      activate_fail_title: "Activation Failed",
+      activate_fail_subtitle: "Invalid Link",
+      activate_fail_desc: "This activation link is invalid or has expired. Please contact your organization for a new link.",
+      activate_fail_invalid_token: "Invalid or expired token",
+      activate_back_login: "Back to login",
+      activate_title: "Activate Account",
+      activate_create_password: "Create Password",
+      activate_create_password_desc: "Please review your information and create a new password.",
+      activate_full_name: "Full Name",
+      activate_organization: "Organization",
+      activate_submit: "Activate Account",
+      activate_success_title: "Activation Successful",
+      activate_success_subtitle: "Account is ready",
+      activate_success_desc: "Your account has been successfully activated. You can now log in to view and manage your digital certificates.",
+      activate_success_msg: "Account activated successfully",
+      forgot_password_error_email_empty: "Please enter your account email",
+      forgot_password_success_msg: "If the email is in our system, password reset instructions will be sent shortly.",
+      forgot_password_subtitle: "Get Reset Instructions",
+      forgot_password_desc: "Enter your registered admin email. We'll send recovery instructions if the account exists.",
+      forgot_password_submit: "Send Reset Instructions",
+      forgot_password_back_login: "Back to login",
       login_title: "Login",
       login_subtitle: "Use email account or connect wallet",
       register_title: "Register Account",
@@ -1995,6 +2075,32 @@ dashboard: {
       institution_code_hint: "Do not use personal email (gmail, yahoo...)",
       admin_email_placeholder: "admin@institution.edu.vn",
       hello: "Hello",
+      visualPanel: {
+        login: {
+          badge: "Digital Certificate Issuance System",
+          title: "Access the secure digital certificate management system.",
+          description: "Manage, issue, verify, and track blockchain data from a unified workspace.",
+          features: ["JWT Authentication", "Organization Account", "Session Management"]
+        },
+        register: {
+          badge: "Register Issuing Organization",
+          title: "One account for the entire certificate issuance process.",
+          description: "Submit a school registration request, await approval, and receive a dedicated smart contract for your organization.",
+          features: ["Institution Verification", "Organization Wallet", "Contract Deployment"]
+        },
+        forgotPassword: {
+          badge: "Recover Access",
+          title: "Safely recover your admin account.",
+          description: "Submit a password reset request via your registered email, then return to the system to continue issuing and verifying certificates.",
+          features: ["Verification Email", "Time-Limited Link", "Session Protection"]
+        },
+        activate: {
+          badge: "Activate Student Account",
+          title: "Complete account activation to receive digital certificates.",
+          description: "Set up your password to finalize the account activation process and start receiving digital certificates from your organization.",
+          features: ["Identity Verification", "Password Creation", "Receive Digital Certificates"]
+        }
+      }
     },
     studentDashboard: {
       header: {
