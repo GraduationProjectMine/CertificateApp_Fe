@@ -1,6 +1,6 @@
 "use client";
 import styles from "./AdminTopbar.module.css";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
@@ -8,6 +8,7 @@ import { useI18n } from "@/features/i18n/I18nContext";
 import type { User } from "@/features/auth/types";
 import AppControls from "@/components/common/AppControls";
 import Tooltip from "@/components/common/Tooltip";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 interface AdminTopbarProps {
   user: User;
@@ -41,10 +42,25 @@ function getBreadcrumbs(pathname: string, t: (path: string) => string) {
 export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopbarProps) {
   const pathname = usePathname();
   const { t } = useI18n();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const breadcrumbs = getBreadcrumbs(pathname, t);
 
   return (
     <header className={styles._1}>
+      <ConfirmModal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title={t("common.confirm.logoutTitle")}
+        message={t("common.confirm.logoutBody")}
+        confirmLabel={t("common.confirm.logoutConfirm")}
+        cancelLabel={t("common.confirm.logoutCancel")}
+        variant="danger"
+        icon="danger"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          onLogout();
+        }}
+      />
       <div className={styles._2}>
         <Tooltip content={t("adminShell.topbar.openMenuTooltip")} position="bottom">
           <button
@@ -96,7 +112,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
 
 <Tooltip content={t("adminShell.topbar.logoutTooltip")} position="bottom">
           <button
-            onClick={onLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className={styles._18}
           >
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">

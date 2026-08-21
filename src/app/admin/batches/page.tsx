@@ -71,6 +71,7 @@ export default function AdminBatchesPage() {
   const [showConfirmBatch, setShowConfirmBatch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [batchCurrentPage, setBatchCurrentPage] = useState(1);
@@ -234,7 +235,14 @@ export default function AdminBatchesPage() {
       .map((source, originalIndex) => {
         const record = source as unknown as CreateCertificatePayload;
         const missingFields = requiredBatchFields
-          .filter(({ key }) => !source[key]?.trim())
+          .filter(({ key }) => {
+            const val = source[key];
+            if (!val || !val.trim()) return true;
+            if (key === "issueDate" || key === "dob") {
+              if (isNaN(new Date(val.trim()).getTime())) return true;
+            }
+            return false;
+          })
           .map(({ label }) => label);
 
         const isValid = missingFields.length === 0;
@@ -320,12 +328,14 @@ export default function AdminBatchesPage() {
   }
 
   async function retry(itemId: string) {
-    if (!selected) return;
+    if (!selected || retryingId) return;
+    setRetryingId(itemId);
     try {
       setSelected(await operationsApi.retryBatchItem(selected.id, itemId));
       await load();
       toast.success(t("adminBatches.retrySuccess"));
     } catch (err) { toast.error(err instanceof Error ? err.message : t("adminBatches.error.retry")); }
+    finally { setRetryingId(null); }
   }
 
   function exportErrors() {
@@ -565,7 +575,7 @@ export default function AdminBatchesPage() {
             <div>
               <label className={styles._29}>{t("adminBatches.requiredField.dob")} *</label>
               <input
-                type="text"
+                type="date"
                 className={styles._30}
                 placeholder={t("adminBatches.placeholder.dob")}
                 value={activeRecord.dob || ""}
@@ -653,7 +663,7 @@ export default function AdminBatchesPage() {
             <div>
               <label className={styles._29}>{t("adminBatches.requiredField.issueDate")} *</label>
               <input
-                type="text"
+                type="date"
                 className={styles._30}
                 placeholder={t("adminBatches.placeholder.issueDate")}
                 value={activeRecord.issueDate || ""}
@@ -785,7 +795,7 @@ export default function AdminBatchesPage() {
                     </td>
                     <td className="p-1">
                       <input
-                        type="text"
+                        type="date"
                         value={item.record.dob || ""}
                         placeholder={t("adminBatches.tablePlaceholder.dob")}
                         onChange={(e) => handleTableRowEdit(item.originalIndex, "dob", e.target.value)}
@@ -966,7 +976,7 @@ export default function AdminBatchesPage() {
                     <td className={`p-3 font-bold ${item.status === "SUCCESS" ? "text-green-600" : "text-red-500"}`}>{item.status}</td>
                     <td className="max-w-sm p-3 text-gray-500 dark:text-gray-400">
                       {item.error || item.certificateId || "—"}{" "}
-                      {item.status === "FAILED" && <button className="ml-2 font-bold text-teal-600" onClick={() => retry(item.id)}>{t("adminBatches.retry")}</button>}
+                      {item.status === "FAILED" && <button className="ml-2 font-bold text-teal-600" disabled={retryingId !== null} onClick={() => retry(item.id)}>{retryingId === item.id ? t("common.loading") : t("adminBatches.retry")}</button>}
                     </td>
                   </tr>
                 ))}

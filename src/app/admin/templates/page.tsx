@@ -29,8 +29,9 @@ export default function AdminTemplatesPage() {
   const [newDesc, setNewDesc] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteTargetName, setDeleteTargetName] = useState("");
-  const [creating, setCreating] = useState(false);
+const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -85,23 +86,29 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  const handleDuplicate = async (id: string) => {
+const handleDuplicate = async (id: string) => {
+    setActionId(id);
     try {
       await templateApi.duplicate(id);
       toast.success(t("adminTemplates.duplicateSuccess"));
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || t("adminTemplates.error.duplicate"));
+    } finally {
+      setActionId(null);
     }
   };
 
   const handleSetDefault = async (id: string) => {
+    setActionId(id);
     try {
       await templateApi.update(id, { is_default: true });
       toast.success(t("adminTemplates.setDefaultSuccess"));
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || t("adminTemplates.error.setDefault"));
+    } finally {
+      setActionId(null);
     }
   };
 
@@ -195,15 +202,17 @@ export default function AdminTemplatesPage() {
                 </Link>
                 {!template.is_default && (
                   <button
-                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleSetDefault(template.id)}
+                    disabled={actionId !== null}
                   >
                     {t("adminTemplates.setDefault")}
                   </button>
                 )}
                 <button
-                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleDuplicate(template.id)}
+                  disabled={actionId !== null}
                 >
                   {t("adminTemplates.duplicate")}
                 </button>

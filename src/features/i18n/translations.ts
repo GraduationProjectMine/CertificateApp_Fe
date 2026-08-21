@@ -8,12 +8,18 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       themeTooltip: "Chuyển đổi giao diện Sáng / Tối",
       languageTooltip: "Chuyển đổi ngôn ngữ VI / EN",
       loading: "Đang xử lý...",
-      home: "Trang chủ",
+home: "Trang chủ",
       validation: {
         invalidEmail: "Email không hợp lệ",
         invalidPassword: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số",
         invalidName: "Tên phải có ít nhất 2 ký tự",
         invalidUrl: "URL phải bắt đầu bằng http:// hoặc https://",
+      },
+      confirm: {
+        logoutTitle: "Xác nhận đăng xuất",
+        logoutBody: "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?",
+        logoutConfirm: "Đăng xuất",
+        logoutCancel: "Hủy",
       },
     },
     verifyPage: {
@@ -665,6 +671,7 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       issueSingleMissing: 'Vui lòng nhập đầy đủ trường thông tin bắt buộc "{field}" trước khi phát hành lên Blockchain.',
       batchExportMissing: 'Bản ghi dòng {row} còn thiếu thông tin "{field}". Vui lòng điền đầy đủ trước khi xuất ZIP.',
       batchIssueMissing: 'Bản ghi dòng {row} còn thiếu thông tin "{field}". Vui lòng điền đầy đủ trước khi phát hành lô.',
+      invalidDate: 'Định dạng ngày tháng không hợp lệ cho: "{field}".',
       exportSingleSuccess: "Xuất PDF bản ghi thành công!",
       exportZipSuccess: "Đã xuất thành công ZIP cho {count} văn bằng!",
       issueSingleSuccess: "Cấp phát văn bằng thành công!",
@@ -882,12 +889,18 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       submitSuccess: "Đã gửi văn bằng sang trạng thái chờ duyệt",
       approveSuccess: "Đã phát hành văn bằng thành công",
       deleteSuccess: "Đã xóa văn bằng",
-      confirm: {
+confirm: {
         title: "Xác nhận phát hành lên Blockchain",
         body: "Văn bằng sau khi được tải/phát hành lên Blockchain & IPFS sẽ KHÔNG THỂ CHỈNH SỬA hoặc THAY ĐỔI dữ liệu.",
         bodyEn: "\u201CThe certificate can't be changed after uploaded to chain\u201D",
         back: "Quay lại",
         submit: "Xác nhận phát hành",
+      },
+      submitConfirm: {
+        title: "Xác nhận gửi duyệt",
+        body: "Gửi văn bằng này sang trạng thái chờ duyệt (PENDING)?",
+        confirm: "Gửi duyệt",
+        cancel: "Hủy",
       },
     },
     adminOnlineCertificates: {
@@ -1030,6 +1043,12 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
       },
       processing: "Đang xử lý...",
       importButton: "Import",
+      confirm: {
+        title: "Xác nhận import sinh viên",
+        body: "Bạn có chắc chắn muốn import sinh viên từ file \"{file}\"? Hệ thống sẽ tạo tài khoản hàng loạt cho các sinh viên này.",
+        confirm: "Import",
+        cancel: "Hủy",
+      },
       result: {
         title: "Kết quả import",
         totalRows: "Tổng dòng",
@@ -1505,6 +1524,11 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         description: "Các thông báo về văn bằng và hệ thống.",
       },
       markAllRead: "Đánh dấu đã đọc tất cả",
+      toast: {
+        markReadError: "Không thể đánh dấu đã đọc",
+        markAllReadError: "Không thể đánh dấu tất cả đã đọc",
+        markAllReadSuccess: "Đã đánh dấu tất cả đã đọc",
+      },
       loadError: "Không thể tải thông báo",
       loading: "Đang tải...",
       empty: {
@@ -1580,6 +1604,8 @@ const translations: Record<Locale, Record<string, TranslationValue>> = {
         title: "Tuỳ chọn thông báo",
         emailLabel: "Thông báo qua email",
         emailDesc: "Nhận thông báo qua email khi có văn bằng mới",
+        updateError: "Không thể cập nhật tuỳ chọn thông báo",
+        updateSuccess: "Đã cập nhật tuỳ chọn thông báo",
       },
       sections: {
         account: {
@@ -1801,12 +1827,18 @@ dashboard: {
       themeTooltip: "Toggle Light / Dark theme",
       languageTooltip: "Switch VI / EN language",
       loading: "Processing...",
-      home: "Home",
+home: "Home",
       validation: {
         invalidEmail: "Invalid email address",
         invalidPassword: "Password must be at least 8 characters and include uppercase, lowercase and a number",
         invalidName: "Name must be at least 2 characters",
         invalidUrl: "URL must start with http:// or https://",
+      },
+      confirm: {
+        logoutTitle: "Confirm sign out",
+        logoutBody: "Are you sure you want to sign out of the system?",
+        logoutConfirm: "Sign out",
+        logoutCancel: "Cancel",
       },
     },
     verifyPage: {
@@ -2458,6 +2490,7 @@ dashboard: {
       issueSingleMissing: 'Please fill in the required field "{field}" before issuing to Blockchain.',
       batchExportMissing: 'Row {row} is missing required field "{field}". Please fill it in before exporting ZIP.',
       batchIssueMissing: 'Row {row} is missing required field "{field}". Please fill it in before issuing the batch.',
+      invalidDate: 'Invalid date format for: "{field}".',
       exportSingleSuccess: "Record PDF exported successfully!",
       exportZipSuccess: "Successfully exported ZIP for {count} diplomas!",
       issueSingleSuccess: "Diploma issued successfully!",
@@ -2675,12 +2708,18 @@ dashboard: {
       submitSuccess: "Certificate submitted for approval",
       approveSuccess: "Certificate issued successfully",
       deleteSuccess: "Certificate deleted",
-      confirm: {
+confirm: {
         title: "Confirm blockchain issuance",
         body: "Once uploaded/issued to Blockchain & IPFS, the diploma data CANNOT BE EDITED or CHANGED.",
         bodyEn: "\u201CThe certificate can't be changed after uploaded to chain\u201D",
         back: "Go back",
         submit: "Confirm issuance",
+      },
+      submitConfirm: {
+        title: "Confirm submission",
+        body: "Submit this certificate for approval (PENDING)?",
+        confirm: "Submit",
+        cancel: "Cancel",
       },
     },
     adminOnlineCertificates: {
@@ -2823,6 +2862,12 @@ dashboard: {
       },
       processing: "Processing...",
       importButton: "Import",
+      confirm: {
+        title: "Confirm student import",
+        body: "Are you sure you want to import students from the file \"{file}\"? The system will bulk create accounts for these students.",
+        confirm: "Import",
+        cancel: "Cancel",
+      },
       result: {
         title: "Import Result",
         totalRows: "Total Rows",
@@ -3298,6 +3343,11 @@ dashboard: {
         description: "Notifications about credentials and the system.",
       },
       markAllRead: "Mark all as read",
+      toast: {
+        markReadError: "Failed to mark as read",
+        markAllReadError: "Failed to mark all as read",
+        markAllReadSuccess: "All notifications marked as read",
+      },
       loadError: "Unable to load notifications",
       loading: "Loading...",
       empty: {
@@ -3373,6 +3423,8 @@ dashboard: {
         title: "Notification preferences",
         emailLabel: "Email notifications",
         emailDesc: "Receive email notifications when a new credential is issued",
+        updateError: "Failed to update notification preferences",
+        updateSuccess: "Notification preferences updated",
       },
       sections: {
         account: {

@@ -151,12 +151,18 @@ export default function CertificateGeneratorPage() {
     return records[activeRowIndex] || {};
   }, [records, activeRowIndex]);
 
-  const validateRecord = (record: Record<string, string>): { valid: boolean; missingLabel?: string } => {
+  const validateRecord = (record: Record<string, string>): { valid: boolean; missingLabel?: string; invalidDateLabel?: string } => {
     for (const item of boundFields) {
       if (OPTIONAL_BINDINGS.includes(item.key)) continue;
       const val = record[item.key];
       if (!val || !val.trim()) {
         return { valid: false, missingLabel: item.label };
+      }
+      if (item.key === "issueDate" || item.key === "dob") {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) {
+          return { valid: false, invalidDateLabel: item.label };
+        }
       }
     }
     return { valid: true };
@@ -197,6 +203,10 @@ export default function CertificateGeneratorPage() {
     if (!canvasRef.current) return;
     const check = validateRecord(activeRecord);
     if (!check.valid) {
+      if (check.invalidDateLabel) {
+        toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", check.invalidDateLabel));
+        return;
+      }
       toast.error(t("adminTemplateGenerator.exportPdfMissing").replace("{field}", check.missingLabel || ""));
       return;
     }
@@ -242,7 +252,11 @@ export default function CertificateGeneratorPage() {
       for (let i = 0; i < records.length; i++) {
         const rowCheck = validateRecord(records[i]);
         if (!rowCheck.valid) {
-          toast.error(t("adminTemplateGenerator.batchExportMissing").replace("{row}", String(i + 1)).replace("{field}", rowCheck.missingLabel || ""));
+          if (rowCheck.invalidDateLabel) {
+            toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", rowCheck.invalidDateLabel));
+          } else {
+            toast.error(t("adminTemplateGenerator.batchExportMissing").replace("{row}", String(i + 1)).replace("{field}", rowCheck.missingLabel || ""));
+          }
           setActiveRowIndex(i);
           return;
         }
@@ -334,6 +348,10 @@ export default function CertificateGeneratorPage() {
     if (!selectedTemplate) return;
     const check = validateRecord(activeRecord);
     if (!check.valid) {
+      if (check.invalidDateLabel) {
+        toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", check.invalidDateLabel));
+        return;
+      }
       toast.error(t("adminTemplateGenerator.issueSingleMissing").replace("{field}", check.missingLabel || ""));
       return;
     }
@@ -346,7 +364,11 @@ export default function CertificateGeneratorPage() {
     for (let i = 0; i < records.length; i++) {
       const check = validateRecord(records[i]);
       if (!check.valid) {
-        toast.error(t("adminTemplateGenerator.batchIssueMissing").replace("{row}", String(i + 1)).replace("{field}", check.missingLabel || ""));
+        if (check.invalidDateLabel) {
+          toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", check.invalidDateLabel));
+        } else {
+          toast.error(t("adminTemplateGenerator.batchIssueMissing").replace("{row}", String(i + 1)).replace("{field}", check.missingLabel || ""));
+        }
         setActiveRowIndex(i);
         return;
       }
@@ -836,7 +858,7 @@ export default function CertificateGeneratorPage() {
                       {OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "var(--text-faint)", fontWeight: 400 }}> {t("adminTemplateGenerator.optionalSuffix")}</span>}
                     </label>
                     <input
-                      type="text"
+                      type={(key === "issueDate" || key === "dob") ? "date" : "text"}
                       value={activeRecord[key] || ""}
                       onChange={(e) => handleUpdateActiveField(key, e.target.value)}
                       style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
