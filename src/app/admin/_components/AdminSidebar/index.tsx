@@ -4,9 +4,9 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
+import { useI18n } from "@/features/i18n/I18nContext";
 import type { User } from "@/features/auth/types";
 import Tooltip from "@/components/common/Tooltip";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 interface AdminSidebarProps {
   user: User;
@@ -27,7 +27,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
       } ${collapsed ? "md:w-20" : "w-64 md:w-64"}`}
     >
       <div className={`${styles._1} ${collapsed ? "!px-2 justify-between" : "px-5 justify-between"}`}>
-        <Tooltip content="Về trang chủ CertiChain" position="right">
+        <Tooltip content={t("adminShell.sidebar.homeTooltip")} position="right">
           <Link href="/" className={styles._2}>
             <div className={styles._3}>
               C
@@ -35,13 +35,13 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
             {!collapsed && (
               <div className={styles._4}>
                 <span className={styles._5}>CertiChain</span>
-                <span className={styles._6}>{t("dashboard.adminNav.adminPortal")}</span>
+                <span className={styles._6}>{t("adminShell.sidebar.portalBadge")}</span>
               </div>
             )}
           </Link>
         </Tooltip>
 
-        <Tooltip content={collapsed ? "Mở rộng thanh menu" : "Thu gọn thanh menu"} position="right">
+        <Tooltip content={collapsed ? t("adminShell.sidebar.expandTooltip") : t("adminShell.sidebar.collapseTooltip")} position="right">
           <button
             onClick={onToggleCollapse}
             className={`${styles._7} ${collapsed ? "!p-1" : ""}`}
@@ -76,7 +76,6 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
             return acc;
           }, '');
           const isActive = item.path === activeItemPath;
-          const displayTitle = item.translationKey ? t(item.translationKey) : item.title;
 
           const linkElement = (
             <Link
@@ -92,7 +91,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
               <div className={`${styles._22} ${isActive ? "scale-105" : "group-hover:scale-105"}`}>
                 {item.icon}
               </div>
-              {!collapsed && <span className={styles._9}>{displayTitle}</span>}
+{!collapsed && <span className={styles._9}>{t(item.titleKey)}</span>}
               {!collapsed && !isActive && (
                 <span className={styles._10}></span>
               )}
@@ -100,7 +99,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
           );
 
           return collapsed ? (
-            <Tooltip key={item.path} content={displayTitle} position="right" className="w-full">
+<Tooltip key={item.path} content={t(item.titleKey)} position="right" className="w-full">
               {linkElement}
             </Tooltip>
           ) : (
@@ -112,7 +111,7 @@ export default function AdminSidebar({ user, open, collapsed, onClose, onToggleC
       <div className={styles._11}>
         {!collapsed ? (
           <div className={styles._12}>
-            <div className={styles._13}>{t("dashboard.adminNav.userSection")}</div>
+<div className={styles._13}>{t("adminShell.sidebar.userLabel")}</div>
             <div className={styles._14}>
               <div className={styles._15}>
                 {user.name.charAt(0)}

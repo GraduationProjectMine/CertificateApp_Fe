@@ -14,12 +14,20 @@ function onRefreshed(token: string) {
 
 async function safeParseJson(res: Response) {
   const contentType = res.headers.get('content-type');
+  if (res.status === 204) return null;
   if (contentType && contentType.includes('application/json')) {
-    return res.json();
+    const text = await res.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      if (!res.ok) throw new Error(`API Endpoint Error (${res.status}): ${res.statusText || 'Invalid JSON response'}`);
+      return text;
+    }
   }
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`API Endpoint Error (${res.status}): ${res.statusText || 'Invalid response format'}`);
+    throw new Error(text || `API Endpoint Error (${res.status}): ${res.statusText || 'Invalid response format'}`);
   }
   try {
     return JSON.parse(text);

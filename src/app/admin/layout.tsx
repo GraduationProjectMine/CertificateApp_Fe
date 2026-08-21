@@ -1,7 +1,6 @@
 "use client";
 import styles from "./layout.module.css";
 import React, { useState, useEffect } from "react";
-import { Toaster } from "react-hot-toast";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import AdminSidebar from "./_components/AdminSidebar";
 import AdminTopbar from "./_components/AdminTopbar";
@@ -24,8 +23,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <>
-      <Toaster position="top-right" toastOptions={{ duration: 4000, className: "text-xs font-medium" }} />
-
       <div className={styles._1}>
       {sidebarOpen && (
         <div

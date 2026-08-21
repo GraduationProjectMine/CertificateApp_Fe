@@ -1,12 +1,14 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { templateApi } from "@/features/templates/services/api";
 import type { CertificateTemplate } from "@/features/templates/types";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import FormModal from "@/components/common/Modal/FormModal";
+import { useI18n } from "@/features/i18n/I18nContext";
+import { validateMinLength } from "@/lib/validators";
+import toast from "react-hot-toast";
 
 const DEFAULT_DESIGN = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -18,7 +20,7 @@ const DEFAULT_DESIGN = {
 };
 
 export default function AdminTemplatesPage() {
-  const router = useRouter();
+  const { t } = useI18n();
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,62 +29,86 @@ export default function AdminTemplatesPage() {
   const [newDesc, setNewDesc] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteTargetName, setDeleteTargetName] = useState("");
+const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const data = await templateApi.list();
       setTemplates(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load templates");
+      setError(err.message || t("adminTemplates.error.load"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    const name = newName.trim();
+    const description = newDesc.trim();
+    if (!validateMinLength(name, 2)) {
+      toast.error(t("common.validation.invalidName"));
+      return;
+    }
+    setCreating(true);
     try {
-      await templateApi.create({ name: newName, description: newDesc, design_data: DEFAULT_DESIGN as any });
+      await templateApi.create({ name, description: description || undefined, design_data: DEFAULT_DESIGN as any });
+      toast.success(t("adminTemplates.createSuccess"));
       setShowCreateModal(false);
       setNewName("");
       setNewDesc("");
       await fetchData();
     } catch (err: any) {
-      alert(err.message || "Create failed");
+      toast.error(err.message || t("adminTemplates.error.create"));
+    } finally {
+      setCreating(false);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTargetId) return;
+    setDeleting(true);
     try {
       await templateApi.delete(deleteTargetId);
+      toast.success(t("adminTemplates.deleteSuccess"));
       setTemplates((prev) => prev.filter((t) => t.id !== deleteTargetId));
       setDeleteTargetId("");
       setDeleteTargetName("");
     } catch (err: any) {
-      alert(err.message || "Delete failed");
+      toast.error(err.message || t("adminTemplates.error.delete"));
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const handleDuplicate = async (id: string) => {
+const handleDuplicate = async (id: string) => {
+    setActionId(id);
     try {
       await templateApi.duplicate(id);
+      toast.success(t("adminTemplates.duplicateSuccess"));
       await fetchData();
     } catch (err: any) {
-      alert(err.message || "Duplicate failed");
+      toast.error(err.message || t("adminTemplates.error.duplicate"));
+    } finally {
+      setActionId(null);
     }
   };
 
   const handleSetDefault = async (id: string) => {
+    setActionId(id);
     try {
       await templateApi.update(id, { is_default: true });
+      toast.success(t("adminTemplates.setDefaultSuccess"));
       await fetchData();
     } catch (err: any) {
-      alert(err.message || "Failed to set default");
+      toast.error(err.message || t("adminTemplates.error.setDefault"));
+    } finally {
+      setActionId(null);
     }
   };
 
@@ -90,40 +116,41 @@ export default function AdminTemplatesPage() {
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>Quản lý Mẫu Bằng</h1>
-          <p className={styles._4}>Thiết kế và quản lý các mẫu văn bằng, chứng chỉ cho tổ chức của bạn.</p>
+          <h1 className={styles._3}>{t("adminTemplates.title")}</h1>
+          <p className={styles._4}>{t("adminTemplates.description")}</p>
         </div>
         <button className={styles._5} onClick={() => setShowCreateModal(true)}>
-          + Thiết kế mẫu bằng mới
+          {t("adminTemplates.createButton")}
         </button>
       </div>
 
       <FormModal
         open={showCreateModal}
         onClose={() => { setShowCreateModal(false); setNewName(""); setNewDesc(""); }}
-        title="Tạo mẫu văn bằng mới"
-        description="Thiết kế mẫu văn bằng chứng chỉ cho tổ chức của bạn."
+        title={t("adminTemplates.createModal.title")}
+        description={t("adminTemplates.createModal.description")}
         onSubmit={(e) => { e.preventDefault(); void handleCreate(); }}
-        submitLabel="Tạo mẫu"
+        submitting={creating}
+        submitLabel={t("adminTemplates.createModal.submit")}
         size="md"
       >
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên mẫu *</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminTemplates.createModal.nameLabel")}</label>
           <input
             type="text"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs outline-none focus:ring-1 focus:ring-primary"
-            placeholder="VD: Mẫu bằng tốt nghiệp ĐH"
+            placeholder={t("adminTemplates.createModal.namePlaceholder")}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mô tả (tuỳ chọn)</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t("adminTemplates.createModal.descLabel")}</label>
           <textarea
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs outline-none focus:ring-1 focus:ring-primary resize-none"
             rows={3}
-            placeholder="VD: Mẫu mặc định cho kỹ sư CNTT"
+            placeholder={t("adminTemplates.createModal.descPlaceholder")}
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
           />
@@ -133,29 +160,30 @@ export default function AdminTemplatesPage() {
       <ConfirmModal
         open={!!deleteTargetId}
         onClose={() => { setDeleteTargetId(""); setDeleteTargetName(""); }}
-        title="Xóa mẫu văn bằng"
-        message={`Bạn có chắc chắn muốn xóa mẫu "${deleteTargetName}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa"
-        cancelLabel="Hủy"
+        title={t("adminTemplates.deleteModal.title")}
+        message={`${t("adminTemplates.deleteModal.messagePrefix")} "${deleteTargetName}"${t("adminTemplates.deleteModal.messageSuffix")}`}
+        confirmLabel={t("adminTemplates.deleteModal.confirm")}
+        cancelLabel={t("adminTemplates.deleteModal.cancel")}
         variant="danger"
         icon="danger"
+        loading={deleting}
         onConfirm={() => void handleDelete()}
       />
 
       <div className={styles._6}>
         {loading ? (
-          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminTemplates.loading")}</div>
         ) : error ? (
           <div className="p-8 text-center text-red-500 dark:text-red-400 text-xs">{error}</div>
         ) : templates.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Chưa có mẫu văn bằng nào. Hãy tạo mẫu đầu tiên!</div>
+          <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminTemplates.empty")}</div>
         ) : (
           templates.map((template) => (
             <div key={template.id} className={styles._7}>
               <div className={styles._8}>
                 <div className={styles._9}>
                   <div className={styles._10}>
-                    {template.is_default ? "MẶC ĐỊNH" : "THƯỜNG"}
+                    {template.is_default ? t("adminTemplates.defaultBadge") : t("adminTemplates.regularBadge")}
                   </div>
                 </div>
                 <div>
@@ -170,28 +198,30 @@ export default function AdminTemplatesPage() {
                   href={`/admin/templates/editor/${template.id}`}
                   className="text-[10px] font-bold text-primary hover:text-primary-hover transition-colors"
                 >
-                  Thiết kế
+                  {t("adminTemplates.design")}
                 </Link>
                 {!template.is_default && (
                   <button
-                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleSetDefault(template.id)}
+                    disabled={actionId !== null}
                   >
-                    Đặt mặc định
+                    {t("adminTemplates.setDefault")}
                   </button>
                 )}
                 <button
-                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleDuplicate(template.id)}
+                  disabled={actionId !== null}
                 >
-                  Nhân bản
+                  {t("adminTemplates.duplicate")}
                 </button>
                 {!template.is_default && (
                   <button
                     className="text-[10px] font-bold text-danger hover:text-red-600 transition-colors"
                     onClick={() => { setDeleteTargetId(template.id); setDeleteTargetName(template.name); }}
                   >
-                    Xoá
+                    {t("adminTemplates.delete")}
                   </button>
                 )}
               </div>
