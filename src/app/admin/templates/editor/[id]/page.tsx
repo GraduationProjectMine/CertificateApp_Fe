@@ -22,13 +22,26 @@ const DEFAULT_DESIGN: DesignData = {
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
 
-function getFieldTemplates(t: ReturnType<typeof useI18n>["t"]): Array<{ type: "text" | "image" | "qr" | "line" | "rect"; label: string; icon: string }> {
+function getFieldTemplates(t: ReturnType<typeof useI18n>["t"]): Array<{ category: string; items: Array<{ type: "text" | "image" | "qr" | "line" | "rect" | "ellipse" | "triangle" | "star"; label: string; icon: string }> }> {
   return [
-    { type: "text", label: t("adminTemplateEditor.fieldTypeText"), icon: "T" },
-    { type: "image", label: t("adminTemplateEditor.fieldTypeImage"), icon: "🖼" },
-    { type: "qr", label: t("adminTemplateEditor.fieldTypeQr"), icon: "▦" },
-    { type: "line", label: t("adminTemplateEditor.fieldTypeLine"), icon: "▬" },
-    { type: "rect", label: t("adminTemplateEditor.fieldTypeRect"), icon: "▮" },
+    {
+      category: t("adminTemplateEditor.fieldCategoryBasic"),
+      items: [
+        { type: "text", label: t("adminTemplateEditor.fieldTypeText"), icon: "T" },
+        { type: "image", label: t("adminTemplateEditor.fieldTypeImage"), icon: "🖼" },
+        { type: "qr", label: t("adminTemplateEditor.fieldTypeQr"), icon: "▦" },
+      ],
+    },
+    {
+      category: t("adminTemplateEditor.shapeCategory"),
+      items: [
+        { type: "line", label: t("adminTemplateEditor.fieldTypeLine"), icon: "▬" },
+        { type: "rect", label: t("adminTemplateEditor.fieldTypeRect"), icon: "▮" },
+        { type: "ellipse", label: t("adminTemplateEditor.fieldTypeEllipse"), icon: "⭘" },
+        { type: "triangle", label: t("adminTemplateEditor.fieldTypeTriangle"), icon: "▲" },
+        { type: "star", label: t("adminTemplateEditor.fieldTypeStar"), icon: "★" },
+      ],
+    },
   ];
 }
 
@@ -90,7 +103,33 @@ export default function TemplateEditorPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [dragging, setDragging] = useState<{ fieldId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [resizing, setResizing] = useState<{ fieldId: string; dir: string; startX: number; startY: number; origW: number; origH: number } | null>(null);
+  const [history, setHistory] = useState<DesignData[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const pushHistory = useCallback((newDesign: DesignData) => {
+    setHistory((prev) => {
+      const next = prev.slice(0, historyIndex + 1);
+      next.push(newDesign);
+      if (next.length > 50) next.shift();
+      return next;
+    });
+    setHistoryIndex((i) => Math.min(i + 1, 49));
+  }, [historyIndex]);
+
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      setHistoryIndex((i) => i - 1);
+      setDesign(history[historyIndex - 1]);
+    }
+  }, [history, historyIndex]);
+
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex((i) => i + 1);
+      setDesign(history[historyIndex + 1]);
+    }
+  }, [history, historyIndex]);
 
   // Dynamic Manual Input Data & Import File State
   const [mockData, setMockData] = useState<Record<string, string>>({
@@ -160,11 +199,12 @@ export default function TemplateEditorPage() {
   const selectedField = design.fields.find((f) => f.id === selectedId) || null;
 
   const updateField = useCallback((fieldId: string, updates: Partial<TemplateField>) => {
-    setDesign((prev) => ({
-      ...prev,
-      fields: prev.fields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)),
-    }));
-  }, []);
+    setDesign((prev) => {
+      const next = { ...prev, fields: prev.fields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)) };
+      pushHistory(next);
+      return next;
+    });
+  }, [pushHistory]);
 
   const addField = useCallback((type: TemplateField["type"], binding?: string) => {
     const isLine = type === "line";
@@ -175,25 +215,96 @@ export default function TemplateEditorPage() {
       type,
       x: 100,
       y: 100,
-      w: type === "qr" ? 70 : isImage ? 100 : isLine ? 150 : isRect ? 150 : 200,
-      h: type === "qr" ? 70 : isImage ? 100 : isLine ? 4 : isRect ? 100 : 40,
+      w: type === "qr" ? 70 : isImage ? 100 : isLine ? 150 : isRect ? 150 : type === "ellipse" || type === "triangle" || type === "star" ? 100 : 200,
+      h: type === "qr" ? 70 : isImage ? 100 : isLine ? 4 : isRect ? 100 : type === "ellipse" || type === "triangle" || type === "star" ? 100 : 40,
       font: "sans-serif",
       size: 14,
-      color: type === "line" || type === "rect" ? "#c9a84c" : "#333333",
+      color: type === "line" || type === "rect" || type === "ellipse" || type === "triangle" || type === "star" ? "#c9a84c" : "#333333",
       align: "left",
       text: type === "text" ? "Văn bản" : undefined,
       dynamic: !!binding,
       binding: binding || (type === "image" ? "organization_logo" : undefined),
       src: binding === "organization_logo" || type === "image" ? organizationLogo || undefined : undefined,
     };
-    setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
+    setDesign((prev) => {
+      const next = { ...prev, fields: [...prev.fields, newField] };
+      pushHistory(next);
+      return next;
+    });
     setSelectedId(newField.id);
-  }, [organizationLogo]);
+  }, [organizationLogo, pushHistory]);
 
   const deleteField = useCallback((fieldId: string) => {
-    setDesign((prev) => ({ ...prev, fields: prev.fields.filter((f) => f.id !== fieldId) }));
+    setDesign((prev) => {
+      const next = { ...prev, fields: prev.fields.filter((f) => f.id !== fieldId) };
+      pushHistory(next);
+      return next;
+    });
     setSelectedId((prev) => (prev === fieldId ? null : prev));
-  }, []);
+  }, [pushHistory]);
+
+  const getSelectedFields = useCallback((): TemplateField[] => {
+    if (!selectedId) return [];
+    const field = design.fields.find((f) => f.id === selectedId);
+    return field ? [field] : [];
+  }, [design.fields, selectedId]);
+
+  const alignFields = useCallback((align: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+    const fields = design.fields.filter((f) => f.id === selectedId);
+    if (fields.length < 1) return;
+    const target = fields[0];
+    setDesign((prev) => {
+      const next = {
+        ...prev,
+        fields: prev.fields.map((f) => {
+          if (f.id === selectedId) {
+            const updates: Partial<TemplateField> = {};
+            if (align === "left") updates.x = target.x;
+            if (align === "center") updates.x = target.x + (target.w - f.w) / 2;
+            if (align === "right") updates.x = target.x + target.w - f.w;
+            if (align === "top") updates.y = target.y;
+            if (align === "middle") updates.y = target.y + (target.h - f.h) / 2;
+            if (align === "bottom") updates.y = target.y + target.h - f.h;
+            return { ...f, ...updates };
+          }
+          return f;
+        }),
+      };
+      pushHistory(next);
+      return next;
+    });
+  }, [design.fields, selectedId, pushHistory]);
+
+  const distributeFields = useCallback((direction: "horizontal" | "vertical") => {
+    const fields = design.fields.filter((f) => f.id === selectedId);
+    if (fields.length < 2) return;
+    const sorted = [...fields].sort((a, b) => (direction === "horizontal" ? a.x : a.y) - (direction === "horizontal" ? b.x : b.y));
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const start = direction === "horizontal" ? first.x : first.y;
+    const end = direction === "horizontal" ? last.x + last.w : last.y + last.h;
+    const totalSize = sorted.reduce((sum, f) => sum + (direction === "horizontal" ? f.w : f.h), 0);
+    const gap = (end - start - totalSize) / (sorted.length - 1);
+    let current = start;
+    setDesign((prev) => {
+      const next = {
+        ...prev,
+        fields: prev.fields.map((f) => {
+          const idx = sorted.findIndex((sf) => sf.id === f.id);
+          if (idx >= 0) {
+            const updates: Partial<TemplateField> = {};
+            if (direction === "horizontal") updates.x = current;
+            else updates.y = current;
+            current += (direction === "horizontal" ? f.w : f.h) + gap;
+            return { ...f, ...updates };
+          }
+          return f;
+        }),
+      };
+      pushHistory(next);
+      return next;
+    });
+  }, [design.fields, selectedId, pushHistory]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent, fieldId: string) => {
     const field = design.fields.find((f) => f.id === fieldId);
@@ -260,6 +371,33 @@ export default function TemplateEditorPage() {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [resizing, zoom, updateField]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+        e.preventDefault();
+        redo();
+      }
+      if (e.key === "Delete" && selectedId && !previewMode) {
+        deleteField(selectedId);
+      }
+      if (e.key === "Backspace" && selectedId && !previewMode) {
+        e.preventDefault(); // prevent browser back navigation
+        deleteField(selectedId);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo, selectedId, previewMode, deleteField]);
 
   const handleSave = async () => {
     const name = templateName.trim();
@@ -359,6 +497,51 @@ export default function TemplateEditorPage() {
       if (field.type === "rect") {
         return <div style={{ width: "100%", height: "100%", border: `2px solid ${field.color || "#c9a84c"}`, boxSizing: "border-box" }} />;
       }
+      if (field.type === "ellipse") {
+        return (
+          <svg width="100%" height="100%" viewBox={`0 0 ${field.w} ${field.h}`} style={{ display: "block" }}>
+            <ellipse
+              cx={field.w / 2}
+              cy={field.h / 2}
+              rx={field.w / 2}
+              ry={field.h / 2}
+              fill="none"
+              stroke={field.color || "#c9a84c"}
+              strokeWidth={2}
+            />
+          </svg>
+        );
+      }
+      if (field.type === "triangle") {
+        return (
+          <svg width="100%" height="100%" viewBox={`0 0 ${field.w} ${field.h}`} style={{ display: "block" }}>
+            <polygon
+              points={`${field.w / 2},0 ${field.w},${field.h} 0,${field.h}`}
+              fill="none"
+              stroke={field.color || "#c9a84c"}
+              strokeWidth={2}
+            />
+          </svg>
+        );
+      }
+      if (field.type === "star") {
+        const cx = field.w / 2;
+        const cy = field.h / 2;
+        const spikes = 5;
+        const outerRadius = Math.min(field.w, field.h) / 2;
+        const innerRadius = outerRadius * 0.4;
+        let points = "";
+        for (let i = 0; i < spikes * 2; i++) {
+          const radius = i % 2 === 0 ? outerRadius : innerRadius;
+          const angle = (Math.PI * i) / spikes - Math.PI / 2;
+          points += `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)} `;
+        }
+        return (
+          <svg width="100%" height="100%" viewBox={`0 0 ${field.w} ${field.h}`} style={{ display: "block" }}>
+            <polygon points={points.trim()} fill="none" stroke={field.color || "#c9a84c"} strokeWidth={2} />
+          </svg>
+        );
+      }
       if (field.dynamic && field.binding) {
         const val = mockData[field.binding];
         if (val) {
@@ -423,6 +606,12 @@ export default function TemplateEditorPage() {
             <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "var(--text-secondary)" }}>+</button>
           </div>
 
+          {/* Undo/Redo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--page-bg)", borderRadius: 8, padding: "2px" }}>
+            <button onClick={undo} disabled={historyIndex <= 0} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: historyIndex > 0 ? "var(--text-body)" : "var(--text-muted)", opacity: historyIndex > 0 ? 1 : 0.4 }} title={t("adminTemplateEditor.undoTitle")}>↶</button>
+            <button onClick={redo} disabled={historyIndex >= history.length - 1} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: historyIndex < history.length - 1 ? "var(--text-body)" : "var(--text-muted)", opacity: historyIndex < history.length - 1 ? 1 : 0.4 }} title={t("adminTemplateEditor.redoTitle")}>↷</button>
+          </div>
+
           {/* Mode Switcher */}
           <button
             onClick={() => setPreviewMode(!previewMode)}
@@ -456,17 +645,22 @@ export default function TemplateEditorPage() {
               <span style={{ fontSize: 16 }}>🏢</span>
               <span>{t("adminTemplateEditor.logoLabel")}</span>
             </button>
-            {fieldTemplates.map((ft) => (
-              <button
-                key={ft.type}
-                onClick={() => addField(ft.type)}
-                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 6, borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: 13, color: "var(--text-body)", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "var(--surface-active)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
-              >
-                <span style={{ fontSize: 16 }}>{ft.icon}</span>
-                <span>{ft.label}</span>
-              </button>
+            {fieldTemplates.map((group) => (
+              <div key={group.category} style={{ marginBottom: 16 }}>
+                <h4 style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{group.category}</h4>
+                {group.items.map((ft) => (
+                  <button
+                    key={ft.type}
+                    onClick={() => addField(ft.type)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 6, borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: 13, color: "var(--text-body)", transition: "all 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "var(--surface-active)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
+                  >
+                    <span style={{ fontSize: 16 }}>{ft.icon}</span>
+                    <span>{ft.label}</span>
+                  </button>
+                ))}
+              </div>
             ))}
             <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>{t("adminTemplateEditor.fieldsTitle")} ({design.fields.length})</h3>
             {design.fields.map((f) => (
@@ -806,6 +1000,27 @@ export default function TemplateEditorPage() {
                 </div>
               </>
             )}
+
+            {/* Align & Distribute (Canvas-level) */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.alignDistributeTitle")}</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button onClick={() => alignFields("left")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignLeft")}>⬅</button>
+                  <button onClick={() => alignFields("center")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignCenter")}>↔</button>
+                  <button onClick={() => alignFields("right")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignRight")}>➡</button>
+                </div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button onClick={() => alignFields("top")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignTop")}>⬆</button>
+                  <button onClick={() => alignFields("middle")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignMiddle")}>↕</button>
+                  <button onClick={() => alignFields("bottom")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignBottom")}>⬇</button>
+                </div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button onClick={() => distributeFields("horizontal")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.distributeHorizontal")}>⋮⋮</button>
+                  <button onClick={() => distributeFields("vertical")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.distributeVertical")}>⋮⋮</button>
+                </div>
+              </div>
+            </div>
 
             {/* Position & Size */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
