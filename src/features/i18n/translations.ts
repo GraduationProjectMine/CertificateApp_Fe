@@ -318,7 +318,7 @@ home: "Trang chủ",
     studentDashboard: {
       header: {
         title: "Bảng điều khiển",
-        description: "Chào m� mừng bạn đến với hệ thống quản lý văn bằng số"
+        description: "Chào mừng bạn đến với hệ thống quản lý văn bằng số"
       },
       stats: {
         totalCertificates: "Tổng văn bằng",
