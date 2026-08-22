@@ -23,7 +23,7 @@ export default function IssuerBadge({
     ? `https://sepolia.etherscan.io/address/${walletAddress}`
     : null;
 
-  const handleBadgeClick = () => {
+  const handleBadgeClick = (e: React.MouseEvent) => {
     if (etherscanUrl) {
       window.open(etherscanUrl, "_blank", "noopener,noreferrer");
     }

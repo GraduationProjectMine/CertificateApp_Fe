@@ -1,14 +1,29 @@
 "use client";
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import { shareApi } from "@/features/share/services/share.api";
 import type { ShareDto } from "@/features/share/services/share.api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
-import { useI18n } from "@/features/i18n/I18nContext";
-import ConfirmModal from "@/components/common/Modal/ConfirmModal";
-import toast from "react-hot-toast";
+
+const SCOPE_OPTIONS = [
+  { value: "dob", label: "Ngày sinh" },
+  { value: "placeOfBirth", label: "Nơi sinh" },
+  { value: "gender", label: "Giới tính" },
+  { value: "ethnicity", label: "Dân tộc" },
+  { value: "schoolName", label: "Trường" },
+  { value: "examCohort", label: "Khóa thi" },
+];
+
+const EXPIRY_OPTIONS = [
+  { value: "", label: "Không hết hạn" },
+  { value: "1", label: "1 ngày" },
+  { value: "7", label: "7 ngày" },
+  { value: "30", label: "30 ngày" },
+  { value: "90", label: "90 ngày" },
+  { value: "365", label: "365 ngày" },
+];
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
@@ -27,24 +42,6 @@ function formatDate(dateStr: string | null) {
 
 export default function SharesPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
-  const SCOPE_OPTIONS = [
-    { value: "dob", label: t("studentShares.scope.dob") },
-    { value: "placeOfBirth", label: t("studentShares.scope.placeOfBirth") },
-    { value: "gender", label: t("studentShares.scope.gender") },
-    { value: "ethnicity", label: t("studentShares.scope.ethnicity") },
-    { value: "schoolName", label: t("studentShares.scope.schoolName") },
-    { value: "examCohort", label: t("studentShares.scope.examCohort") },
-  ];
-
-  const EXPIRY_OPTIONS = [
-    { value: "", label: t("studentShares.expiry.never") },
-    { value: "1", label: t("studentShares.expiry.days1") },
-    { value: "7", label: t("studentShares.expiry.days7") },
-    { value: "30", label: t("studentShares.expiry.days30") },
-    { value: "90", label: t("studentShares.expiry.days90") },
-    { value: "365", label: t("studentShares.expiry.days365") },
-  ];
   const [shares, setShares] = useState<ShareDto[]>([]);
   const [certs, setCerts] = useState<CertificateDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,10 +52,8 @@ export default function SharesPage() {
   const [formScope, setFormScope] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [revokeTargetId, setRevokeTargetId] = useState("");
-  const [revokeLoading, setRevokeLoading] = useState(false);
 
-  const fetchShares = useCallback(() => {
+  const fetchShares = () => {
     if (!user?.id) return;
     setLoading(true);
     setError("");
@@ -73,33 +68,28 @@ export default function SharesPage() {
         const enriched = shareList.map((s) => ({
           ...s,
           certificate_title:
-            s.certificate_title || certMap.get(s.certificate_id) || t("studentShares.unknownCert"),
+            s.certificate_title || certMap.get(s.certificate_id) || "Không rõ",
         }));
         setShares(enriched);
         setCerts(certList);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [t, user?.id]);
+  };
 
   useEffect(() => {
     fetchShares();
-  }, [fetchShares]);
+  }, [user?.id]);
 
   const handleCreate = async () => {
-    if (!formCert) {
-      toast.error(t("studentShares.toast.certRequired"));
-      return;
-    }
+    if (!formCert) return;
     setSubmitting(true);
-    setError("");
     try {
       await shareApi.create({
         certificate_id: formCert,
         expires_in_days: formExpiry ? parseInt(formExpiry, 10) : undefined,
         scope: formScope.length > 0 ? formScope : undefined,
       });
-      toast.success(t("studentShares.toast.createSuccess"));
       setShowModal(false);
       setFormCert("");
       setFormExpiry("");
@@ -112,20 +102,13 @@ export default function SharesPage() {
     }
   };
 
-  const handleRevoke = async () => {
-    if (!revokeTargetId) return;
-    setRevokeLoading(true);
-    setError("");
+  const handleRevoke = async (id: string) => {
+    if (!confirm("Bạn có chắc muốn thu hồi link chia sẻ này?")) return;
     try {
-      await shareApi.revoke(revokeTargetId);
-      toast.success(t("studentShares.toast.revokeSuccess"));
-      setRevokeTargetId("");
+      await shareApi.revoke(id);
       fetchShares();
     } catch (err: any) {
       setError(err.message);
-      toast.error(err.message);
-    } finally {
-      setRevokeLoading(false);
     }
   };
 
@@ -134,7 +117,6 @@ export default function SharesPage() {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
-      toast.success(t("studentShares.toast.copySuccess"));
     } catch {
       const ta = document.createElement("textarea");
       ta.value = url;
@@ -144,7 +126,6 @@ export default function SharesPage() {
       document.body.removeChild(ta);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
-      toast.success(t("studentShares.toast.copySuccess"));
     }
   };
 
@@ -167,44 +148,31 @@ export default function SharesPage() {
 
   const statusBadge = (share: ShareDto) => {
     if (share.revoked)
-      return <span className={`${styles._15} ${styles._18}`}>{t("studentShares.status.revoked")}</span>;
+      return <span className={`${styles._15} ${styles._18}`}>Đã thu hồi</span>;
     if (share.is_expired)
-      return <span className={`${styles._15} ${styles._17}`}>{t("studentShares.status.expired")}</span>;
+      return <span className={`${styles._15} ${styles._17}`}>Hết hạn</span>;
     return (
       <span className={`${styles._15} ${styles._16}`}>
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        {t("studentShares.status.active")}
+        Đang hoạt động
       </span>
     );
   };
 
   return (
     <div className={styles._1}>
-      <ConfirmModal
-        open={!!revokeTargetId}
-        onClose={() => setRevokeTargetId("")}
-        title={t("studentShares.revoke")}
-        message={t("studentShares.confirmRevoke")}
-        confirmLabel={t("studentShares.revoke")}
-        cancelLabel={t("studentShares.modal.cancel")}
-        variant="danger"
-        icon="danger"
-        loading={revokeLoading}
-        onConfirm={() => void handleRevoke()}
-      />
-
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("studentShares.header.title")}</h1>
+          <h1 className={styles._3}>Chia sẻ văn bằng</h1>
           <p className={styles._4}>
-            {t("studentShares.header.description")}
+            Quản lý các liên kết chia sẻ văn bằng của bạn
           </p>
         </div>
         <button onClick={() => setShowModal(true)} className={styles._23}>
           <svg className={styles._24} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
           </svg>
-          {t("studentShares.addLink")}
+          Thêm liên kết
         </button>
       </div>
 
@@ -233,7 +201,7 @@ export default function SharesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           </div>
-          <p className={styles._22}>{t("studentShares.empty.title")}</p>
+          <p className={styles._22}>Chưa có liên kết chia sẻ nào</p>
         </div>
       ) : (
         <div className={styles._5}>
@@ -243,7 +211,7 @@ export default function SharesPage() {
                 <div className={styles._8}>
                   <h3 className={styles._9}>{share.certificate_title}</h3>
                   <p className={styles._10}>
-                    {formatDate(share.createdAt)} &middot; {share.verify_count} {t("studentShares.verifyCount")}
+                    {formatDate(share.createdAt)} &middot; {share.verify_count} lượt xác minh
                   </p>
                   <div className={styles._11}>
                     <div className="flex items-center gap-1.5 max-w-full">
@@ -271,7 +239,7 @@ export default function SharesPage() {
                           <svg className={styles._26} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {t("studentShares.expiresAt")} {formatDate(share.expires_at)}
+                          Hết hạn: {formatDate(share.expires_at)}
                         </span>
                       )}
                       {!share.expires_at && (
@@ -279,7 +247,7 @@ export default function SharesPage() {
                           <svg className={styles._26} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                           </svg>
-                          {t("studentShares.neverExpires")}
+                          Không hết hạn
                         </span>
                       )}
                     </div>
@@ -288,10 +256,10 @@ export default function SharesPage() {
                 <div className={styles._12}>
                   {statusBadge(share)}
                   <button
-                    onClick={() => setRevokeTargetId(share.id)}
+                    onClick={() => handleRevoke(share.id)}
                     className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200/50 hover:bg-red-100 dark:hover:bg-red-950/50 transition-all"
                   >
-                    {t("studentShares.revoke")}
+                    Thu hồi
                   </button>
                 </div>
               </div>
@@ -304,7 +272,7 @@ export default function SharesPage() {
                 <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
-                {t("studentShares.inactiveSummary")} ({inactiveShares.length})
+                Liên kết đã thu hồi / hết hạn ({inactiveShares.length})
               </summary>
               <div className="mt-3 space-y-3">
                 {inactiveShares.map((share) => (
@@ -313,7 +281,7 @@ export default function SharesPage() {
                       <div className={styles._8}>
                         <h3 className={styles._9}>{share.certificate_title}</h3>
                         <p className={styles._10}>
-                          {formatDate(share.createdAt)} &middot; {share.verify_count} {t("studentShares.verifyCount")}
+                          {formatDate(share.createdAt)} &middot; {share.verify_count} lượt xác minh
                         </p>
                       </div>
                       <div className={styles._12}>
@@ -332,7 +300,7 @@ export default function SharesPage() {
         <div className={styles._27} onClick={() => setShowModal(false)}>
           <div className={styles._28} onClick={(e) => e.stopPropagation()}>
             <div className={styles._29}>
-              <h2 className={styles._30}>{t("studentShares.modal.title")}</h2>
+              <h2 className={styles._30}>Thêm liên kết chia sẻ</h2>
               <button onClick={() => setShowModal(false)} className={styles._31}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -342,13 +310,13 @@ export default function SharesPage() {
 
             <div className={styles._32}>
               <div className={styles._33}>
-                <label className={styles._34}>{t("studentShares.modal.selectCert")}</label>
+                <label className={styles._34}>Chọn văn bằng</label>
                 <select
                   value={formCert}
                   onChange={(e) => setFormCert(e.target.value)}
                   className={styles._35}
                 >
-                  <option value="">{t("studentShares.modal.selectPlaceholder")}</option>
+                  <option value="">-- Chọn văn bằng --</option>
                   {certs.map((c) => (
                     <option key={c.certificate_id} value={c.certificate_id}>
                       {c.certificate_title}
@@ -358,7 +326,7 @@ export default function SharesPage() {
               </div>
 
               <div className={styles._33}>
-                <label className={styles._34}>{t("studentShares.modal.expiry")}</label>
+                <label className={styles._34}>Thời hạn</label>
                 <select
                   value={formExpiry}
                   onChange={(e) => setFormExpiry(e.target.value)}
@@ -373,7 +341,7 @@ export default function SharesPage() {
               </div>
 
               <div className={styles._33}>
-                <label className={styles._34}>{t("studentShares.modal.scope")}</label>
+                <label className={styles._34}>Phạm vi thông tin</label>
                 <div className={styles._36}>
                   {SCOPE_OPTIONS.map((o) => {
                     const selected = formScope.includes(o.value);
@@ -405,14 +373,14 @@ export default function SharesPage() {
                   onClick={() => setShowModal(false)}
                   className={styles._42}
                 >
-                  {t("studentShares.modal.cancel")}
+                  Hủy
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={!formCert || submitting}
                   className={styles._43}
                 >
-                  {submitting ? t("studentShares.modal.creating") : t("studentShares.modal.create")}
+                  {submitting ? "Đang tạo..." : "Tạo liên kết"}
                 </button>
               </div>
             </div>

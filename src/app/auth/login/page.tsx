@@ -6,10 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import { authApi } from "../../../features/auth/services/api";
 import Button from "@/components/ui/Button";
-import AppControls from "@/components/common/AppControls";
 import { BrowserProvider } from "ethers";
-import { validateEmail } from "@/lib/validators";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 function getDashboardRedirect(role: string) {
   const normalizedRole = role?.toLowerCase();
@@ -22,7 +19,6 @@ function getDashboardRedirect(role: string) {
 
 export default function LoginPage() {
   const { user, login, loginWithMetaMask } = useAuth();
-  const { t, tArr } = useI18n();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,35 +34,16 @@ export default function LoginPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-    const normalizedEmail = email.trim();
-    if (!normalizedEmail || !password) {
+    if (!email || !password) {
       setError("Vui lòng nhập email và mật khẩu");
       return;
     }
-    if (!validateEmail(normalizedEmail)) {
-      setError("Email không hợp lệ");
-      return;
-    }
 
-setIsSubmitting(true);
-    const result = await login(normalizedEmail, password);
-    if (!result.success) setError(result.error || "Đã có lỗi xảy ra");
+    setIsSubmitting(true);
+    const result = await login(email, password);
+    if (!result.success) setError("Đã có lỗi xảy ra");
     setIsSubmitting(false);
   };
-
-function isUserRejectedError(err: any): boolean {
-  if (!err) return false;
-  if (err.code === 4001 || err.code === "ACTION_REJECTED") return true;
-  if (err.info?.error?.code === 4001) return true;
-  const msg = (err.message || "").toLowerCase();
-  return (
-    msg.includes("user rejected") ||
-    msg.includes("action_rejected") ||
-    msg.includes("user denied") ||
-    msg.includes("ethers-user-denied") ||
-    msg.includes("rejected the request")
-  );
-}
 
   const handleMetaMaskLogin = async () => {
     setError("");
@@ -95,13 +72,10 @@ function isUserRejectedError(err: any): boolean {
       // 3. Login with MetaMask
       const result = await loginWithMetaMask(walletAddress, signature, tempToken);
       if (!result.success) {
-        setError(result.error || "Đã có lỗi xảy ra");
+        setError("Đã có lỗi xảy ra");
       }
     } catch (err: any) {
       console.error(err);
-      if (isUserRejectedError(err)) {
-        return;
-      }
       setError("Đã có lỗi xảy ra");
     } finally {
       setIsWalletSubmitting(false);
@@ -117,33 +91,30 @@ function isUserRejectedError(err: any): boolean {
           <div className={`motion-float ${styles._6}`} />
           <div className={`motion-float-slow ${styles._7}`} />
 
-          <div className="flex w-full items-center justify-between">
-            <Link href="/" className={styles._8}>
-              <span className={styles._9}>
-                C
-              </span>
-              <span className={styles._10}>CertiChain</span>
-            </Link>
-            <AppControls />
-          </div>
+          <Link href="/" className={styles._8}>
+            <span className={styles._9}>
+              C
+            </span>
+            <span className={styles._10}>CertiChain</span>
+          </Link>
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
-              {t("auth.visualPanel.login.badge")}
+              Bảo mật danh tính học thuật
             </p>
             <h1 className={styles._13}>
-              {t("auth.visualPanel.login.title")}
+              Truy cập hệ thống cấp phát văn bằng số.
             </h1>
             <p className={styles._14}>
-              {t("auth.visualPanel.login.description")}
+              Quản trị, cấp bằng, xác minh và theo dõi dữ liệu blockchain từ một không gian làm việc thống nhất.
             </p>
           </div>
 
           <div className={styles._15} data-reveal>
-            {tArr("auth.visualPanel.login.features").map((item, index) => (
-              <div key={index} className={styles._16}>
+            {["JWT bảo vệ", "Tài khoản tổ chức", "Phiên đăng nhập"].map((item) => (
+              <div key={item} className={styles._16}>
                 <span className={styles._17} />
-                <span className={styles._18}>{String(item)}</span>
+                <span className={styles._18}>{item}</span>
               </div>
             ))}
           </div>
@@ -157,22 +128,20 @@ function isUserRejectedError(err: any): boolean {
               </span>
               <span className={styles._23}>CertiChain</span>
             </Link>
-            <div className="flex items-center gap-3">
-              <AppControls />
-              <Link href="/" className={`auth-switch-link ${styles._24}`}>
-                {t("common.home")}
-              </Link>
-            </div>
+            <Link href="/" className={`auth-switch-link ${styles._24}`}>
+              Trang chủ
+            </Link>
           </div>
 
           <div className={`auth-card-surface ${styles._25}`}>
             <div className={styles._26}>
               <p className={styles._27}>
-                {t("auth.login_title")}
+                Đăng nhập tài khoản
               </p>
               <h2 className={styles._28}>
-                {t("auth.login_subtitle")}
+                Chào mừng trở lại
               </h2>
+              <p className={styles._29}>Sử dụng email và mật khẩu đã được cấp trong hệ thống.</p>
             </div>
 
             {error && (
@@ -184,7 +153,7 @@ function isUserRejectedError(err: any): boolean {
             <form className={styles._31} onSubmit={handleSubmit}>
               <label className={styles._32}>
                 <span className={styles._33}>
-                  {t("auth.email")}
+                  Email
                 </span>
                 <input
                   type="email"
@@ -192,13 +161,13 @@ function isUserRejectedError(err: any): boolean {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   className={styles._34}
-                  placeholder={t("auth.email")}
+                  placeholder="admin@truonghoc.edu.vn"
                 />
               </label>
 
               <label className={styles._32}>
                 <span className={styles._33}>
-                  {t("auth.password")}
+                  Mật khẩu
                 </span>
                 <div className="relative">
                   <input
@@ -207,7 +176,7 @@ function isUserRejectedError(err: any): boolean {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className={`${styles._34} pr-10`}
-                    placeholder={t("auth.password")}
+                    placeholder="Nhập mật khẩu"
                   />
                   <button
                     type="button"
@@ -229,13 +198,13 @@ function isUserRejectedError(err: any): boolean {
               </label>
 
               <Button type="submit" disabled={isSubmitting || isWalletSubmitting} className={styles._35}>
-                {isSubmitting ? t("auth.loading") : t("auth.login_btn")}
+                {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
               </Button>
             </form>
 
             <div className="relative flex py-2 items-center">
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-              <span className="flex-shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase">{t("auth.or")}</span>
+              <span className="flex-shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase">Hoặc</span>
               <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
             </div>
 
@@ -265,15 +234,15 @@ function isUserRejectedError(err: any): boolean {
                 <path d="m159.3 215 46.2 7.8 34.3-36.4-45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
                 <path d="m159.3 215-46.2 7.8-34.3-36.4 45.5-34z" fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" strokeWidth="6"/>
               </svg>
-              {isWalletSubmitting ? t("auth.loading") : t("auth.metamask")}
+              {isWalletSubmitting ? "Đang kết nối ví..." : "Đăng nhập với MetaMask"}
             </Button>
 
             <div className={styles._43}>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._44}`}>
-                {t("auth.register_link")}
+                Đăng ký tài khoản trường học
               </Button>
               <Link href="/auth/forgot-password" className={`auth-switch-link ${styles._45}`}>
-                {t("auth.forgot_password")}
+                Quên mật khẩu?
               </Link>
             </div>
           </div>

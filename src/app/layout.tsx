@@ -6,7 +6,6 @@ import { AuthProvider } from "@/features/auth/components/AuthContext";
 import { ThemeProvider } from "@/features/theme/ThemeContext";
 import { I18nProvider } from "@/features/i18n/I18nContext";
 import { AppMotion } from "@/components/motion/AppMotion";
-import ToastProvider from "@/components/common/ToastProvider";
 
 const themeScript = `
 (function(){try{var t=localStorage.getItem("certichain_theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()
@@ -30,7 +29,6 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>
-              <ToastProvider />
               <AppMotion>{children}</AppMotion>
             </AuthProvider>
           </I18nProvider>

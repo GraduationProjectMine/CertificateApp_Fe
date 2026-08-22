@@ -29,6 +29,18 @@
  @apply ml-auto hidden lg:flex items-center gap-2;
 }
 
+._8 {
+ @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white;
+}
+
+._9 {
+ @apply w-4 h-4;
+}
+
+._10 {
+ @apply inline-flex h-9 items-center justify-center rounded-lg px-2.5 text-xs font-bold uppercase text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white;
+}
+
 ._11 {
  @apply mx-1 h-5 w-px bg-gray-200 dark:bg-white/10;
 }
@@ -87,6 +99,14 @@
 
 ._25 {
  @apply flex items-center gap-2 py-1;
+}
+
+._26 {
+ @apply p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm;
+}
+
+._27 {
+ @apply px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors uppercase tracking-wider;
 }
 
 ._28 {

@@ -10,32 +10,29 @@ import { certificateApi, type CreateCertificatePayload } from "@/features/certif
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
 import { QRCodeSVG } from "qrcode.react";
-import toast from "react-hot-toast";
 
 import { useAuth } from "@/features/auth/components/AuthContext";
-import { useI18n } from "@/features/i18n/I18nContext";
+import toast from "react-hot-toast";
 
-function getBindingLabels(t: ReturnType<typeof useI18n>["t"]): Record<string, string> {
-  return {
-    student_id: t("adminTemplateGenerator.bindingStudentId"),
-    student_fullName: t("adminTemplateGenerator.bindingStudentFullName"),
-    certificate_title: t("adminTemplateGenerator.bindingCertificateTitle"),
-    organization_name: t("adminTemplateGenerator.bindingOrganizationName"),
-    organization_logo: t("adminTemplateGenerator.bindingOrganizationLogo"),
-    dob: t("adminTemplateGenerator.bindingDob"),
-    placeOfBirth: t("adminTemplateGenerator.bindingPlaceOfBirth"),
-    gender: t("adminTemplateGenerator.bindingGender"),
-    ethnicity: t("adminTemplateGenerator.bindingEthnicity"),
-    schoolName: t("adminTemplateGenerator.bindingSchoolName"),
-    examCohort: t("adminTemplateGenerator.bindingExamCohort"),
-    examBoard: t("adminTemplateGenerator.bindingExamBoard"),
-    issueLocation: t("adminTemplateGenerator.bindingIssueLocation"),
-    issueDate: t("adminTemplateGenerator.bindingIssueDate"),
-    serialNumber: t("adminTemplateGenerator.bindingSerialNumber"),
-    registryNumber: t("adminTemplateGenerator.bindingRegistryNumber"),
-    verification_url: t("adminTemplateGenerator.bindingVerificationUrl"),
-  };
-}
+const ALL_BINDING_LABELS: Record<string, string> = {
+  student_id: "Mã sinh viên",
+  student_fullName: "Họ tên sinh viên",
+  certificate_title: "Tên văn bằng",
+  organization_name: "Tên tổ chức",
+  organization_logo: "Logo tổ chức",
+  dob: "Ngày sinh",
+  placeOfBirth: "Nơi sinh",
+  gender: "Giới tính",
+  ethnicity: "Dân tộc",
+  schoolName: "Tên trường / Đơn vị",
+  examCohort: "Khóa học",
+  examBoard: "Hội đồng thi",
+  issueLocation: "Nơi cấp",
+  issueDate: "Ngày cấp",
+  serialNumber: "Số hiệu",
+  registryNumber: "Số vào sổ",
+  verification_url: "URL xác minh (QR)",
+};
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -49,11 +46,8 @@ const DEFAULT_DESIGN: DesignData = {
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
 
-const OPTIONAL_BINDINGS = ["verification_url", "organization_logo"];
-
 export default function CertificateGeneratorPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateTemplate | null>(null);
@@ -133,7 +127,6 @@ export default function CertificateGeneratorPage() {
   }, [selectedTemplate]);
 
   // Dynamically extract bound fields present in the selected template + student_id
-  const bindingLabels = useMemo(() => getBindingLabels(t), [t]);
   const boundFields = useMemo(() => {
     const fields = activeDesign.fields || [];
     const bound = fields.filter((f) => f.dynamic && f.binding);
@@ -143,30 +136,13 @@ export default function CertificateGeneratorPage() {
     }
     return uniqueKeys.map((key) => ({
       key,
-      label: bindingLabels[key] || key,
+      label: ALL_BINDING_LABELS[key] || key,
     }));
-  }, [activeDesign, bindingLabels]);
+  }, [activeDesign]);
 
   const activeRecord = useMemo(() => {
     return records[activeRowIndex] || {};
   }, [records, activeRowIndex]);
-
-  const validateRecord = (record: Record<string, string>): { valid: boolean; missingLabel?: string; invalidDateLabel?: string } => {
-    for (const item of boundFields) {
-      if (OPTIONAL_BINDINGS.includes(item.key)) continue;
-      const val = record[item.key];
-      if (!val || !val.trim()) {
-        return { valid: false, missingLabel: item.label };
-      }
-      if (item.key === "issueDate" || item.key === "dob") {
-        const d = new Date(val);
-        if (isNaN(d.getTime())) {
-          return { valid: false, invalidDateLabel: item.label };
-        }
-      }
-    }
-    return { valid: true };
-  };
 
   const handleUpdateActiveField = (key: string, val: string) => {
     setRecords((prev) => {
@@ -177,6 +153,19 @@ export default function CertificateGeneratorPage() {
     });
   };
 
+  const OPTIONAL_BINDINGS = ["verification_url", "organization_logo"];
+
+  const validateRecord = (record: Record<string, string>): { valid: boolean; missingLabel?: string } => {
+    for (const item of boundFields) {
+      if (OPTIONAL_BINDINGS.includes(item.key)) continue;
+      const val = record[item.key];
+      if (!val || !val.trim()) {
+        return { valid: false, missingLabel: item.label };
+      }
+    }
+    return { valid: true };
+  };
+
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -184,15 +173,15 @@ export default function CertificateGeneratorPage() {
     try {
       const res = await templateApi.importDataFile(file);
       if (!res.rows || res.rows.length === 0) {
-        toast.error(t("adminTemplateGenerator.fileNoData"));
+        toast.error("File không chứa dữ liệu hợp lệ.");
         return;
       }
       setImportedFileName(res.fileName);
       setRecords(res.rows.map((r) => r.record));
       setActiveRowIndex(0);
-      toast.success(`${t("adminTemplateGenerator.importSuccessPrefix")} ${res.totalRows} ${t("adminTemplateGenerator.recordUnit")} ${t("adminTemplateGenerator.importFromFile")} ${res.fileName}`);
-    } catch (err: any) {
-      toast.error(err.message || t("adminTemplateGenerator.error.import"));
+      toast.success(`Đã tải thành công ${res.totalRows} bản ghi từ file ${res.fileName}`);
+    } catch {
+      toast.error("Có lỗi xảy ra, không thể nạp dữ liệu từ file.");
     } finally {
       setImporting(false);
       e.target.value = "";
@@ -203,11 +192,7 @@ export default function CertificateGeneratorPage() {
     if (!canvasRef.current) return;
     const check = validateRecord(activeRecord);
     if (!check.valid) {
-      if (check.invalidDateLabel) {
-        toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", check.invalidDateLabel));
-        return;
-      }
-      toast.error(t("adminTemplateGenerator.exportPdfMissing").replace("{field}", check.missingLabel || ""));
+      toast.error(`Vui lòng nhập đầy đủ trường thông tin bắt buộc "${check.missingLabel}" trước khi xuất PDF.`);
       return;
     }
     setExportingSingle(true);
@@ -231,9 +216,9 @@ export default function CertificateGeneratorPage() {
       const studentName = activeRecord.student_fullName || activeRecord.student_id || selectedTemplate?.name || "van_bang";
       const fileName = `${studentName.replace(/\s+/g, "_")}.pdf`;
       pdf.save(fileName);
-      toast.success(t("adminTemplateGenerator.exportSingleSuccess"));
-    } catch (err: any) {
-      toast.error(err.message || t("adminTemplateGenerator.error.exportPdf"));
+      toast.success("Xuất PDF bản ghi thành công!");
+    } catch {
+      toast.error("Có lỗi xảy ra, không thể xuất file PDF văn bằng.");
     } finally {
       setExportingSingle(false);
     }
@@ -241,6 +226,15 @@ export default function CertificateGeneratorPage() {
 
   const exportBatchZip = async () => {
     if (!canvasRef.current || records.length === 0) return;
+    for (let i = 0; i < records.length; i++) {
+      const check = validateRecord(records[i]);
+      if (!check.valid) {
+        toast.error(`Bản ghi dòng ${i + 1} còn thiếu thông tin "${check.missingLabel}". Vui lòng điền đầy đủ trước khi xuất ZIP.`);
+        setActiveRowIndex(i);
+        return;
+      }
+    }
+
     setExportingBatch(true);
     setBatchProgress(`0 / ${records.length}`);
     try {
@@ -250,16 +244,6 @@ export default function CertificateGeneratorPage() {
       const isLandscape = activeDesign.page.width >= activeDesign.page.height;
 
       for (let i = 0; i < records.length; i++) {
-        const rowCheck = validateRecord(records[i]);
-        if (!rowCheck.valid) {
-          if (rowCheck.invalidDateLabel) {
-            toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", rowCheck.invalidDateLabel));
-          } else {
-            toast.error(t("adminTemplateGenerator.batchExportMissing").replace("{row}", String(i + 1)).replace("{field}", rowCheck.missingLabel || ""));
-          }
-          setActiveRowIndex(i);
-          return;
-        }
         setBatchProgress(`${i + 1} / ${records.length}`);
         setActiveRowIndex(i);
         await new Promise((r) => setTimeout(r, 100));
@@ -286,20 +270,43 @@ export default function CertificateGeneratorPage() {
         folder.file(`${i + 1}_${studentName}.pdf`, pdfBlob);
       }
 
-      setBatchProgress(t("adminTemplateGenerator.creatingZip"));
+      setBatchProgress("Tạo file ZIP...");
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(content);
       link.download = `certificates_batch_${Date.now()}.zip`;
       link.click();
       URL.revokeObjectURL(link.href);
-      toast.success(t("adminTemplateGenerator.exportZipSuccess").replace("{count}", String(records.length)));
-    } catch (err: any) {
-      toast.error(err.message || t("adminTemplateGenerator.error.createZip"));
+      toast.success(`Đã xuất thành công ZIP cho ${records.length} văn bằng!`);
+    } catch {
+      toast.error("Có lỗi xảy ra, không thể tạo file ZIP.");
     } finally {
       setExportingBatch(false);
       setBatchProgress("");
     }
+  };
+
+  const requestIssueSingle = () => {
+    if (!selectedTemplate) return;
+    const check = validateRecord(activeRecord);
+    if (!check.valid) {
+      toast.error(`Vui lòng nhập đầy đủ trường thông tin bắt buộc "${check.missingLabel}" trước khi phát hành lên Blockchain.`);
+      return;
+    }
+    setConfirmingUpload({ type: "SINGLE", count: 1 });
+  };
+
+  const requestIssueBatch = () => {
+    if (!selectedTemplate || records.length === 0) return;
+    for (let i = 0; i < records.length; i++) {
+      const check = validateRecord(records[i]);
+      if (!check.valid) {
+        toast.error(`Bản ghi dòng ${i + 1} còn thiếu thông tin "${check.missingLabel}". Vui lòng điền đầy đủ trước khi phát hành lô.`);
+        setActiveRowIndex(i);
+        return;
+      }
+    }
+    setConfirmingUpload({ type: "BATCH", count: records.length });
   };
 
   // Issue single certificate with JSON file pinned to IPFS & registered on-chain
@@ -335,45 +342,12 @@ export default function CertificateGeneratorPage() {
         type: "SINGLE",
         data: cert,
       });
-      toast.success(t("adminTemplateGenerator.issueSingleSuccess"));
-    } catch (err: any) {
-      toast.error(err.message || t("adminTemplateGenerator.error.issueSingle"));
+      toast.success("Cấp phát văn bằng thành công!");
+    } catch {
+      toast.error("Có lỗi xảy ra, không thể phát hành văn bằng! (There is error, can't upload certificate)");
     } finally {
       setIssuingSingle(false);
     }
-  };
-
-  // Request confirmation before issuing single certificate
-  const requestIssueSingle = () => {
-    if (!selectedTemplate) return;
-    const check = validateRecord(activeRecord);
-    if (!check.valid) {
-      if (check.invalidDateLabel) {
-        toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", check.invalidDateLabel));
-        return;
-      }
-      toast.error(t("adminTemplateGenerator.issueSingleMissing").replace("{field}", check.missingLabel || ""));
-      return;
-    }
-    setConfirmingUpload({ type: "SINGLE", count: 1 });
-  };
-
-  // Request confirmation before issuing batch certificates
-  const requestIssueBatch = () => {
-    if (!selectedTemplate || records.length === 0) return;
-    for (let i = 0; i < records.length; i++) {
-      const check = validateRecord(records[i]);
-      if (!check.valid) {
-        if (check.invalidDateLabel) {
-          toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", check.invalidDateLabel));
-        } else {
-          toast.error(t("adminTemplateGenerator.batchIssueMissing").replace("{row}", String(i + 1)).replace("{field}", check.missingLabel || ""));
-        }
-        setActiveRowIndex(i);
-        return;
-      }
-    }
-    setConfirmingUpload({ type: "BATCH", count: records.length });
   };
 
   // Issue batch certificates with JSON files pinned to IPFS & registered on-chain
@@ -422,9 +396,9 @@ export default function CertificateGeneratorPage() {
         type: "BATCH",
         data: batchRes,
       });
-      toast.success(t("adminTemplateGenerator.issueBatchSuccess"));
-    } catch (err: any) {
-      toast.error(err.message || t("adminTemplateGenerator.error.issueBatch"));
+      toast.success("Cấp phát lô văn bằng thành công!");
+    } catch {
+      toast.error("Có lỗi xảy ra, không thể phát hành lô văn bằng! (There is error, can't upload certificate)");
     } finally {
       setIssuingBatch(false);
     }
@@ -464,7 +438,7 @@ export default function CertificateGeneratorPage() {
           return (
             <img
               src={imgSrc}
-              alt={field.label || t("adminTemplateGenerator.logoAlt")}
+              alt={field.label || "Logo"}
               style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
             />
           );
@@ -472,7 +446,7 @@ export default function CertificateGeneratorPage() {
         return (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#64748b", fontSize: 11 }}>
             <span style={{ fontSize: 18 }}>🖼</span>
-            <span>{field.label || t("adminTemplateGenerator.logoLabel")}</span>
+            <span>{field.label || "Logo tổ chức"}</span>
           </div>
         );
       }
@@ -484,8 +458,8 @@ export default function CertificateGeneratorPage() {
           (activeRecord.serialNumber
             ? `${baseUrl}/public/certificate/${activeRecord.serialNumber}`
             : activeRecord.student_id
-              ? `${baseUrl}/public/certificate/${activeRecord.student_id}`
-              : `${baseUrl}/public/verify`);
+            ? `${baseUrl}/public/certificate/${activeRecord.student_id}`
+            : `${baseUrl}/public/verify`);
         const qrSize = Math.max(20, Math.min(field.w, field.h) - 4);
         return (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff" }}>
@@ -504,54 +478,53 @@ export default function CertificateGeneratorPage() {
         if (val && val.trim().length > 0) {
           return <span>{(field.label ? `${field.label} ` : "") + val}</span>;
         }
-        const label = bindingLabels[field.binding] || field.binding;
+        const label = ALL_BINDING_LABELS[field.binding] || field.binding;
         return <span style={{ opacity: 0.6 }}>{(field.label ? `${field.label} ` : "") + label}</span>;
       }
-      return <span>{field.text || t("adminTemplateGenerator.textDefault")}</span>;
+      return <span>{field.text || "Văn bản"}</span>;
     })();
 
     return <div style={styles}>{content}</div>;
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500 text-xs">{t("adminTemplateGenerator.loading")}</div>;
+    return <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-xs">Đang tải danh sách mẫu...</div>;
   }
 
   if (user?.role === "staff") {
     return (
       <div className="p-8 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
-        {t("adminTemplateGenerator.staffAccessDenied")}
+        Tài khoản nhân viên không có quyền truy cập trang Tạo &amp; Xuất bằng PDF.
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "var(--page-bg)", fontFamily: "sans-serif", color: "var(--text-main)", transition: "background 0.3s, color 0.3s" }}>
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
       {/* Header Toolbar - 2-Row Layout */}
-      <div className="flex flex-col bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-slate-800 shadow-2xs shrink-0 transition-colors">
+      <div className="flex flex-col bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
         {/* Row 1: Title, Template Selector, Record Badge & Zoom Controls */}
-        <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-nowrap gap-4">
+        <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 dark:border-slate-800/60 overflow-x-auto whitespace-nowrap gap-4">
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-xl">🎓</span>
-              <h1 className="text-base font-extrabold text-slate-900 dark:text-white m-0 whitespace-nowrap">{t("adminTemplateGenerator.title")}</h1>
+              <h1 className="text-base font-extrabold text-slate-900 dark:text-white m-0 whitespace-nowrap">Tạo & Xuất bằng PDF</h1>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 shrink-0" />
+            <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0" />
 
             {/* Template Selector Dropdown */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-2xs shrink-0">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">{t("adminTemplateGenerator.selectTemplateLabel")}</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Chọn mẫu:</span>
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleSelectTemplate(e.target.value)}
-                className="text-slate-800 dark:text-slate-100 text-xs font-semibold focus:outline-none cursor-pointer pr-1 whitespace-nowrap"
-                style={{ background: "var(--surface)", color: "var(--text-main)" }}
+                className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-semibold focus:outline-none cursor-pointer pr-1 whitespace-nowrap"
               >
-                <option value="" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateGenerator.selectTemplatePlaceholder")}</option>
-                {templates.map((tpl) => (
-                  <option key={tpl.id} value={tpl.id} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
-                    {tpl.name} {tpl.is_default ? t("adminTemplateGenerator.defaultSuffix") : ""}
+                <option value="" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">-- Chọn mẫu văn bằng --</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
+                    {t.name} {t.is_default ? "(Mặc định)" : ""}
                   </option>
                 ))}
               </select>
@@ -559,18 +532,18 @@ export default function CertificateGeneratorPage() {
 
             {selectedTemplate && (
               <>
-                <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 shrink-0" />
+                <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0" />
                 {/* Record Status Badge in Top Bar */}
                 <div className="flex items-center gap-2 text-xs shrink-0">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-800 dark:text-blue-300 font-bold shadow-2xs whitespace-nowrap">
-                    📄 {t("adminTemplateGenerator.recordBadge")}: <strong className="text-blue-600 dark:text-blue-400">{activeRowIndex + 1}</strong> / {records.length}
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 text-blue-800 dark:text-blue-300 font-bold shadow-2xs whitespace-nowrap">
+                    📄 Bản ghi: <strong className="text-blue-600 dark:text-blue-400">{activeRowIndex + 1}</strong> / {records.length}
                   </span>
                   {importedFileName ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 font-semibold whitespace-nowrap">
                       📁 {importedFileName}
                     </span>
                   ) : (
-                    <span className="text-slate-400 dark:text-slate-500 font-normal text-[11px] whitespace-nowrap">{t("adminTemplateGenerator.manualDataSuffix")}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-normal text-[11px] whitespace-nowrap">(Dữ liệu nhập tay)</span>
                   )}
                 </div>
               </>
@@ -580,80 +553,80 @@ export default function CertificateGeneratorPage() {
           {selectedTemplate && (
             /* Zoom Controls */
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs shrink-0">
-              <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors" title={t("adminTemplateGenerator.zoomOutTitle")}>−</button>
+              <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors cursor-pointer" title="Thu nhỏ">−</button>
               <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 min-w-[36px] text-center">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors" title={t("adminTemplateGenerator.zoomInTitle")}>+</button>
+              <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors cursor-pointer" title="Phóng to">+</button>
             </div>
           )}
         </div>
 
-        {/* Row 2: Pure Action Bar for Import, Export & Blockchain Issue (Evenly Spread) */}
+        {/* Row 2: Pure Action Bar for Import, Export & Blockchain Issue */}
         {selectedTemplate && (
-          <div className="flex items-center justify-between px-8 py-2.5 bg-slate-50/90 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-nowrap gap-4">
+          <div className="flex items-center justify-between px-8 py-2.5 bg-slate-50/90 dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-nowrap gap-4">
             {/* Group 1: Import Data */}
-            <label className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 shrink-0">
+            <label className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 shrink-0">
               <span>📥</span>
-              <span>{importing ? t("adminTemplateGenerator.importing") : t("adminTemplateGenerator.importCsv")}</span>
+              <span>{importing ? "Đang nạp..." : "Import CSV/Excel"}</span>
               <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} className="hidden" />
             </label>
 
-            <div className="h-4 w-[1px] bg-slate-300/80 dark:bg-slate-600/80 shrink-0" />
+            <div className="h-4 w-[1px] bg-slate-300/80 dark:bg-slate-800 shrink-0" />
 
             {/* Group 2: PDF Export Group */}
-            <div className="flex items-center gap-1.5 bg-sky-50 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-900/60 p-1 rounded-xl shadow-2xs shrink-0">
+            <div className="flex items-center gap-1.5 bg-sky-50 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 p-1 rounded-xl shadow-2xs shrink-0">
               <button
                 onClick={exportSinglePdf}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-                className="px-3 py-1 text-xs font-bold text-sky-700 dark:text-sky-300 bg-white dark:bg-slate-800 hover:bg-sky-100/80 dark:hover:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
-                title={t("adminTemplateGenerator.exportPdfTitle")}
+                className="px-3 py-1 text-xs font-bold text-sky-700 dark:text-sky-300 bg-white dark:bg-slate-800 hover:bg-sky-100/80 dark:hover:bg-slate-700 border border-sky-200/70 dark:border-sky-800/40 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0 cursor-pointer"
+                title="Xuất 1 file PDF cho bản ghi hiện tại"
               >
                 <span>📄</span>
-                <span>{exportingSingle ? t("adminTemplateGenerator.exportingPdf") : t("adminTemplateGenerator.exportPdf")}</span>
+                <span>{exportingSingle ? "Đang xuất..." : "Xuất PDF bản ghi"}</span>
               </button>
               <button
                 onClick={exportBatchZip}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-                className="px-3 py-1 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
-                title={t("adminTemplateGenerator.exportZipTitle")}
+                className="px-3 py-1 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0 cursor-pointer"
+                title="Xuất tất cả PDF thành file ZIP"
               >
                 <span>📦</span>
-                <span>{exportingBatch ? `${t("adminTemplateGenerator.creatingZipProgress")} (${batchProgress})...` : `${t("adminTemplateGenerator.exportZipAll")} (${records.length})`}</span>
+                <span>{exportingBatch ? `Đang tạo ZIP (${batchProgress})...` : `Xuất ZIP tất cả (${records.length})`}</span>
               </button>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-300/80 dark:bg-slate-600/80 shrink-0" />
+            <div className="h-4 w-[1px] bg-slate-300/80 dark:bg-slate-800 shrink-0" />
 
             {/* Group 3: Blockchain Issue Group */}
-            <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/60 p-1 rounded-xl shadow-2xs shrink-0">
+            <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 p-1 rounded-xl shadow-2xs shrink-0">
               <button
                 onClick={requestIssueSingle}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch}
-                className="px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-800 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-900/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
-                title={t("adminTemplateGenerator.issueSingleTitle")}
+                className="px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-800 hover:bg-emerald-100/80 dark:hover:bg-slate-700 border border-emerald-200/70 dark:border-emerald-800/40 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0 cursor-pointer"
+                title="Đăng ký bản ghi này lên IPFS & Blockchain"
               >
                 <span>🚀</span>
-                <span>{issuingSingle ? t("adminTemplateGenerator.issuing") : t("adminTemplateGenerator.issueSingle")}</span>
+                <span>{issuingSingle ? "Đang phát hành..." : "Phát hành bản ghi"}</span>
               </button>
               <button
                 onClick={requestIssueBatch}
                 disabled={exportingSingle || exportingBatch || issuingSingle || issuingBatch || records.length === 0}
-                className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
-                title={t("adminTemplateGenerator.issueBatchTitle")}
+                className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0 cursor-pointer"
+                title="Đăng ký tất cả bản ghi lên IPFS & Blockchain"
               >
                 <span>🚀</span>
-                <span>{issuingBatch ? t("adminTemplateGenerator.issuing") : `${t("adminTemplateGenerator.issueBatch")} (${records.length})`}</span>
+                <span>{issuingBatch ? "Đang phát hành..." : `Phát hành tất cả (${records.length})`}</span>
               </button>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-300/80 dark:bg-slate-600/80 shrink-0" />
+            <div className="h-4 w-[1px] bg-slate-300/80 dark:bg-slate-800 shrink-0" />
 
             {/* Change Template Action */}
             <button
               onClick={handleCancel}
-              className="px-3.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-xs font-bold transition-all inline-flex items-center gap-1.5 active:scale-95 shadow-2xs shrink-0"
+              className="px-3.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition-all inline-flex items-center gap-1.5 active:scale-95 shadow-2xs shrink-0 cursor-pointer"
             >
               <span>✕</span>
-              <span>{t("adminTemplateGenerator.changeTemplate")}</span>
+              <span>Đổi mẫu</span>
             </button>
           </div>
         )}
@@ -662,98 +635,65 @@ export default function CertificateGeneratorPage() {
       {/* Main Content Workspace */}
       {!selectedTemplate ? (
         /* Empty / Initial Template Selection Screen */
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, background: "var(--page-bg-subtle)" }}>
-          <div style={{ textAlign: "center", maxWidth: 600, marginBottom: 32 }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>🎓</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-main)", marginBottom: 8 }}>{t("adminTemplateGenerator.selectTemplateTitle")}</h2>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-              {t("adminTemplateGenerator.selectTemplateDescription")}
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-y-auto">
+          <div className="text-center max-w-xl mb-8">
+            <div className="text-5xl mb-3">🎓</div>
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">Vui lòng chọn mẫu văn bằng</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Hãy chọn 1 mẫu văn bằng bên dưới để hiển thị phôi thiết kế, nạp dữ liệu nhập tay hoặc file Excel và xuất PDF / Phát hành IPFS & Blockchain.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, width: "100%", maxWidth: 800 }}>
-            {templates.map((tpl) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl">
+            {templates.map((t) => (
               <div
-                key={tpl.id}
-                onClick={() => handleSelectTemplate(tpl.id)}
-                style={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 16,
-                  padding: 20,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#147D74";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                  e.currentTarget.style.transform = "none";
-                }}
+                key={t.id}
+                onClick={() => handleSelectTemplate(t.id)}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-primary dark:hover:border-primary shadow-xs flex flex-col justify-between group"
               >
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#e6f2f1", color: "#147D74" }}>
-                      {tpl.is_default ? t("adminTemplateGenerator.defaultTemplateBadge") : t("adminTemplateGenerator.createdTemplateBadge")}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+                      {t.is_default ? "Mẫu mặc định" : "Mẫu đã tạo"}
                     </span>
                   </div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-body)", margin: "0 0 6px 0" }}>{tpl.name}</h3>
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>{tpl.description || t("adminTemplateGenerator.noDescription")}</p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-primary transition-colors">{t.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{t.description || "Không có mô tả"}</p>
                 </div>
 
                 <button
-                  style={{
-                    marginTop: 16,
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    background: "#147D74",
-                    color: "#fff",
-                    border: "none",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "background 0.2s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#0f635c"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "#147D74"; }}
+                  className="mt-4 w-full py-2 px-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
                 >
-                  {t("adminTemplateGenerator.selectThisTemplate")}
+                  Chọn mẫu này →
                 </button>
               </div>
             ))}
 
             {templates.length === 0 && (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 32, background: "var(--surface)", borderRadius: 16, border: "1px solid var(--border)", width: "100%" }}>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("adminTemplateGenerator.noTemplatesPrefix")} <strong>{t("adminTemplateGenerator.templateMenuLabel")}</strong> {t("adminTemplateGenerator.noTemplatesSuffix")}</p>
+              <div className="col-span-full text-center p-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 w-full">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Chưa có mẫu văn bằng nào. Hãy tạo mẫu trong mục <strong>Mẫu văn bằng</strong> trước.</p>
               </div>
             )}
           </div>
         </div>
       ) : (
         /* Loaded Template Workspace */
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <div className="flex flex-1 overflow-hidden">
           {/* Dynamic Input Side Panel */}
-          <div style={{ width: 340, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-            <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid var(--border-subtle)" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#147D74", marginBottom: 2 }}>{t("adminTemplateGenerator.templatePrefix")} {selectedTemplate.name}</div>
-              <h2 style={{ fontSize: 13, fontWeight: 800, color: "var(--text-main)", marginBottom: 2 }}>{t("adminTemplateGenerator.inputDataTitle")}</h2>
-              <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>
-                {t("adminTemplateGenerator.dynamicLabelsPrefix")} <strong style={{ color: "#147D74" }}>{boundFields.length} {t("adminTemplateGenerator.dynamicLabelsUnit")}</strong> {t("adminTemplateGenerator.dynamicLabelsSuffix")}
+          <div className="w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto flex flex-col text-slate-900 dark:text-slate-100 shrink-0">
+            <div className="mb-3.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="text-[11px] font-bold text-primary mb-0.5">Mẫu: {selectedTemplate.name}</div>
+              <h2 className="text-xs font-extrabold text-slate-900 dark:text-white mb-0.5">Nhập dữ liệu theo mẫu</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0">
+                Hiển thị <strong className="text-primary">{boundFields.length} nhãn động</strong> thuộc mẫu này.
               </p>
             </div>
 
             {/* Record Navigator */}
-            <div style={{ marginBottom: 16, background: "var(--surface-subtle)", border: "1px solid var(--border)", padding: 10, borderRadius: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-body)" }}>
-                  {importedFileName ? `📁 ${importedFileName}` : t("adminTemplateGenerator.manualRecordLabel")}
+            <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl shadow-2xs">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate max-w-[170px]">
+                  {importedFileName ? `📁 ${importedFileName}` : "Bản ghi nhập tay"}
                   {importedFileName && (
                     <button
                       onClick={() => {
@@ -761,43 +701,35 @@ export default function CertificateGeneratorPage() {
                         setActiveRowIndex(0);
                         setImportedFileName("");
                       }}
-                      title={t("adminTemplateGenerator.deleteFileDataTitle")}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#ef4444",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        marginLeft: 6,
-                      }}
+                      title="Xóa dữ liệu nạp từ file"
+                      className="bg-transparent border-none text-red-500 hover:text-red-600 text-[10px] font-bold cursor-pointer ml-1.5"
                     >
-                      {t("adminTemplateGenerator.deleteFileLabel")}
+                      [Xóa file]
                     </button>
                   )}
                 </span>
-                <span style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)" }}>
-                  {t("adminTemplateGenerator.rowLabel")} {activeRowIndex + 1} / {records.length}
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                  Dòng {activeRowIndex + 1} / {records.length}
                 </span>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setActiveRowIndex((i) => Math.max(0, i - 1))}
                   disabled={activeRowIndex <= 0}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                  className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40 transition-all"
                 >
-                  {t("adminTemplateGenerator.prev")}
+                  ◄ Trước
                 </button>
 
                 <select
                   value={activeRowIndex}
                   onChange={(e) => setActiveRowIndex(Number(e.target.value))}
-                  style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: 11, background: "var(--surface)", color: "var(--text-main)", fontWeight: 500 }}
+                  className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer truncate"
                 >
                   {records.map((r, i) => (
-                    <option key={i} value={i} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
-                      {t("adminTemplateGenerator.rowLabel")} {i + 1}: {r.student_fullName || r.student_id || `${t("adminTemplateGenerator.recordLabel")} ${i + 1}`}
+                    <option key={i} value={i} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                      Dòng {i + 1}: {r.student_fullName || r.student_id || `Bản ghi ${i + 1}`}
                     </option>
                   ))}
                 </select>
@@ -805,21 +737,24 @@ export default function CertificateGeneratorPage() {
                 <button
                   onClick={() => setActiveRowIndex((i) => Math.min(records.length - 1, i + 1))}
                   disabled={activeRowIndex >= records.length - 1}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontSize: 11, fontWeight: 600, cursor: "pointer", opacity: activeRowIndex >= records.length - 1 ? 0.4 : 1 }}
+                  className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40 transition-all"
                 >
-                  {t("adminTemplateGenerator.next")}
+                  Sau ►
                 </button>
               </div>
             </div>
 
             {/* Dynamic Input Form (Only for bound fields in the active template) */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="flex-1 flex flex-col gap-3">
               {boundFields.map(({ key, label }) => {
+                const isOptional = OPTIONAL_BINDINGS.includes(key);
+
                 if (key === "student_id" && students.length > 0) {
                   return (
                     <div key={key}>
-                      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-faint)", marginBottom: 4 }}>
-                        {label}{!OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "#ef4444" }}> *</span>} {t("adminTemplateGenerator.selectOrManualSuffix")}
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        {label} {!isOptional && <span className="text-red-500 font-bold">*</span>}
+                        <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500 ml-1">(Chọn hoặc Nhập tay)</span>
                       </label>
                       <select
                         value={activeRecord[key] || ""}
@@ -831,11 +766,11 @@ export default function CertificateGeneratorPage() {
                             handleUpdateActiveField("student_fullName", st.student_fullName);
                           }
                         }}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box", marginBottom: 4 }}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all mb-1 cursor-pointer"
                       >
-                        <option value="" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateGenerator.selectExistingStudent")}</option>
+                        <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">-- Chọn sinh viên có sẵn --</option>
                         {students.map((st) => (
-                          <option key={st.student_id} value={st.student_id} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
+                          <option key={st.student_id} value={st.student_id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                             {st.student_id} - {st.student_fullName}
                           </option>
                         ))}
@@ -844,8 +779,8 @@ export default function CertificateGeneratorPage() {
                         type="text"
                         value={activeRecord[key] || ""}
                         onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
-                        placeholder={t("adminTemplateGenerator.enterNewStudentId")}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                        placeholder="Hoặc nhập mã SV mới..."
                       />
                     </div>
                   );
@@ -853,31 +788,35 @@ export default function CertificateGeneratorPage() {
 
                 return (
                   <div key={key}>
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-faint)", marginBottom: 4 }}>
-                      {label}{!OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "#ef4444" }}> *</span>}
-                      {OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "var(--text-faint)", fontWeight: 400 }}> {t("adminTemplateGenerator.optionalSuffix")}</span>}
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {label}{" "}
+                      {isOptional ? (
+                        <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">(Tự động / Tùy chọn)</span>
+                      ) : (
+                        <span className="text-red-500 font-bold">*</span>
+                      )}
                     </label>
                     <input
-                      type={(key === "issueDate" || key === "dob") ? "date" : "text"}
+                      type="text"
                       value={activeRecord[key] || ""}
                       onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
-                      placeholder={OPTIONAL_BINDINGS.includes(key) ? t("adminTemplateGenerator.placeholderOptional").replace("{label}", label.toLowerCase()) : `${t("adminTemplateGenerator.enterPrefix")} ${label.toLowerCase()}...`}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                      placeholder={isOptional ? `Tùy chọn nhập ${label.toLowerCase()}...` : `Nhập ${label.toLowerCase()}...`}
                     />
                   </div>
                 );
               })}
 
               {boundFields.length === 0 && (
-                <div style={{ padding: 16, background: "var(--warning-bg)", border: "1px solid var(--warning-border)", borderRadius: 8, fontSize: 11, color: "var(--warning-text)" }}>
-                  {t("adminTemplateGenerator.noDynamicFieldsPrefix")} <strong>{t("adminTemplateGenerator.templateMenuLabel")}</strong> {t("adminTemplateGenerator.noDynamicFieldsSuffix")}
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-800 dark:text-amber-300">
+                  Mẫu này chưa có trường động nào. Hãy vào mục <strong>Mẫu văn bằng</strong> để thêm các trường động (binding).
                 </div>
               )}
             </div>
           </div>
 
           {/* Center Live Canvas Workspace */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "var(--page-bg)" }}>
+          <div className="flex-1 flex items-center justify-center overflow-auto p-6 bg-slate-100 dark:bg-slate-950 transition-colors">
             <div
               ref={canvasRef}
               style={{
@@ -940,39 +879,43 @@ export default function CertificateGeneratorPage() {
         </div>
       )}
 
-      {/* Confirmation Modal before Blockchain Issuance */}
+      {/* Pre-upload to Blockchain Confirmation Modal */}
       {confirmingUpload && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "var(--surface)", borderRadius: 20, maxWidth: 440, width: "100%", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
-            <div style={{ textAlign: "center", padding: "24px 20px", borderRadius: 16, background: "rgba(245, 158, 11, 0.08)", border: "1px solid #fcd34d", marginBottom: 20 }}>
-              <div style={{ margin: "0 auto 12px", width: 56, height: 56, borderRadius: "50%", background: "rgba(245, 158, 11, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706" }}>
-                <svg style={{ width: 28, height: 28 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-slate-900 dark:text-white">
+            <div className="text-center p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">
+              <div className="mx-auto w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <h2 style={{ fontSize: 16, fontWeight: 900, color: "#b45309", margin: "0 0 8px 0" }}>{t("adminTemplateGenerator.confirmTitle")}</h2>
-              <p style={{ fontSize: 12, color: "#92400e", margin: 0, lineHeight: 1.6 }}>
-                {t("adminTemplateGenerator.confirmBody")}
+              <h3 className="text-base font-extrabold text-amber-800 dark:text-amber-300">
+                Xác nhận phát hành lên Blockchain
+              </h3>
+              <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
+                Văn bằng sau khi được tải/phát hành lên Blockchain & IPFS sẽ <strong>KHÔNG THỂ CHỈNH SỬA Hoặc THAY ĐỔI</strong> dữ liệu.
               </p>
-              <p style={{ fontSize: 11, color: "#a16207", fontStyle: "italic", margin: "8px 0 0 0" }}>
-                {t("adminTemplateGenerator.confirmBodyEn")}
+              <p className="text-[11px] text-amber-600 dark:text-amber-500 font-normal italic">
+                &ldquo;The certificate can&apos;t be changed after uploaded to chain&rdquo;
               </p>
             </div>
 
             {confirmingUpload.type === "BATCH" && (
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", background: "var(--surface-subtle)", padding: "10px 16px", borderRadius: 12, border: "1px solid var(--border)", textAlign: "center", marginBottom: 16 }}>
-                {t("adminTemplateGenerator.confirmBatchCount").replace("{count}", String(confirmingUpload.count))}
+              <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                Số lượng văn bằng phát hành: <strong className="text-primary">{confirmingUpload.count}</strong>
               </div>
             )}
 
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="flex items-center gap-3 pt-1">
               <button
+                type="button"
                 onClick={() => setConfirmingUpload(null)}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "background 0.2s" }}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                {t("adminTemplateGenerator.confirmBack")}
+                Quay lại
               </button>
               <button
+                type="button"
                 onClick={() => {
                   const targetType = confirmingUpload.type;
                   setConfirmingUpload(null);
@@ -982,11 +925,9 @@ export default function CertificateGeneratorPage() {
                     void executeIssueBatch();
                   }
                 }}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, background: "#059669", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "background 0.2s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#047857"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#059669"; }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                {t("adminTemplateGenerator.confirmSubmit")}
+                Xác nhận phát hành
               </button>
             </div>
           </div>
@@ -995,26 +936,24 @@ export default function CertificateGeneratorPage() {
 
       {/* Result Modal for Direct Single / Batch Issuance */}
       {issueResult && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div style={{ background: "var(--surface)", borderRadius: 20, maxWidth: 440, width: "100%", padding: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
-            <div style={{ textAlign: "center", padding: "28px 20px", borderRadius: 16, background: "rgba(20, 125, 116, 0.08)", border: "1px solid #b2d8d5", marginBottom: 20 }}>
-              <div style={{ margin: "0 auto 12px", width: 56, height: 56, borderRadius: "50%", background: "rgba(20, 125, 116, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#147D74" }}>
-                <svg style={{ width: 28, height: 28 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+            <div className="text-center p-6 rounded-2xl bg-primary/10 border border-primary/20 space-y-3">
+              <div className="mx-auto w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 style={{ fontSize: 20, fontWeight: 900, color: "#147D74", margin: 0 }}>
-                {issueResult.type === "SINGLE" ? t("adminTemplateGenerator.issueSuccessSingle") : t("adminTemplateGenerator.issueSuccessBatch")}
+              <h2 className="text-lg font-extrabold text-primary">
+                {issueResult.type === "SINGLE" ? "Cấp phát văn bằng thành công!" : "Kết quả cấp phát lô văn bằng thành công!"}
               </h2>
             </div>
 
             <button
               onClick={() => setIssueResult(null)}
-              style={{ width: "100%", padding: "12px", borderRadius: 12, background: "#147D74", color: "#fff", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.2s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#0f635c"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#147D74"; }}
+              className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm transition-all cursor-pointer shadow-2xs active:scale-95"
             >
-              {t("adminTemplateGenerator.closeNotification")}
+              Đóng thông báo
             </button>
           </div>
         </div>

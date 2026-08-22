@@ -1,6 +1,6 @@
 import React from "react";
 
-export function ActionLink({ onClick, children }: { onClick?: () => void; children: React.ReactNode }) {
+export function ActionLink({ href, onClick, children }: { href?: string; onClick?: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}

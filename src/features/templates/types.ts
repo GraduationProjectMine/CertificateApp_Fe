@@ -1,6 +1,6 @@
 export interface TemplateField {
   id: string;
-  type: 'text' | 'image' | 'qr' | 'line' | 'rect' | 'ellipse' | 'triangle' | 'star';
+  type: 'text' | 'image' | 'qr' | 'line' | 'rect';
   x: number;
   y: number;
   w: number;

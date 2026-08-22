@@ -1,24 +1,22 @@
 "use client";
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { useAuth } from "@/features/auth/components/AuthContext";
-import { useI18n } from "@/features/i18n/I18nContext";
 import { certificateApi, mapCertificateDtoToStudentCert, mapOnlineCertificateDtoToStudentCert } from "@/features/certificates/services/certificate.api";
 import type { StudentCertificate } from "@/features/certificates/types";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
-import toast from "react-hot-toast";
+
+const TYPE_OPTIONS = [
+  { value: "all", label: "Tất cả các loại" },
+  { value: "BACHELOR_DEGREE", label: "Bằng cử nhân" },
+  { value: "CERTIFICATE", label: "Chứng chỉ" },
+];
 
 const ITEMS_PER_PAGE = 6;
 
 export default function StudentCertificatesPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
-  const TYPE_OPTIONS = [
-    { value: "all", label: t("studentCertificates.filter.allTypes") },
-    { value: "BACHELOR_DEGREE", label: t("studentCertificates.filter.bachelorDegree") },
-    { value: "CERTIFICATE", label: t("studentCertificates.filter.certificate") },
-  ];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<StudentCertificate[]>([]);
@@ -42,7 +40,7 @@ export default function StudentCertificatesPage() {
   const [requestError, setRequestError] = useState("");
   const [requestSuccess, setRequestSuccess] = useState("");
 
-  const fetchCertificates = useCallback(() => {
+  const fetchCertificates = () => {
     if (!user?.id) return;
     setLoading(true);
     setError("");
@@ -61,11 +59,11 @@ export default function StudentCertificatesPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [user?.id]);
+  };
 
   useEffect(() => {
     fetchCertificates();
-  }, [fetchCertificates]);
+  }, [user?.id]);
 
   // Reset pagination when active tab, filters or search query change
   useEffect(() => {
@@ -129,7 +127,7 @@ export default function StudentCertificatesPage() {
     e.preventDefault();
     if (!requestCert) return;
     if (requestReason.trim().length < 10) {
-      setRequestError(t("studentCertificates.modal.errorReasonLength"));
+      setRequestError("Lý do chỉnh sửa phải có ít nhất 10 ký tự.");
       return;
     }
 
@@ -141,16 +139,13 @@ export default function StudentCertificatesPage() {
         reason: requestReason.trim(),
         details: requestDetails.trim() || undefined,
       });
-      setRequestSuccess(t("studentCertificates.modal.success"));
-      toast.success(t("studentCertificates.modal.success"));
+      setRequestSuccess("Đã gửi yêu cầu chỉnh sửa thành công! Nhà trường sẽ xử lý bản thảo.");
       setTimeout(() => {
         setRequestCert(null);
         setRequestSuccess("");
       }, 2000);
     } catch (err: any) {
-      const message = err.message || t("studentCertificates.modal.errorFailed");
-      setRequestError(message);
-      toast.error(message);
+      setRequestError(err.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
     } finally {
       setSubmittingRequest(false);
     }
@@ -160,9 +155,9 @@ export default function StudentCertificatesPage() {
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("studentCertificates.header.title")}</h1>
+          <h1 className={styles._3}>Văn bằng của tôi</h1>
           <p className={styles._4}>
-            {loading ? "..." : `${officialCerts.length} ${t("studentCertificates.header.officialCount")} · ${draftCerts.length} ${t("studentCertificates.header.draftCount")}`}
+            {loading ? "..." : `${officialCerts.length} văn bằng chính thức · ${draftCerts.length} bản thảo chờ cấp`}
           </p>
         </div>
       </div>
@@ -177,7 +172,7 @@ export default function StudentCertificatesPage() {
               : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
-          🎓 {t("studentCertificates.tabs.official")}
+          🎓 Văn bằng chính thức
           <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
             {officialCerts.length}
           </span>
@@ -191,7 +186,7 @@ export default function StudentCertificatesPage() {
               : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
-          ⏳ {t("studentCertificates.tabs.draft")}
+          ⏳ Văn bằng chờ duyệt (Bản thảo)
           <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
             {draftCerts.length}
           </span>
@@ -203,7 +198,7 @@ export default function StudentCertificatesPage() {
         <div className="flex-1">
           <input
             type="text"
-            placeholder={t("studentCertificates.search.placeholder")}
+            placeholder="Tìm theo tên bằng, mã văn bằng, trường cấp..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs font-semibold text-gray-800 dark:text-gray-200 outline-none focus:border-primary transition-all"
@@ -227,9 +222,9 @@ export default function StudentCertificatesPage() {
               onChange={(e) => setFilterStatus(e.target.value)}
               className={styles._8}
             >
-              <option value="all">{t("studentCertificates.filter.allStatus")}</option>
-              <option value="valid">{t("studentCertificates.filter.valid")}</option>
-              <option value="revoked">{t("studentCertificates.filter.revoked")}</option>
+              <option value="all">Tất cả trạng thái</option>
+              <option value="valid">Hợp lệ</option>
+              <option value="revoked">Đã thu hồi</option>
             </select>
           )}
         </div>
@@ -267,8 +262,8 @@ export default function StudentCertificatesPage() {
           </div>
           <p className={styles._12}>
             {activeTab === "official"
-              ? t("studentCertificates.empty.official")
-              : t("studentCertificates.empty.draft")}
+              ? "Không tìm thấy văn bằng chính thức nào"
+              : "Chưa có bản thảo văn bằng chờ duyệt nào"}
           </p>
         </div>
       ) : activeTab === "official" ? (
@@ -287,7 +282,7 @@ export default function StudentCertificatesPage() {
                       </svg>
                     </div>
                     <div className={styles._19}>
-                      <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? t("studentCertificates.filter.bachelorDegree") : t("studentCertificates.filter.certificate")}</p>
+                      <p className={styles._20}>{cert.type === "BACHELOR_DEGREE" ? "Bằng cử nhân" : "Chứng chỉ"}</p>
                       <h3 className={styles._21}>{cert.credentialTitle}</h3>
                       <p className={styles._22}>{cert.issuerName} · {cert.issueDate}</p>
                     </div>
@@ -297,11 +292,11 @@ export default function StudentCertificatesPage() {
                     {cert.onChain && (
                       <span className={styles._24}>
                         <span className={styles._25} />
-                        {t("studentCertificates.card.onchain")}
+                        On-chain
                       </span>
                     )}
                     <span className={`${styles._0} ${cert.status === "VALID" ? styles._26 : styles._27}`}>
-                      {cert.status === "VALID" ? t("studentCertificates.card.valid") : t("studentCertificates.card.revoked")}
+                      {cert.status === "VALID" ? "Hợp lệ" : "Đã thu hồi"}
                     </span>
                   </div>
                 </div>
@@ -313,7 +308,7 @@ export default function StudentCertificatesPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
               <p className="text-xs text-gray-500 font-semibold">
-                {t("studentCertificates.pagination.showing")} {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} {t("studentCertificates.pagination.of")} {filtered.length} {t("studentCertificates.pagination.certificates")}
+                Hiển thị {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} trên tổng số {filtered.length} văn bằng
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -321,7 +316,7 @@ export default function StudentCertificatesPage() {
                   disabled={currentPage === 1}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
-                  {t("studentCertificates.pagination.previous")}
+                  Trang trước
                 </button>
                 {Array.from({ length: totalPages }).map((_, idx) => {
                   const pageNum = idx + 1;
@@ -344,7 +339,7 @@ export default function StudentCertificatesPage() {
                   disabled={currentPage === totalPages}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
-                  {t("studentCertificates.pagination.next")}
+                  Trang sau
                 </button>
               </div>
             </div>
@@ -367,44 +362,44 @@ export default function StudentCertificatesPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-base text-gray-900 dark:text-white">{cert.credentialTitle}</h3>
                         <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">
-                          {t("studentCertificates.card.draftPending")}
+                          Bản thảo / Chờ duyệt cấp
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">{t("studentCertificates.card.school")} {cert.issuerName || cert.schoolName || t("studentCertificates.card.updating")}</p>
+                      <p className="text-xs text-gray-500 mt-1">Trường: {cert.issuerName || cert.schoolName || "Đang cập nhật"}</p>
 
                       {/* Detailed Info Card for checking draft info */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 text-xs">
                         <div>
-                          <span className="text-gray-400 font-semibold block text-[11px] uppercase">{t("studentCertificates.draftInfo.fullName")}</span>
+                          <span className="text-gray-400 font-semibold block text-[11px] uppercase">Họ và tên</span>
                           <span className="font-bold text-gray-800 dark:text-gray-200">{cert.studentName}</span>
                         </div>
                         {cert.dob && (
                           <div>
-                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">{t("studentCertificates.draftInfo.dob")}</span>
+                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">Ngày sinh</span>
                             <span className="font-bold text-gray-800 dark:text-gray-200">{cert.dob}</span>
                           </div>
                         )}
                         {cert.gender && (
                           <div>
-                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">{t("studentCertificates.draftInfo.gender")}</span>
+                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">Giới tính</span>
                             <span className="font-bold text-gray-800 dark:text-gray-200">{cert.gender}</span>
                           </div>
                         )}
                         {cert.placeOfBirth && (
                           <div>
-                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">{t("studentCertificates.draftInfo.placeOfBirth")}</span>
+                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">Nơi sinh</span>
                             <span className="font-bold text-gray-800 dark:text-gray-200">{cert.placeOfBirth}</span>
                           </div>
                         )}
                         {cert.ethnicity && (
                           <div>
-                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">{t("studentCertificates.draftInfo.ethnicity")}</span>
+                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">Dân tộc</span>
                             <span className="font-bold text-gray-800 dark:text-gray-200">{cert.ethnicity}</span>
                           </div>
                         )}
                         {cert.examCohort && (
                           <div>
-                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">{t("studentCertificates.draftInfo.examCohort")}</span>
+                            <span className="text-gray-400 font-semibold block text-[11px] uppercase">Khóa thi</span>
                             <span className="font-bold text-gray-800 dark:text-gray-200">{cert.examCohort}</span>
                           </div>
                         )}
@@ -417,13 +412,13 @@ export default function StudentCertificatesPage() {
                       href={`/student/certificates/${cert.id}`}
                       className="px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                     >
-                      {t("studentCertificates.card.viewFullDetail")}
+                      Xem chi tiết đầy đủ
                     </Link>
                     <button
                       onClick={(e) => handleOpenRequest(cert, e)}
                       className="px-3.5 py-2 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-300/60 hover:bg-amber-100 transition-all"
                     >
-                      {t("studentCertificates.card.requestCorrection")}
+                      Yêu cầu chỉnh sửa
                     </button>
                   </div>
                 </div>
@@ -435,7 +430,7 @@ export default function StudentCertificatesPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
               <p className="text-xs text-gray-500 font-semibold">
-                {t("studentCertificates.pagination.showing")} {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} {t("studentCertificates.pagination.of")} {filtered.length} {t("studentCertificates.pagination.drafts")}
+                Hiển thị {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} trên tổng số {filtered.length} bản thảo
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -443,7 +438,7 @@ export default function StudentCertificatesPage() {
                   disabled={currentPage === 1}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
-                  {t("studentCertificates.pagination.previous")}
+                  Trang trước
                 </button>
                 {Array.from({ length: totalPages }).map((_, idx) => {
                   const pageNum = idx + 1;
@@ -466,7 +461,7 @@ export default function StudentCertificatesPage() {
                   disabled={currentPage === totalPages}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
-                  {t("studentCertificates.pagination.next")}
+                  Trang sau
                 </button>
               </div>
             </div>
@@ -480,7 +475,7 @@ export default function StudentCertificatesPage() {
           <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full p-6 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">{t("studentCertificates.modal.title")}</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">Yêu cầu chỉnh sửa bản thảo</h2>
                 <p className="text-xs text-gray-500 mt-0.5">{requestCert.credentialTitle} - {requestCert.studentName}</p>
               </div>
               <button onClick={() => setRequestCert(null)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -503,33 +498,33 @@ export default function StudentCertificatesPage() {
                 )}
 
                 <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 text-[11px] text-amber-800 dark:text-amber-300 space-y-1">
-                  <p className="font-bold uppercase tracking-wider text-[10px]">{t("studentCertificates.modal.currentInfo")}</p>
-                  <p>• {t("studentCertificates.modal.name")} {requestCert.studentName}</p>
-                  {requestCert.dob && <p>• {t("studentCertificates.modal.dob")} {requestCert.dob}</p>}
-                  {requestCert.gender && <p>• {t("studentCertificates.modal.gender")} {requestCert.gender}</p>}
-                  {requestCert.placeOfBirth && <p>• {t("studentCertificates.modal.placeOfBirth")} {requestCert.placeOfBirth}</p>}
+                  <p className="font-bold uppercase tracking-wider text-[10px]">Thông tin bản thảo hiện tại:</p>
+                  <p>• Họ tên: {requestCert.studentName}</p>
+                  {requestCert.dob && <p>• Ngày sinh: {requestCert.dob}</p>}
+                  {requestCert.gender && <p>• Giới tính: {requestCert.gender}</p>}
+                  {requestCert.placeOfBirth && <p>• Nơi sinh: {requestCert.placeOfBirth}</p>}
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {t("studentCertificates.modal.reasonLabel")} <span className="text-red-500">*</span>
+                    Lý do chỉnh sửa <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={3}
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
-                    placeholder={t("studentCertificates.modal.reasonPlaceholder")}
+                    placeholder="Mô tả sai sót (ví dụ: Sai ngày sinh, sai chính tả tên, v.v.)"
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-200 outline-none"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("studentCertificates.modal.detailsLabel")}</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Chi tiết thông tin đúng</label>
                   <textarea
                     rows={3}
                     value={requestDetails}
                     onChange={(e) => setRequestDetails(e.target.value)}
-                    placeholder={t("studentCertificates.modal.detailsPlaceholder")}
+                    placeholder="Ghi rõ thông tin chính xác bạn muốn nhà trường điều chỉnh"
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-200 outline-none"
                   />
                 </div>
@@ -541,14 +536,14 @@ export default function StudentCertificatesPage() {
                     disabled={submittingRequest}
                     className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300"
                   >
-                    {t("studentCertificates.modal.cancel")}
+                    Hủy
                   </button>
                   <button
                     type="submit"
                     disabled={submittingRequest}
                     className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-xs font-bold text-white transition-all disabled:opacity-50"
                   >
-                    {submittingRequest ? t("studentCertificates.modal.submitting") : t("studentCertificates.modal.submit")}
+                    {submittingRequest ? "Đang gửi..." : "Gửi yêu cầu"}
                   </button>
                 </div>
               </form>

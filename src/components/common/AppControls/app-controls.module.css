@@ -1,6 +1,0 @@
-@reference "../../../app/globals.css";
-@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
-
-.group {
- @apply inline-flex items-center gap-2;
-}

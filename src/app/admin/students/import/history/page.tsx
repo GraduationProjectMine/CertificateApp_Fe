@@ -2,11 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi, type ImportBatchDto } from "@/features/students/services/student.api";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 export default function ImportHistoryPage() {
   const router = useRouter();
-  const { t } = useI18n();
   const [batches, setBatches] = useState<ImportBatchDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,7 +12,7 @@ export default function ImportHistoryPage() {
   useEffect(() => {
     studentApi.importHistory()
       .then(setBatches)
-      .catch((err) => setError(err instanceof Error ? err.message : t("adminStudentImportHistory.errors.loadFailed")))
+      .catch((err) => setError(err instanceof Error ? err.message : "Không thể tải lịch sử import"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -22,14 +20,14 @@ export default function ImportHistoryPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("adminStudentImportHistory.title")}</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("adminStudentImportHistory.description")}</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Lịch sử Import</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Các lần import sinh viên từ file CSV.</p>
         </div>
         <button
           onClick={() => router.push("/admin/students/import")}
           className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all"
         >
-          + {t("adminStudentImportHistory.newImport")}
+          + Import mới
         </button>
       </div>
 
@@ -38,20 +36,20 @@ export default function ImportHistoryPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">{t("adminStudentImportHistory.loading")}</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
       ) : batches.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">{t("adminStudentImportHistory.empty")}</div>
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 text-xs">Chưa có lần import nào.</div>
       ) : (
         <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl overflow-hidden">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200/60 dark:border-gray-800/60">
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImportHistory.table.file")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImportHistory.table.createdBy")}</th>
-                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImportHistory.table.total")}</th>
-                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImportHistory.table.success")}</th>
-                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImportHistory.table.failed")}</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">{t("adminStudentImportHistory.table.time")}</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">File</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Người tạo</th>
+                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tổng</th>
+                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thành công</th>
+                <th className="text-center px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thất bại</th>
+                <th className="text-left px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Thời gian</th>
               </tr>
             </thead>
             <tbody>

@@ -1,14 +1,13 @@
 "use client";
 import styles from "./AdminTopbar.module.css";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { menuItems } from "../MenuItems";
-import { useI18n } from "@/features/i18n/I18nContext";
 import type { User } from "@/features/auth/types";
-import AppControls from "@/components/common/AppControls";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import Tooltip from "@/components/common/Tooltip";
-import ConfirmModal from "@/components/common/Modal/ConfirmModal";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 interface AdminTopbarProps {
   user: User;
@@ -21,15 +20,14 @@ function getBreadcrumbs(pathname: string, t: (path: string) => string) {
   return segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
     const item = menuItems.find((m) => m.path === href);
-    const displayTitle = item
-      ? t(item.titleKey)
-      : segment === "admin"
-      ? t("adminShell.topbar.breadcrumbAdmin")
-      : segment === "certificates"
-      ? t("adminShell.topbar.breadcrumbCertificates")
-      : segment === "issue"
-      ? t("adminShell.topbar.breadcrumbIssue")
-      : segment;
+    let displayTitle = segment;
+    if (segment === "admin") {
+      displayTitle = t("dashboard.adminNav.portalTitle");
+    } else if (item?.translationKey) {
+      displayTitle = t(item.translationKey);
+    } else if (item) {
+      displayTitle = item.title;
+    }
 
     return {
       title: displayTitle.charAt(0).toUpperCase() + displayTitle.slice(1),
@@ -41,28 +39,13 @@ function getBreadcrumbs(pathname: string, t: (path: string) => string) {
 
 export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopbarProps) {
   const pathname = usePathname();
-  const { t } = useI18n();
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { locale, toggleLocale, t } = useI18n();
   const breadcrumbs = getBreadcrumbs(pathname, t);
 
   return (
     <header className={styles._1}>
-      <ConfirmModal
-        open={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        title={t("common.confirm.logoutTitle")}
-        message={t("common.confirm.logoutBody")}
-        confirmLabel={t("common.confirm.logoutConfirm")}
-        cancelLabel={t("common.confirm.logoutCancel")}
-        variant="danger"
-        icon="danger"
-        onConfirm={() => {
-          setShowLogoutConfirm(false);
-          onLogout();
-        }}
-      />
       <div className={styles._2}>
-        <Tooltip content={t("adminShell.topbar.openMenuTooltip")} position="bottom">
+        <Tooltip content="Mở danh mục Menu" position="bottom">
           <button
             onClick={onMenuToggle}
             className={styles._3}
@@ -75,7 +58,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
         </Tooltip>
 
         <nav className={styles._5}>
-<span className={styles._6}>{t("adminShell.topbar.portalLabel")}</span>
+          <span className={styles._6}>{t("dashboard.adminNav.portalTitle")}</span>
           {breadcrumbs.map((crumb) => (
             <React.Fragment key={crumb.href}>
               <span className={styles._7}>/</span>
@@ -93,7 +76,7 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
 
       <div className={styles._2}>
         {user.loginType === "metamask" && (
-          <Tooltip content={t("adminShell.topbar.walletTooltip").replace("{address}", user.walletAddress || "")} position="bottom">
+          <Tooltip content={`Ví MetaMask: ${user.walletAddress}`} position="bottom">
             <div className={styles._9}>
               <svg className={styles._10} viewBox="0 0 256 238" fill="none">
                 <path d="M247.9 104.8l-15-46.7-56-42.5-44.5 59 4.3.4 35.3-32.9L247.9 104.8z" fill="#E2761B"/>
@@ -108,17 +91,29 @@ export default function AdminTopbar({ user, onMenuToggle, onLogout }: AdminTopba
           </Tooltip>
         )}
 
-        <AppControls />
+        <Tooltip content="Chuyển đổi giao diện Sáng / Tối" position="bottom">
+          <ThemeToggle className={styles._15} />
+        </Tooltip>
 
-<Tooltip content={t("adminShell.topbar.logoutTooltip")} position="bottom">
+        <Tooltip content="Chuyển đổi ngôn ngữ / Switch Language" position="bottom">
           <button
-            onClick={() => setShowLogoutConfirm(true)}
+            onClick={toggleLocale}
+            className="flex items-center justify-center min-w-[32px] h-8 px-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition-all cursor-pointer shadow-2xs"
+            aria-label="Toggle Language"
+          >
+            {locale === "vi" ? "EN" : "VI"}
+          </button>
+        </Tooltip>
+
+        <Tooltip content="Đăng xuất khỏi hệ thống" position="bottom">
+          <button
+            onClick={onLogout}
             className={styles._18}
           >
             <svg className={styles._19} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1"></path>
             </svg>
-<span>{t("adminShell.topbar.logout")}</span>
+            <span>{t("nav.logout")}</span>
           </button>
         </Tooltip>
       </div>
