@@ -1,0 +1,14 @@
+@reference "../../../app/globals.css";
+@custom-variant dark (&:where(:global(.dark), :global(.dark) *));
+
+.toggle {
+ @apply inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white/85 px-3 text-sm font-bold text-slate-600 shadow-sm backdrop-blur transition-all hover:border-primary/30 hover:bg-slate-50 hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.08] dark:hover:text-white;
+}
+
+.icon {
+ @apply h-4 w-4 shrink-0;
+}
+
+.locale {
+ @apply text-[11px] font-black tracking-wide;
+}
