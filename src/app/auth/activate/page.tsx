@@ -4,6 +4,8 @@ import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
+import AppControls from "@/components/common/AppControls";
+import { useI18n } from "@/features/i18n/I18nContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -18,6 +20,7 @@ interface VerifyData {
 function ActivateForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { t, tArr } = useI18n();
 
   const [state, setState] = useState<ActivateState>("loading");
   const [verifyData, setVerifyData] = useState<VerifyData | null>(null);
@@ -63,11 +66,11 @@ function ActivateForm() {
     setError("");
 
     if (!password || password.length < 8) {
-      setError("Mật khẩu phải có ít nhất 8 ký tự");
+      setError(t("auth.activate_error_password_length") || "Mật khẩu phải có ít nhất 8 ký tự");
       return;
     }
     if (password !== confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
+      setError(t("auth.activate_error_password_mismatch") || "Mật khẩu xác nhận không khớp");
       return;
     }
 
@@ -80,13 +83,13 @@ function ActivateForm() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        setError(body?.message || body?.error || "Kích hoạt tài khoản thất bại");
+        setError(body?.message || body?.error || t("auth.activate_error_failed") || "Kích hoạt tài khoản thất bại");
         setIsSubmitting(false);
         return;
       }
       setState("success");
     } catch {
-      setError("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+      setError(t("auth.activate_error_network") || "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
     }
@@ -97,27 +100,31 @@ function ActivateForm() {
       <div className={`motion-float ${styles._6}`} />
       <div className={`motion-float-slow ${styles._7}`} />
 
-      <Link href="/" className={styles._8}>
-        <span className={styles._9}>C</span>
-        <span className={styles._10}>CertiChain</span>
-      </Link>
+      <div className="flex w-full items-center justify-between">
+        <Link href="/" className={styles._8}>
+          <span className={styles._9}>C</span>
+          <span className={styles._10}>CertiChain</span>
+        </Link>
+        <AppControls />
+      </div>
 
       <div className={styles._11}>
-        <p className={styles._12}>Bảo mật danh tính học thuật</p>
+        <p className={styles._12}>
+          {t("auth.visualPanel.activate.badge")}
+        </p>
         <h1 className={styles._13}>
-          Kích hoạt tài khoản sinh viên.
+          {t("auth.visualPanel.activate.title")}
         </h1>
         <p className={styles._46}>
-          Thiết lập mật khẩu để hoàn tất quy trình kích hoạt tài khoản
-          và bắt đầu nhận văn bằng số từ tổ chức của bạn.
+          {t("auth.visualPanel.activate.description")}
         </p>
       </div>
 
       <div className={styles._15}>
-        {["Xác thực danh tính", "Tạo mật khẩu", "Văn bằng số"].map((item) => (
-          <div key={item} className={styles._16}>
+        {tArr("auth.visualPanel.activate.features").map((item, index) => (
+          <div key={index} className={styles._16}>
             <span className={styles._17} />
-            <span className={styles._18}>{item}</span>
+            <span className={styles._18}>{String(item)}</span>
           </div>
         ))}
       </div>
@@ -130,7 +137,7 @@ function ActivateForm() {
         <div className={styles._39}>
           <div className={styles._40}>
             <div className={styles._41} />
-            <p className={styles._42}>Đang xác thực token...</p>
+            <p className={styles._42}>{t("auth.activate_loading")}</p>
           </div>
         </div>
       );
@@ -140,19 +147,18 @@ function ActivateForm() {
       return (
         <>
           <div className={styles._26}>
-            <p className={styles._27}>Kích hoạt thất bại</p>
-            <h2 className={styles._28}>Liên kết không hợp lệ</h2>
+            <p className={styles._27}>{t("auth.activate_fail_title")}</p>
+            <h2 className={styles._28}>{t("auth.activate_fail_subtitle")}</h2>
             <p className={styles._43}>
-              Liên kết kích hoạt này không hợp lệ hoặc đã hết hạn. Vui lòng
-              liên hệ với tổ chức của bạn để nhận liên kết mới.
+              {t("auth.activate_fail_desc")}
             </p>
           </div>
           <div className={styles._30}>
-            Token không hợp lệ hoặc đã hết hạn
+            {t("auth.activate_fail_invalid_token")}
           </div>
           <div className={styles._37}>
             <Button variant="ghost" href="/auth/login">
-              Quay lại đăng nhập
+              {t("auth.activate_back_login")}
             </Button>
           </div>
         </>
@@ -163,9 +169,9 @@ function ActivateForm() {
       return (
         <>
           <div className={styles._26}>
-            <p className={styles._27}>Kích hoạt tài khoản</p>
-            <h2 className={styles._28}>Tạo mật khẩu</h2>
-            <p className={styles._29}>Vui lòng kiểm tra thông tin và tạo mật khẩu mới.</p>
+            <p className={styles._27}>{t("auth.activate_title") || "Kích hoạt tài khoản"}</p>
+            <h2 className={styles._28}>{t("auth.activate_create_password")}</h2>
+            <p className={styles._29}>{t("auth.activate_create_password_desc")}</p>
           </div>
 
           {error && (
@@ -176,7 +182,7 @@ function ActivateForm() {
 
           <form className={styles._31} onSubmit={handleSubmit}>
             <label className={styles._32}>
-              <span className={styles._33}>Họ và tên</span>
+              <span className={styles._33}>{t("auth.activate_full_name")}</span>
               <input
                 type="text"
                 value={verifyData.name}
@@ -198,7 +204,7 @@ function ActivateForm() {
             </label>
 
             <label className={styles._32}>
-              <span className={styles._33}>Tổ chức</span>
+              <span className={styles._33}>{t("auth.activate_organization")}</span>
               <input
                 type="text"
                 value={verifyData.organizationName}
@@ -209,7 +215,7 @@ function ActivateForm() {
             </label>
 
             <label className={styles._32}>
-              <span className={styles._33}>Mật khẩu mới</span>
+              <span className={styles._33}>{t("auth.password")}</span>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -218,7 +224,7 @@ function ActivateForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`${styles._34} pr-10`}
-                  placeholder="Ít nhất 8 ký tự"
+                  placeholder={t("auth.password_hint")}
                 />
                 <button
                   type="button"
@@ -240,7 +246,7 @@ function ActivateForm() {
             </label>
 
             <label className={styles._32}>
-              <span className={styles._33}>Xác nhận mật khẩu</span>
+              <span className={styles._33}>{t("auth.confirm_password")}</span>
               <input
                 type="password"
                 required
@@ -248,12 +254,12 @@ function ActivateForm() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={styles._34}
-                placeholder="Nhập lại mật khẩu"
+                placeholder={t("auth.password_confirm_placeholder")}
               />
             </label>
 
             <Button type="submit" disabled={isSubmitting} className={styles._44}>
-              {isSubmitting ? "Đang xử lý..." : "Kích hoạt tài khoản"}
+              {isSubmitting ? t("auth.loading") : (t("auth.activate_submit") || "Kích hoạt tài khoản")}
             </Button>
           </form>
         </>
@@ -264,18 +270,17 @@ function ActivateForm() {
       return (
         <>
           <div className={styles._26}>
-            <p className={styles._27}>Kích hoạt thành công</p>
-            <h2 className={styles._28}>Tài khoản đã sẵn sàng</h2>
+            <p className={styles._27}>{t("auth.activate_success_title")}</p>
+            <h2 className={styles._28}>{t("auth.activate_success_subtitle")}</h2>
             <p className={styles._43}>
-              Tài khoản của bạn đã được kích hoạt thành công. Giờ đây bạn có thể
-              đăng nhập để xem và quản lý văn bằng số của mình.
+              {t("auth.activate_success_desc")}
             </p>
           </div>
           <div className={styles._36}>
-            Tài khoản đã được kích hoạt thành công
+            {t("auth.activate_success_msg")}
           </div>
           <Button className={styles._44} href="/auth/login">
-            Đăng nhập
+            {t("auth.login_btn")}
           </Button>
         </>
       );
@@ -294,9 +299,12 @@ function ActivateForm() {
             <span className={styles._22}>C</span>
             <span className={styles._23}>CertiChain</span>
           </Link>
-          <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
-            Đăng nhập
-          </Link>
+          <div className="flex items-center gap-3">
+            <AppControls />
+            <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
+              {t("auth.login_btn")}
+            </Link>
+          </div>
         </div>
 
         <div className={`auth-card-surface ${styles._25}`}>

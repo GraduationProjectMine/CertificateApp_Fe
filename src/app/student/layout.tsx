@@ -5,22 +5,24 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../../features/auth/components/AuthContext";
-import ThemeToggle from "@/components/common/ThemeToggle";
-import Tooltip from "@/components/common/Tooltip";
 import { useI18n } from "@/features/i18n/I18nContext";
+import AppControls from "@/components/common/AppControls";
+import Tooltip from "@/components/common/Tooltip";
+import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const { locale, toggleLocale, t } = useI18n();
+const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const navItems = [
-    { labelKey: "dashboard.studentNav.dashboard", defaultLabel: "Bảng điều khiển", href: "/student/dashboard", descKey: "dashboard.studentNav.dashboardDesc", defaultDesc: "Tổng quan hoạt động & văn bằng", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-    { labelKey: "dashboard.studentNav.certificates", defaultLabel: "Văn bằng của tôi", href: "/student/certificates", descKey: "dashboard.studentNav.certificatesDesc", defaultDesc: "Danh sách bằng & chứng chỉ đã cấp", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
-    { labelKey: "dashboard.studentNav.disputes", defaultLabel: "Yêu cầu chỉnh sửa", href: "/student/disputes", descKey: "dashboard.studentNav.disputesDesc", defaultDesc: "Yêu cầu chỉnh sửa thông tin văn bằng", icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" },
-    { labelKey: "dashboard.studentNav.profile", defaultLabel: "Hồ sơ cá nhân", href: "/student/profile", descKey: "dashboard.studentNav.profileDesc", defaultDesc: "Thông tin tài khoản sinh viên", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { labelKey: "dashboard.studentNav.settings", defaultLabel: "Cài đặt", href: "/student/settings", descKey: "dashboard.studentNav.settingsDesc", defaultDesc: "Tùy chỉnh & mật khẩu tài khoản", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
+    { label: t("studentShell.dashboard"), href: "/student/dashboard", desc: t("studentShell.dashboardDesc"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+    { label: t("studentShell.myCertificates"), href: "/student/certificates", desc: t("studentShell.myCertificatesDesc"), icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
+    { label: t("studentShell.disputes"), href: "/student/disputes", desc: t("studentShell.disputesDesc"), icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" },
+    { label: t("studentShell.profile"), href: "/student/profile", desc: t("studentShell.profileDesc"), icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { label: t("studentShell.settings"), href: "/student/settings", desc: t("studentShell.settingsDesc"), icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
   ];
 
   const getClassName = (href: string) => {
@@ -30,6 +32,20 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className={styles._1}>
+      <ConfirmModal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title={t("common.confirm.logoutTitle")}
+        message={t("common.confirm.logoutBody")}
+        confirmLabel={t("common.confirm.logoutConfirm")}
+        cancelLabel={t("common.confirm.logoutCancel")}
+        variant="danger"
+        icon="danger"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          logout();
+        }}
+      />
       <header className={styles._2}>
         <div className={styles._3}>
           <div className="flex items-center gap-3">
@@ -42,37 +58,26 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Tooltip content="Về trang chủ CertiChain" position="right">
+            <Tooltip content={t("studentShell.homeTooltip")} position="right">
               <Link href="/" className={styles._4}>
                 CertiChain
               </Link>
             </Tooltip>
           </div>
           <div className={styles._5}>
-            <Tooltip content="Chuyển đổi giao diện Sáng / Tối" position="bottom">
-              <ThemeToggle />
-            </Tooltip>
-            <Tooltip content="Chuyển đổi ngôn ngữ / Switch Language" position="bottom">
-              <button
-                onClick={toggleLocale}
-                className="flex items-center justify-center min-w-[32px] h-8 px-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-primary hover:text-primary transition-all cursor-pointer shadow-2xs"
-                aria-label="Toggle Language"
-              >
-                {locale === "vi" ? "EN" : "VI"}
-              </button>
-            </Tooltip>
-            <Tooltip content="Tài khoản Sinh viên đang đăng nhập" position="bottom">
+<AppControls />
+            <Tooltip content={t("studentShell.accountTooltip")} position="bottom">
               <span className={`${styles._6} hidden sm:inline`}>{user?.name}</span>
             </Tooltip>
-            <Tooltip content="Đăng xuất khỏi hệ thống" position="bottom">
+            <Tooltip content={t("studentShell.logoutTooltip")} position="bottom">
               <button
-                onClick={logout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="flex items-center gap-1.5 font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer text-xs sm:text-sm"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m6-9V5a3 3 0 00-6 0v1" />
                 </svg>
-                <span className="hidden sm:inline">{t("nav.logout")}</span>
+<span className="hidden sm:inline">{t("studentShell.logout")}</span>
               </button>
             </Tooltip>
           </div>
@@ -96,7 +101,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             }`}
           >
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-200 dark:border-gray-800 md:hidden">
-              <span className="font-bold text-sm text-gray-900 dark:text-white">{t("dashboard.studentNav.menuTitle")}</span>
+<span className="font-bold text-sm text-gray-900 dark:text-white">{t("studentShell.menuTitle")}</span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -105,8 +110,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               </button>
             </div>
             {navItems.map((item) => {
-              const label = t(item.labelKey);
-              const desc = t(item.descKey);
+              const label = item.label;
+              const desc = item.desc;
               return (
                 <Tooltip key={item.href} content={desc} position="right" className="w-full">
                   <Link
