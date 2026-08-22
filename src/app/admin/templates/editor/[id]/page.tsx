@@ -1,14 +1,11 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { templateApi } from "@/features/templates/services/api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
-import type { TemplateField, DesignData } from "@/features/templates/types";
+import type { CertificateTemplate, TemplateField, DesignData } from "@/features/templates/types";
 import { QRCodeSVG } from "qrcode.react";
-import { useI18n } from "@/features/i18n/I18nContext";
-import { validateMinLength } from "@/lib/validators";
-import toast from "react-hot-toast";
 
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
@@ -22,69 +19,33 @@ const DEFAULT_DESIGN: DesignData = {
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
 
-function getFieldTemplates(t: ReturnType<typeof useI18n>["t"]): Array<{ category: string; items: Array<{ type: "text" | "image" | "qr" | "line" | "rect" | "ellipse" | "triangle" | "star"; label: string; icon: string }> }> {
-  return [
-    {
-      category: t("adminTemplateEditor.fieldCategoryBasic"),
-      items: [
-        { type: "text", label: t("adminTemplateEditor.fieldTypeText"), icon: "T" },
-        { type: "image", label: t("adminTemplateEditor.fieldTypeImage"), icon: "🖼" },
-        { type: "qr", label: t("adminTemplateEditor.fieldTypeQr"), icon: "▦" },
-      ],
-    },
-    {
-      category: t("adminTemplateEditor.shapeCategory"),
-      items: [
-        { type: "line", label: t("adminTemplateEditor.fieldTypeLine"), icon: "▬" },
-        { type: "rect", label: t("adminTemplateEditor.fieldTypeRect"), icon: "▮" },
-        { type: "ellipse", label: t("adminTemplateEditor.fieldTypeEllipse"), icon: "⭘" },
-        { type: "triangle", label: t("adminTemplateEditor.fieldTypeTriangle"), icon: "▲" },
-        { type: "star", label: t("adminTemplateEditor.fieldTypeStar"), icon: "★" },
-      ],
-    },
-  ];
-}
+const FIELD_TEMPLATES = [
+  { type: "text" as const, label: "Văn bản", icon: "T" },
+  { type: "image" as const, label: "Hình ảnh", icon: "🖼" },
+  { type: "qr" as const, label: "Mã QR", icon: "▦" },
+  { type: "line" as const, label: "Đường kẻ", icon: "▬" },
+  { type: "rect" as const, label: "Hình chữ nhật", icon: "▮" },
+];
 
-function getFieldBindings(t: ReturnType<typeof useI18n>["t"]): Array<{ value: string; label: string }> {
-  return [
-    { value: "", label: t("adminTemplateEditor.bindingStatic") },
-    { value: "student_fullName", label: t("adminTemplateEditor.bindingStudentFullName") },
-    { value: "certificate_title", label: t("adminTemplateEditor.bindingCertificateTitle") },
-    { value: "organization_name", label: t("adminTemplateEditor.bindingOrganizationName") },
-    { value: "organization_logo", label: t("adminTemplateEditor.bindingOrganizationLogo") },
-    { value: "dob", label: t("adminTemplateEditor.bindingDob") },
-    { value: "placeOfBirth", label: t("adminTemplateEditor.bindingPlaceOfBirth") },
-    { value: "gender", label: t("adminTemplateEditor.bindingGender") },
-    { value: "ethnicity", label: t("adminTemplateEditor.bindingEthnicity") },
-    { value: "schoolName", label: t("adminTemplateEditor.bindingSchoolName") },
-    { value: "examCohort", label: t("adminTemplateEditor.bindingExamCohort") },
-    { value: "examBoard", label: t("adminTemplateEditor.bindingExamBoard") },
-    { value: "issueLocation", label: t("adminTemplateEditor.bindingIssueLocation") },
-    { value: "issueDate", label: t("adminTemplateEditor.bindingIssueDate") },
-    { value: "serialNumber", label: t("adminTemplateEditor.bindingSerialNumber") },
-    { value: "registryNumber", label: t("adminTemplateEditor.bindingRegistryNumber") },
-    { value: "verification_url", label: t("adminTemplateEditor.bindingVerificationUrl") },
-  ];
-}
-
-function getManualInputFields(t: ReturnType<typeof useI18n>["t"]): Array<{ key: string; label: string }> {
-  return [
-    { key: "student_fullName", label: t("adminTemplateEditor.manualStudentFullName") },
-    { key: "certificate_title", label: t("adminTemplateEditor.manualCertificateTitle") },
-    { key: "organization_name", label: t("adminTemplateEditor.manualOrganizationName") },
-    { key: "dob", label: t("adminTemplateEditor.manualDob") },
-    { key: "placeOfBirth", label: t("adminTemplateEditor.manualPlaceOfBirth") },
-    { key: "gender", label: t("adminTemplateEditor.manualGender") },
-    { key: "ethnicity", label: t("adminTemplateEditor.manualEthnicity") },
-    { key: "schoolName", label: t("adminTemplateEditor.manualSchoolName") },
-    { key: "examCohort", label: t("adminTemplateEditor.manualExamCohort") },
-    { key: "examBoard", label: t("adminTemplateEditor.manualExamBoard") },
-    { key: "issueLocation", label: t("adminTemplateEditor.manualIssueLocation") },
-    { key: "issueDate", label: t("adminTemplateEditor.manualIssueDate") },
-    { key: "serialNumber", label: t("adminTemplateEditor.manualSerialNumber") },
-    { key: "registryNumber", label: t("adminTemplateEditor.manualRegistryNumber") },
-  ];
-}
+const FIELD_BINDINGS = [
+  { value: "", label: "--- Văn bản tĩnh ---" },
+  { value: "student_fullName", label: "Họ tên sinh viên" },
+  { value: "certificate_title", label: "Tên văn bằng" },
+  { value: "organization_name", label: "Tên tổ chức" },
+  { value: "organization_logo", label: "Logo tổ chức" },
+  { value: "dob", label: "Ngày sinh" },
+  { value: "placeOfBirth", label: "Nơi sinh" },
+  { value: "gender", label: "Giới tính" },
+  { value: "ethnicity", label: "Dân tộc" },
+  { value: "schoolName", label: "Tên trường" },
+  { value: "examCohort", label: "Khóa học" },
+  { value: "examBoard", label: "Hội đồng thi" },
+  { value: "issueLocation", label: "Nơi cấp" },
+  { value: "issueDate", label: "Ngày cấp" },
+  { value: "serialNumber", label: "Số hiệu" },
+  { value: "registryNumber", label: "Số vào sổ" },
+  { value: "verification_url", label: "URL xác minh (QR)" },
+];
 
 function generateId() { return `fld_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`; }
 
@@ -92,8 +53,8 @@ export default function TemplateEditorPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { t } = useI18n();
 
+  const [template, setTemplate] = useState<CertificateTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [design, setDesign] = useState<DesignData>(DEFAULT_DESIGN);
@@ -103,33 +64,7 @@ export default function TemplateEditorPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [dragging, setDragging] = useState<{ fieldId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [resizing, setResizing] = useState<{ fieldId: string; dir: string; startX: number; startY: number; origW: number; origH: number } | null>(null);
-  const [history, setHistory] = useState<DesignData[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const canvasRef = useRef<HTMLDivElement>(null);
-
-  const pushHistory = useCallback((newDesign: DesignData) => {
-    setHistory((prev) => {
-      const next = prev.slice(0, historyIndex + 1);
-      next.push(newDesign);
-      if (next.length > 50) next.shift();
-      return next;
-    });
-    setHistoryIndex((i) => Math.min(i + 1, 49));
-  }, [historyIndex]);
-
-  const undo = useCallback(() => {
-    if (historyIndex > 0) {
-      setHistoryIndex((i) => i - 1);
-      setDesign(history[historyIndex - 1]);
-    }
-  }, [history, historyIndex]);
-
-  const redo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      setHistoryIndex((i) => i + 1);
-      setDesign(history[historyIndex + 1]);
-    }
-  }, [history, historyIndex]);
 
   // Dynamic Manual Input Data & Import File State
   const [mockData, setMockData] = useState<Record<string, string>>({
@@ -151,16 +86,12 @@ export default function TemplateEditorPage() {
   });
 
   const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
-  const [importedData] = useState<{
+  const [importedData, setImportedData] = useState<{
     fileName: string;
     totalRows: number;
     rows: Array<{ rowNumber: number; record: Record<string, string>; isValid: boolean }>;
   } | null>(null);
   const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
-
-  const fieldTemplates = useMemo(() => getFieldTemplates(t), [t]);
-  const fieldBindings = useMemo(() => getFieldBindings(t), [t]);
-  const manualInputFields = useMemo(() => getManualInputFields(t), [t]);
 
   useEffect(() => {
     // Fetch organization profile for logo
@@ -177,34 +108,34 @@ export default function TemplateEditorPage() {
 
     if (id === "new") {
       setDesign(DEFAULT_DESIGN);
-      setTemplateName(t("adminTemplateEditor.newTemplateName"));
+      setTemplateName("Mẫu văn bằng mới");
       setLoading(false);
       return;
     }
     const fetchTemplate = async () => {
       try {
         const data = await templateApi.get(id);
+        setTemplate(data);
         setDesign(data.design_data || DEFAULT_DESIGN);
         setTemplateName(data.name);
       } catch (err: any) {
-        toast.error(err.message || t("adminTemplateEditor.error.load"));
+        alert(err.message || "Failed to load template");
         router.push("/admin/templates");
       } finally {
         setLoading(false);
       }
     };
     fetchTemplate();
-  }, [id, router, t]);
+  }, [id, router]);
 
   const selectedField = design.fields.find((f) => f.id === selectedId) || null;
 
   const updateField = useCallback((fieldId: string, updates: Partial<TemplateField>) => {
-    setDesign((prev) => {
-      const next = { ...prev, fields: prev.fields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)) };
-      pushHistory(next);
-      return next;
-    });
-  }, [pushHistory]);
+    setDesign((prev) => ({
+      ...prev,
+      fields: prev.fields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)),
+    }));
+  }, []);
 
   const addField = useCallback((type: TemplateField["type"], binding?: string) => {
     const isLine = type === "line";
@@ -215,96 +146,25 @@ export default function TemplateEditorPage() {
       type,
       x: 100,
       y: 100,
-      w: type === "qr" ? 70 : isImage ? 100 : isLine ? 150 : isRect ? 150 : type === "ellipse" || type === "triangle" || type === "star" ? 100 : 200,
-      h: type === "qr" ? 70 : isImage ? 100 : isLine ? 4 : isRect ? 100 : type === "ellipse" || type === "triangle" || type === "star" ? 100 : 40,
+      w: type === "qr" ? 70 : isImage ? 100 : isLine ? 150 : isRect ? 150 : 200,
+      h: type === "qr" ? 70 : isImage ? 100 : isLine ? 4 : isRect ? 100 : 40,
       font: "sans-serif",
       size: 14,
-      color: type === "line" || type === "rect" || type === "ellipse" || type === "triangle" || type === "star" ? "#c9a84c" : "#333333",
+      color: type === "line" || type === "rect" ? "#c9a84c" : "#333333",
       align: "left",
       text: type === "text" ? "Văn bản" : undefined,
       dynamic: !!binding,
       binding: binding || (type === "image" ? "organization_logo" : undefined),
       src: binding === "organization_logo" || type === "image" ? organizationLogo || undefined : undefined,
     };
-    setDesign((prev) => {
-      const next = { ...prev, fields: [...prev.fields, newField] };
-      pushHistory(next);
-      return next;
-    });
+    setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
     setSelectedId(newField.id);
-  }, [organizationLogo, pushHistory]);
+  }, [organizationLogo]);
 
   const deleteField = useCallback((fieldId: string) => {
-    setDesign((prev) => {
-      const next = { ...prev, fields: prev.fields.filter((f) => f.id !== fieldId) };
-      pushHistory(next);
-      return next;
-    });
+    setDesign((prev) => ({ ...prev, fields: prev.fields.filter((f) => f.id !== fieldId) }));
     setSelectedId((prev) => (prev === fieldId ? null : prev));
-  }, [pushHistory]);
-
-  const getSelectedFields = useCallback((): TemplateField[] => {
-    if (!selectedId) return [];
-    const field = design.fields.find((f) => f.id === selectedId);
-    return field ? [field] : [];
-  }, [design.fields, selectedId]);
-
-  const alignFields = useCallback((align: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
-    const fields = design.fields.filter((f) => f.id === selectedId);
-    if (fields.length < 1) return;
-    const target = fields[0];
-    setDesign((prev) => {
-      const next = {
-        ...prev,
-        fields: prev.fields.map((f) => {
-          if (f.id === selectedId) {
-            const updates: Partial<TemplateField> = {};
-            if (align === "left") updates.x = target.x;
-            if (align === "center") updates.x = target.x + (target.w - f.w) / 2;
-            if (align === "right") updates.x = target.x + target.w - f.w;
-            if (align === "top") updates.y = target.y;
-            if (align === "middle") updates.y = target.y + (target.h - f.h) / 2;
-            if (align === "bottom") updates.y = target.y + target.h - f.h;
-            return { ...f, ...updates };
-          }
-          return f;
-        }),
-      };
-      pushHistory(next);
-      return next;
-    });
-  }, [design.fields, selectedId, pushHistory]);
-
-  const distributeFields = useCallback((direction: "horizontal" | "vertical") => {
-    const fields = design.fields.filter((f) => f.id === selectedId);
-    if (fields.length < 2) return;
-    const sorted = [...fields].sort((a, b) => (direction === "horizontal" ? a.x : a.y) - (direction === "horizontal" ? b.x : b.y));
-    const first = sorted[0];
-    const last = sorted[sorted.length - 1];
-    const start = direction === "horizontal" ? first.x : first.y;
-    const end = direction === "horizontal" ? last.x + last.w : last.y + last.h;
-    const totalSize = sorted.reduce((sum, f) => sum + (direction === "horizontal" ? f.w : f.h), 0);
-    const gap = (end - start - totalSize) / (sorted.length - 1);
-    let current = start;
-    setDesign((prev) => {
-      const next = {
-        ...prev,
-        fields: prev.fields.map((f) => {
-          const idx = sorted.findIndex((sf) => sf.id === f.id);
-          if (idx >= 0) {
-            const updates: Partial<TemplateField> = {};
-            if (direction === "horizontal") updates.x = current;
-            else updates.y = current;
-            current += (direction === "horizontal" ? f.w : f.h) + gap;
-            return { ...f, ...updates };
-          }
-          return f;
-        }),
-      };
-      pushHistory(next);
-      return next;
-    });
-  }, [design.fields, selectedId, pushHistory]);
+  }, []);
 
   const handleCanvasMouseDown = (e: React.MouseEvent, fieldId: string) => {
     const field = design.fields.find((f) => f.id === fieldId);
@@ -372,52 +232,18 @@ export default function TemplateEditorPage() {
     };
   }, [resizing, zoom, updateField]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        if (e.shiftKey) {
-          e.preventDefault();
-          redo();
-        } else {
-          e.preventDefault();
-          undo();
-        }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
-        e.preventDefault();
-        redo();
-      }
-      if (e.key === "Delete" && selectedId && !previewMode) {
-        deleteField(selectedId);
-      }
-      if (e.key === "Backspace" && selectedId && !previewMode) {
-        e.preventDefault(); // prevent browser back navigation
-        deleteField(selectedId);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, selectedId, previewMode, deleteField]);
-
   const handleSave = async () => {
-    const name = templateName.trim();
-    if (!validateMinLength(name, 2)) {
-      toast.error(t("common.validation.invalidName"));
-      return;
-    }
     setSaving(true);
     try {
       if (id === "new") {
-        const created = await templateApi.create({ name, design_data: design as any });
-        toast.success(t("adminTemplateEditor.saveSuccess"));
+        const created = await templateApi.create({ name: templateName, design_data: design as any });
         router.push(`/admin/templates/editor/${created.id}`);
       } else {
-        await templateApi.update(id, { name, design_data: design as any });
-        setTemplateName(name);
-        toast.success(t("adminTemplateEditor.saveSuccess"));
+        await templateApi.update(id, { name: templateName, design_data: design as any });
+        alert("Đã lưu mẫu thành công!");
       }
     } catch (err: any) {
-      toast.error(err.message || t("adminTemplateEditor.error.save"));
+      alert(err.message || "Lưu mẫu thất bại");
     } finally {
       setSaving(false);
     }
@@ -430,7 +256,7 @@ export default function TemplateEditorPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminTemplateEditor.loading")}</div>;
+    return <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>;
   }
 
   const renderFieldContent = (field: TemplateField) => {
@@ -468,15 +294,15 @@ export default function TemplateEditorPage() {
           return (
             <img
               src={imgSrc}
-              alt={field.label || t("adminTemplateEditor.logoLabel")}
+              alt={field.label || "Logo tổ chức"}
               style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
             />
           );
         }
         return (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#64748b", fontSize: 10, padding: 4, textAlign: "center" }}>
-            <span style={{ fontSize: 16 }}>🏢 {t("adminTemplateEditor.logoLabel")}</span>
-            <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}>{organizationLogo ? t("adminTemplateEditor.logoLabel") : t("adminTemplateEditor.noLogoInSettings")}</span>
+            <span style={{ fontSize: 16 }}>🏢 Logo</span>
+            <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}>{organizationLogo ? "Logo tổ chức" : "Chưa có logo trong Cài đặt"}</span>
           </div>
         );
       }
@@ -497,60 +323,15 @@ export default function TemplateEditorPage() {
       if (field.type === "rect") {
         return <div style={{ width: "100%", height: "100%", border: `2px solid ${field.color || "#c9a84c"}`, boxSizing: "border-box" }} />;
       }
-      if (field.type === "ellipse") {
-        return (
-          <svg width="100%" height="100%" viewBox={`0 0 ${field.w} ${field.h}`} style={{ display: "block" }}>
-            <ellipse
-              cx={field.w / 2}
-              cy={field.h / 2}
-              rx={field.w / 2}
-              ry={field.h / 2}
-              fill="none"
-              stroke={field.color || "#c9a84c"}
-              strokeWidth={2}
-            />
-          </svg>
-        );
-      }
-      if (field.type === "triangle") {
-        return (
-          <svg width="100%" height="100%" viewBox={`0 0 ${field.w} ${field.h}`} style={{ display: "block" }}>
-            <polygon
-              points={`${field.w / 2},0 ${field.w},${field.h} 0,${field.h}`}
-              fill="none"
-              stroke={field.color || "#c9a84c"}
-              strokeWidth={2}
-            />
-          </svg>
-        );
-      }
-      if (field.type === "star") {
-        const cx = field.w / 2;
-        const cy = field.h / 2;
-        const spikes = 5;
-        const outerRadius = Math.min(field.w, field.h) / 2;
-        const innerRadius = outerRadius * 0.4;
-        let points = "";
-        for (let i = 0; i < spikes * 2; i++) {
-          const radius = i % 2 === 0 ? outerRadius : innerRadius;
-          const angle = (Math.PI * i) / spikes - Math.PI / 2;
-          points += `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)} `;
-        }
-        return (
-          <svg width="100%" height="100%" viewBox={`0 0 ${field.w} ${field.h}`} style={{ display: "block" }}>
-            <polygon points={points.trim()} fill="none" stroke={field.color || "#c9a84c"} strokeWidth={2} />
-          </svg>
-        );
-      }
       if (field.dynamic && field.binding) {
         const val = mockData[field.binding];
         if (val) {
           return <span>{(field.label ? `${field.label} ` : "") + val}</span>;
         }
-        const label = fieldBindings.find((b) => b.value === field.binding)?.label || field.binding;
+        const label = FIELD_BINDINGS.find((b) => b.value === field.binding)?.label || field.binding;
         return <span style={{ opacity: previewMode ? 0.4 : 0.7 }}>[{label}]</span>;
       }
-      return <span>{field.text || t("adminTemplateEditor.textDefault")}</span>;
+      return <span>{field.text || "Văn bản"}</span>;
     })();
 
     return (
@@ -584,133 +365,153 @@ export default function TemplateEditorPage() {
   const containerHeight = design.page.height;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "var(--page-bg)", fontFamily: "sans-serif", color: "var(--text-main)", transition: "background 0.3s, color 0.3s" }}>
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
       {/* Top Header Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "var(--surface)", borderBottom: "1px solid var(--border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => router.push("/admin/templates")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-secondary)", padding: 4 }}>←</button>
+      <div className="flex items-center justify-between px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push("/admin/templates")}
+            className="bg-transparent border-none cursor-pointer text-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-1"
+          >
+            ←
+          </button>
           <input
             type="text"
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            style={{ fontSize: 16, fontWeight: 700, border: "none", outline: "none", background: "transparent", color: "var(--text-body)", width: 280 }}
-            placeholder={t("adminTemplateEditor.namePlaceholder")}
+            className="text-base font-extrabold border-none outline-none bg-transparent text-slate-900 dark:text-white w-70 placeholder-slate-400 dark:placeholder-slate-500"
+            placeholder="Tên mẫu văn bằng"
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="flex items-center gap-3">
           {/* Zoom controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--page-bg)", borderRadius: 8, padding: "2px" }}>
-            <button onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "var(--text-secondary)" }}>−</button>
-            <span style={{ fontSize: 11, color: "var(--text-secondary)", minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: "var(--text-secondary)" }}>+</button>
-          </div>
-
-          {/* Undo/Redo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--page-bg)", borderRadius: 8, padding: "2px" }}>
-            <button onClick={undo} disabled={historyIndex <= 0} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: historyIndex > 0 ? "var(--text-body)" : "var(--text-muted)", opacity: historyIndex > 0 ? 1 : 0.4 }} title={t("adminTemplateEditor.undoTitle")}>↶</button>
-            <button onClick={redo} disabled={historyIndex >= history.length - 1} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 12, color: historyIndex < history.length - 1 ? "var(--text-body)" : "var(--text-muted)", opacity: historyIndex < history.length - 1 ? 1 : 0.4 }} title={t("adminTemplateEditor.redoTitle")}>↷</button>
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
+            <button
+              onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}
+              className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors cursor-pointer"
+            >
+              −
+            </button>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 min-w-[36px] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))}
+              className="px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold transition-colors cursor-pointer"
+            >
+              +
+            </button>
           </div>
 
           {/* Mode Switcher */}
           <button
             onClick={() => setPreviewMode(!previewMode)}
-            style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border)", background: previewMode ? "#3b82f6" : "var(--surface)", color: previewMode ? "#fff" : "var(--text-secondary)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+            className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95 ${
+              previewMode
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+            }`}
           >
-            {previewMode ? t("adminTemplateEditor.modeDesign") : t("adminTemplateEditor.modePreview")}
+            {previewMode ? "📐 Thiết kế mẫu" : "👁 Xem & Nhập liệu"}
           </button>
 
           {/* Save button */}
           <button
             onClick={handleSave}
             disabled={saving || !templateName.trim()}
-            style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving || !templateName.trim() ? 0.6 : 1 }}
+            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
-            {saving ? t("adminTemplateEditor.saving") : t("adminTemplateEditor.save")}
+            {saving ? "Đang lưu..." : "Lưu mẫu"}
           </button>
         </div>
       </div>
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <div className="flex flex-1 overflow-hidden">
         {/* Left Side Panel: Template Editor toolbox OR Manual Input & File Selector */}
         {!previewMode ? (
-          <div style={{ width: 220, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>{t("adminTemplateEditor.addFieldTitle")}</h3>
+          <div className="w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto shrink-0">
+            <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+              Thêm trường
+            </h3>
             <button
               onClick={() => addField("image", "organization_logo")}
-              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 10, borderRadius: 10, border: "1px solid #3b82f6", background: "var(--surface-active)", cursor: "pointer", fontSize: 13, color: "var(--surface-active-text)", fontWeight: 700, transition: "all 0.15s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.25)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-active)"; }}
+              className="flex items-center gap-2.5 w-full p-2.5 mb-2.5 rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs"
             >
-              <span style={{ fontSize: 16 }}>🏢</span>
-              <span>{t("adminTemplateEditor.logoLabel")}</span>
+              <span className="text-base">🏢</span>
+              <span>Logo tổ chức</span>
             </button>
-            {fieldTemplates.map((group) => (
-              <div key={group.category} style={{ marginBottom: 16 }}>
-                <h4 style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{group.category}</h4>
-                {group.items.map((ft) => (
-                  <button
-                    key={ft.type}
-                    onClick={() => addField(ft.type)}
-                    style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 14px", marginBottom: 6, borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: 13, color: "var(--text-body)", transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "var(--surface-active)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
-                  >
-                    <span style={{ fontSize: 16 }}>{ft.icon}</span>
-                    <span>{ft.label}</span>
-                  </button>
-                ))}
-              </div>
+            {FIELD_TEMPLATES.map((ft) => (
+              <button
+                key={ft.type}
+                onClick={() => addField(ft.type)}
+                className="flex items-center gap-2.5 w-full p-2.5 mb-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer transition-all active:scale-95 shadow-2xs"
+              >
+                <span className="text-base">{ft.icon}</span>
+                <span>{ft.label}</span>
+              </button>
             ))}
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, margin: "20px 0 12px" }}>{t("adminTemplateEditor.fieldsTitle")} ({design.fields.length})</h3>
+            <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-5 mb-3">
+              Các trường ({design.fields.length})
+            </h3>
             {design.fields.map((f) => (
               <div
                 key={f.id}
                 onClick={() => setSelectedId(f.id)}
-                style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, color: selectedId === f.id ? "#3b82f6" : "var(--text-secondary)", background: selectedId === f.id ? "var(--surface-active)" : "transparent", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                className={`p-2 rounded-xl text-xs font-medium cursor-pointer transition-all flex items-center justify-between mb-1 ${
+                  selectedId === f.id
+                    ? "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                }`}
               >
-                <span style={{ fontWeight: 500 }}>{f.binding ? fieldBindings.find((b) => b.value === f.binding)?.label || f.binding : f.text || t("adminTemplateEditor.textDefault")}</span>
-                <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{f.type}</span>
+                <span className="font-semibold truncate max-w-[120px]">
+                  {f.binding ? FIELD_BINDINGS.find((b) => b.value === f.binding)?.label || f.binding : f.text || "Văn bản"}
+                </span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">{f.type}</span>
               </div>
             ))}
           </div>
         ) : (
           /* Manual Input & Import Record Navigation Side Panel */
-          <div style={{ width: 320, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
-            <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid var(--border-subtle)" }}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)", marginBottom: 4 }}>{t("adminTemplateEditor.inputDataTitle")}</h3>
-              <p style={{ fontSize: 11, color: "var(--text-secondary)" }}>{t("adminTemplateEditor.inputDataDescription")}</p>
+          <div className="w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto shrink-0">
+            <div className="mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-xs font-extrabold text-slate-900 dark:text-white mb-1">
+                Nhập dữ liệu văn bằng
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Nhập tay hoặc chọn bản ghi từ file CSV/Excel để nạp vào phôi văn bằng.
+              </p>
             </div>
 
             {/* Imported File Record Selector */}
             {importedData && (
-              <div style={{ marginBottom: 16, background: "var(--success-bg)", border: "1px solid var(--success-border)", padding: 12, borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--success-text)", marginBottom: 6 }}>
-                  📁 {importedData.fileName} ({importedData.totalRows} {t("adminTemplateEditor.recordUnit")})
+              <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 p-3 rounded-xl shadow-2xs text-emerald-800 dark:text-emerald-300">
+                <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1.5 truncate">
+                  📁 {importedData.fileName} ({importedData.totalRows} bản ghi)
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleSelectRowIndex(activeRowIndex - 1)}
                     disabled={activeRowIndex <= 0}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontSize: 11, cursor: "pointer", opacity: activeRowIndex <= 0 ? 0.4 : 1 }}
+                    className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs cursor-pointer disabled:opacity-40"
                   >
                     ◄
                   </button>
                   <select
                     value={activeRowIndex}
                     onChange={(e) => handleSelectRowIndex(Number(e.target.value))}
-                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: 11, background: "var(--surface)", color: "var(--text-main)" }}
+                    className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer truncate"
                   >
                     {importedData.rows.map((r, i) => (
-                      <option key={i} value={i} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
-                        {t("adminTemplateEditor.rowLabel")} {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `${t("adminTemplateEditor.recordLabel")} ${r.rowNumber}`}
+                      <option key={i} value={i} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        Dòng {r.rowNumber}: {r.record.student_fullName || r.record.student_id || `Bản ghi ${r.rowNumber}`}
                       </option>
                     ))}
                   </select>
                   <button
                     onClick={() => handleSelectRowIndex(activeRowIndex + 1)}
                     disabled={activeRowIndex >= importedData.rows.length - 1}
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface)", color: "var(--text-main)", fontSize: 11, cursor: "pointer", opacity: activeRowIndex >= importedData.rows.length - 1 ? 0.4 : 1 }}
+                    className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs cursor-pointer disabled:opacity-40"
                   >
                     ►
                   </button>
@@ -719,16 +520,33 @@ export default function TemplateEditorPage() {
             )}
 
             {/* Manual Form Inputs for Certificate Fields */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {manualInputFields.map(({ key, label }) => (
+            <div className="flex flex-col gap-2.5">
+              {[
+                { key: "student_fullName", label: "Họ và tên sinh viên" },
+                { key: "certificate_title", label: "Tên văn bằng" },
+                { key: "organization_name", label: "Tên tổ chức / Trường" },
+                { key: "dob", label: "Ngày sinh" },
+                { key: "placeOfBirth", label: "Nơi sinh" },
+                { key: "gender", label: "Giới tính" },
+                { key: "ethnicity", label: "Dân tộc" },
+                { key: "schoolName", label: "Đơn vị đào tạo" },
+                { key: "examCohort", label: "Khóa học" },
+                { key: "examBoard", label: "Hội đồng thi" },
+                { key: "issueLocation", label: "Nơi cấp" },
+                { key: "issueDate", label: "Ngày cấp" },
+                { key: "serialNumber", label: "Số hiệu" },
+                { key: "registryNumber", label: "Số vào sổ" },
+              ].map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 3 }}>{label}</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    {label}
+                  </label>
                   <input
                     type="text"
                     value={mockData[key] || ""}
                     onChange={(e) => setMockData((prev) => ({ ...prev, [key]: e.target.value }))}
-                    style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, color: "var(--text-body)", background: "var(--surface)", outline: "none" }}
-                    placeholder={`${t("adminTemplateEditor.enterPrefix")} ${label.toLowerCase()}...`}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    placeholder={`Nhập ${label.toLowerCase()}...`}
                   />
                 </div>
               ))}
@@ -737,7 +555,7 @@ export default function TemplateEditorPage() {
         )}
 
         {/* Center Canvas Workspace */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "var(--page-bg)" }}>
+        <div className="flex-1 flex items-center justify-center overflow-auto p-6 bg-slate-100 dark:bg-slate-950 transition-colors">
           <div
             ref={canvasRef}
             onClick={() => { if (!previewMode) setSelectedId(null); }}
@@ -794,36 +612,44 @@ export default function TemplateEditorPage() {
 
         {/* Right Properties Panel when in Design Mode */}
         {!previewMode && selectedField && (
-          <div style={{ width: 280, background: "var(--surface)", borderLeft: "1px solid var(--border)", padding: 16, overflowY: "auto" }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-body)", marginBottom: 16 }}>{t("adminTemplateEditor.propsTitle")}</h3>
+          <div className="w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-4 overflow-y-auto text-slate-900 dark:text-slate-100 shrink-0">
+            <h3 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+              Thuộc tính trường
+            </h3>
 
             {/* Field Type Selector */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.fieldTypeLabel")}</label>
+            <div className="mb-3.5">
+              <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                Loại trường
+              </label>
               <select
                 value={selectedField.type}
                 onChange={(e) => updateField(selectedField.id, { type: e.target.value as any })}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer"
               >
-                <option value="text" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeText")}</option>
-                <option value="image" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.typeImageLogo")}</option>
-                <option value="qr" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeQr")}</option>
-                <option value="line" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeLine")}</option>
-                <option value="rect" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fieldTypeRect")}</option>
+                <option value="text" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Văn bản</option>
+                <option value="image" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Hình ảnh / Logo</option>
+                <option value="qr" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Mã QR</option>
+                <option value="line" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Đường kẻ</option>
+                <option value="rect" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Hình chữ nhật</option>
               </select>
             </div>
 
             {/* Dynamic Binding Selector */}
             {selectedField.type !== "line" && selectedField.type !== "rect" && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.bindingLabel")}</label>
+              <div className="mb-3.5">
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Dữ liệu động (Binding)
+                </label>
                 <select
                   value={selectedField.binding || ""}
                   onChange={(e) => updateField(selectedField.id, { binding: e.target.value || undefined, dynamic: !!e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer"
                 >
-                  {fieldBindings.map((b) => (
-                    <option key={b.value} value={b.value} style={{ background: "var(--surface)", color: "var(--text-main)" }}>{b.label}</option>
+                  {FIELD_BINDINGS.map((b) => (
+                    <option key={b.value} value={b.value} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                      {b.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -831,43 +657,47 @@ export default function TemplateEditorPage() {
 
             {/* Missing Organization Logo Alert if not configured */}
             {!organizationLogo && (selectedField.type === "image" || selectedField.binding === "organization_logo") && (
-              <div style={{ background: "var(--warning-bg)", border: "1px solid var(--warning-border)", padding: 10, borderRadius: 8, fontSize: 11, color: "var(--warning-text)", marginBottom: 14 }}>
-                <div>{t("adminTemplateEditor.noLogoAlert")}</div>
-                <Link href="/admin/settings" target="_blank" style={{ color: "var(--warning-text)", fontWeight: 700, textDecoration: "underline", marginTop: 4, display: "inline-block" }}>
-                  {t("adminTemplateEditor.uploadLogoLink")}
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 p-2.5 rounded-xl text-xs text-amber-800 dark:text-amber-300 mb-3.5">
+                <div>⚠️ Chưa có logo trong Cài đặt tổ chức.</div>
+                <Link href="/admin/settings" target="_blank" className="text-amber-600 dark:text-amber-400 font-bold underline mt-1 inline-block">
+                  👉 Tải logo tại Cài đặt (Settings)
                 </Link>
               </div>
             )}
 
             {/* Static Text Content */}
             {!selectedField.dynamic && selectedField.type === "text" && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.textContentLabel")}</label>
+              <div className="mb-3.5">
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Nội dung văn bản
+                </label>
                 <input
                   type="text"
                   value={selectedField.text || ""}
                   onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
                 />
               </div>
             )}
 
             {/* Line / Rect Colors */}
             {(selectedField.type === "line" || selectedField.type === "rect") && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.colorLabel")}</label>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <div className="mb-3.5">
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Màu sắc
+                </label>
+                <div className="flex gap-2 items-center">
                   <input
                     type="color"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ width: 36, height: 36, padding: 0, border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", background: "var(--surface)" }}
+                    className="w-9 h-9 p-0.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 cursor-pointer overflow-hidden shrink-0"
                   />
                   <input
                     type="text"
                     value={selectedField.color || "#c9a84c"}
                     onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 11, color: "var(--text-main)", background: "var(--surface)", outline: "none", fontFamily: "monospace" }}
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:outline-none"
                   />
                 </div>
               </div>
@@ -877,27 +707,31 @@ export default function TemplateEditorPage() {
             {selectedField.type === "text" && (
               <>
                 {/* Font Family */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.fontLabel")}</label>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Phông chữ
+                  </label>
                   <select
                     value={selectedField.font || "sans-serif"}
                     onChange={(e) => updateField(selectedField.id, { font: e.target.value })}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 12, color: "var(--text-main)", background: "var(--surface)", outline: "none" }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none cursor-pointer"
                   >
-                    <option value="sans-serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontSans")}</option>
-                    <option value="serif" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontSerif")}</option>
-                    <option value="monospace" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontMono")}</option>
-                    <option value="script" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateEditor.fontScript")}</option>
+                    <option value="sans-serif" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Sans-serif (Mặc định)</option>
+                    <option value="serif" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Serif (Cổ điển)</option>
+                    <option value="monospace" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Monospace (Mã số)</option>
+                    <option value="script" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">Script (Nghệ thuật)</option>
                   </select>
                 </div>
 
                 {/* Text Size Editor with Stepper & Quick Presets */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.fontSizeLabel")}</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Cỡ chữ (px)
+                  </label>
+                  <div className="flex items-center gap-1.5 mb-1.5">
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.max(8, (selectedField.size || 14) - 1) })}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-faint)" }}
+                      className="w-8 h-8 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-base font-bold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer active:scale-95 transition-all"
                     >
                       −
                     </button>
@@ -907,26 +741,26 @@ export default function TemplateEditorPage() {
                       onChange={(e) => updateField(selectedField.id, { size: Math.max(8, Number(e.target.value)) })}
                       min={8}
                       max={120}
-                      style={{ flex: 1, height: 32, textAlign: "center", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, fontWeight: 700, color: "var(--text-body)", background: "var(--surface)", outline: "none" }}
+                      className="flex-1 h-8 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold focus:outline-none"
                     />
                     <button
                       onClick={() => updateField(selectedField.id, { size: Math.min(120, (selectedField.size || 14) + 1) })}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 16, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-faint)" }}
+                      className="w-8 h-8 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-base font-bold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer active:scale-95 transition-all"
                     >
                       +
                     </button>
                   </div>
                   {/* Preset font size chips */}
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  <div className="flex gap-1 flex-wrap">
                     {[10, 12, 14, 18, 24, 32, 48].map((s) => (
                       <button
                         key={s}
                         onClick={() => updateField(selectedField.id, { size: s })}
-                        style={{
-                          padding: "2px 6px", borderRadius: 6, border: `1px solid ${selectedField.size === s ? "var(--accent)" : "var(--border)"}`,
-                          background: selectedField.size === s ? "var(--surface-active)" : "var(--surface)", color: selectedField.size === s ? "var(--surface-active-text)" : "var(--text-secondary)",
-                          fontSize: 10, fontWeight: 600, cursor: "pointer"
-                        }}
+                        className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold cursor-pointer transition-all ${
+                          selectedField.size === s
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                        }`}
                       >
                         {s}
                       </button>
@@ -935,63 +769,67 @@ export default function TemplateEditorPage() {
                 </div>
 
                 {/* Text Color */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.textColorLabel")}</label>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Màu văn bản
+                  </label>
+                  <div className="flex gap-2 items-center">
                     <input
                       type="color"
                       value={selectedField.color || "#333333"}
                       onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                      style={{ width: 36, height: 36, padding: 0, border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", background: "var(--surface)" }}
+                      className="w-9 h-9 p-0.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 cursor-pointer overflow-hidden shrink-0"
                     />
                     <input
                       type="text"
                       value={selectedField.color || "#333333"}
                       onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                      style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 11, color: "var(--text-faint)", background: "var(--surface)", outline: "none", fontFamily: "monospace" }}
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Style & Alignment Toolbar */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.formatAlignLabel")}</label>
-                  <div style={{ display: "flex", gap: 6 }}>
+                <div className="mb-3.5">
+                  <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                    Định dạng & Căn chỉnh
+                  </label>
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => updateField(selectedField.id, { bold: !selectedField.bold })}
-                      style={{
-                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.bold ? "var(--accent)" : "var(--border)"}`,
-                        background: selectedField.bold ? "var(--surface-active)" : "var(--surface)", color: selectedField.bold ? "var(--surface-active-text)" : "var(--text-faint)",
-                        fontWeight: "bold", fontSize: 14, cursor: "pointer"
-                      }}
-                      title={t("adminTemplateEditor.boldTitle")}
+                      className={`w-9 h-9 rounded-xl border text-sm font-bold cursor-pointer transition-all ${
+                        selectedField.bold
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      }`}
+                      title="In đậm"
                     >
                       B
                     </button>
                     <button
                       onClick={() => updateField(selectedField.id, { italic: !selectedField.italic })}
-                      style={{
-                        width: 36, height: 36, borderRadius: 8, border: `1px solid ${selectedField.italic ? "var(--accent)" : "var(--border)"}`,
-                        background: selectedField.italic ? "var(--surface-active)" : "var(--surface)", color: selectedField.italic ? "var(--surface-active-text)" : "var(--text-faint)",
-                        fontStyle: "italic", fontSize: 14, cursor: "pointer"
-                      }}
-                      title={t("adminTemplateEditor.italicTitle")}
+                      className={`w-9 h-9 rounded-xl border text-sm italic cursor-pointer transition-all ${
+                        selectedField.italic
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      }`}
+                      title="In nghiêng"
                     >
                       I
                     </button>
 
-                    <div style={{ width: 1, background: "var(--border)", margin: "0 2px" }} />
+                    <div className="w-[1px] bg-slate-200 dark:bg-slate-700 my-1 mx-0.5" />
 
                     {(["left", "center", "right"] as const).map((a) => (
                       <button
                         key={a}
                         onClick={() => updateField(selectedField.id, { align: a })}
-                        style={{
-                          flex: 1, height: 36, borderRadius: 8, border: `1px solid ${selectedField.align === a ? "var(--accent)" : "var(--border)"}`,
-                          background: selectedField.align === a ? "var(--surface-active)" : "var(--surface)", color: selectedField.align === a ? "var(--surface-active-text)" : "var(--text-faint)",
-                          fontSize: 12, fontWeight: 700, cursor: "pointer"
-                        }}
-                        title={a === "left" ? t("adminTemplateEditor.alignLeft") : a === "center" ? t("adminTemplateEditor.alignCenter") : t("adminTemplateEditor.alignRight")}
+                        className={`flex-1 h-9 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
+                          selectedField.align === a
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                        }`}
+                        title={a === "left" ? "Căn trái" : a === "center" ? "Căn giữa" : "Căn phải"}
                       >
                         {a === "left" ? "⬅" : a === "center" ? "↔" : "➡"}
                       </button>
@@ -1001,39 +839,22 @@ export default function TemplateEditorPage() {
               </>
             )}
 
-            {/* Align & Distribute (Canvas-level) */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{t("adminTemplateEditor.alignDistributeTitle")}</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button onClick={() => alignFields("left")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignLeft")}>⬅</button>
-                  <button onClick={() => alignFields("center")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignCenter")}>↔</button>
-                  <button onClick={() => alignFields("right")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignRight")}>➡</button>
-                </div>
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button onClick={() => alignFields("top")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignTop")}>⬆</button>
-                  <button onClick={() => alignFields("middle")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignMiddle")}>↕</button>
-                  <button onClick={() => alignFields("bottom")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.alignBottom")}>⬇</button>
-                </div>
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button onClick={() => distributeFields("horizontal")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.distributeHorizontal")}>⋮⋮</button>
-                  <button onClick={() => distributeFields("vertical")} style={{ flex: 1, height: 30, borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 10, color: "var(--text-secondary)", cursor: "pointer" }} title={t("adminTemplateEditor.distributeVertical")}>⋮⋮</button>
-                </div>
-              </div>
-            </div>
-
             {/* Position & Size */}
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("adminTemplateEditor.positionSizeTitle")}</h4>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-3.5">
+              <h4 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                Vị trí & Kích thước
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
                 {(["x", "y", "w", "h"] as const).map((prop) => (
                   <div key={prop}>
-                    <label style={{ display: "block", fontSize: 9, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 2 }}>{prop}</label>
+                    <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+                      {prop}
+                    </label>
                     <input
                       type="number"
                       value={selectedField[prop]}
                       onChange={(e) => updateField(selectedField.id, { [prop]: Number(e.target.value) })}
-                      style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 11, color: "var(--text-faint)", background: "var(--surface)", outline: "none" }}
+                      className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-none"
                     />
                   </div>
                 ))}
@@ -1041,9 +862,11 @@ export default function TemplateEditorPage() {
             </div>
 
             {/* Quick Actions (Duplicate & Delete) */}
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>{t("adminTemplateEditor.fieldActionsTitle")}</h4>
-              <div style={{ display: "flex", gap: 6 }}>
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-3.5 space-y-2">
+              <h4 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Thao tác trường
+              </h4>
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     const newField: TemplateField = {
@@ -1055,15 +878,15 @@ export default function TemplateEditorPage() {
                     setDesign((prev) => ({ ...prev, fields: [...prev.fields, newField] }));
                     setSelectedId(newField.id);
                   }}
-                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-subtle)", fontSize: 11, fontWeight: 600, color: "var(--text-faint)", cursor: "pointer" }}
+                  className="flex-1 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer transition-all active:scale-95"
                 >
-                  {t("adminTemplateEditor.duplicateField")}
+                  📋 Nhân bản
                 </button>
                 <button
                   onClick={() => deleteField(selectedField.id)}
-                  style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid var(--danger-border)", background: "var(--danger-bg)", fontSize: 11, fontWeight: 700, color: "var(--danger-text)", cursor: "pointer" }}
+                  className="flex-1 py-2 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold cursor-pointer transition-all active:scale-95"
                 >
-                  {t("adminTemplateEditor.deleteField")}
+                  🗑 Xóa trường
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import styles from "./ShareDialog.module.css";
 import QRCodeBox from "@/components/credential/QRCodeBox";
+import Link from "next/link";
 
 interface ShareDialogProps {
   credentialCode: string;

@@ -2,13 +2,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { studentApi } from "@/features/students/services/student.api";
-import { useI18n } from "@/features/i18n/I18nContext";
-import { validatePassword } from "@/lib/validators";
-import toast from "react-hot-toast";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { t } = useI18n();
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -19,10 +15,12 @@ export default function ChangePasswordPage() {
     setError("");
     setSuccess("");
 
-    if (!form.currentPassword) { setError(t("studentChangePassword.error.currentPasswordRequired")); return; }
-    if (form.newPassword.length < 8) { setError(t("studentChangePassword.error.newPasswordLength")); return; }
-    if (!validatePassword(form.newPassword)) { setError(t("studentChangePassword.error.newPasswordComplexity")); return; }
-    if (form.newPassword !== form.confirmPassword) { setError(t("studentChangePassword.error.confirmMismatch")); return; }
+    if (!form.currentPassword) { setError("Vui lòng nhập mật khẩu hiện tại"); return; }
+    if (form.newPassword.length < 8) { setError("Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.newPassword)) {
+      setError("Mật khẩu phải có ít nhất 1 chữ hoa, 1 chữ thường, 1 số"); return;
+    }
+    if (form.newPassword !== form.confirmPassword) { setError("Mật khẩu xác nhận không khớp"); return; }
 
     setSaving(true);
     try {
@@ -30,13 +28,10 @@ export default function ChangePasswordPage() {
         currentPassword: form.currentPassword,
         newPassword: form.newPassword,
       });
-      setSuccess(t("studentChangePassword.success.changed"));
-      toast.success(t("studentChangePassword.success.changed"));
+      setSuccess("Đổi mật khẩu thành công");
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("studentChangePassword.error.failed");
-      setError(message);
-      toast.error(message);
+      setError(err instanceof Error ? err.message : "Đổi mật khẩu thất bại");
     } finally {
       setSaving(false);
     }
@@ -45,13 +40,13 @@ export default function ChangePasswordPage() {
   return (
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t("studentChangePassword.header.title")}</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("studentChangePassword.header.description")}</p>
+        <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Đổi mật khẩu</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cập nhật mật khẩu đăng nhập của bạn.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-800/60 rounded-3xl p-6 space-y-4">
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("studentChangePassword.form.currentPassword")}</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu hiện tại *</label>
           <input type="password"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.currentPassword}
@@ -59,16 +54,16 @@ export default function ChangePasswordPage() {
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("studentChangePassword.form.newPassword")}</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Mật khẩu mới *</label>
           <input type="password"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.newPassword}
             onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-            placeholder={t("studentChangePassword.form.passwordPlaceholder")}
+            placeholder="Tối thiểu 8 ký tự, 1 hoa, 1 thường, 1 số"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">{t("studentChangePassword.form.confirmPassword")}</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Xác nhận mật khẩu mới *</label>
           <input type="password"
             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             value={form.confirmPassword}
@@ -82,11 +77,11 @@ export default function ChangePasswordPage() {
         <div className="flex gap-3">
           <button type="submit" disabled={saving}
             className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl transition-all">
-            {saving ? t("studentChangePassword.form.saving") : t("studentChangePassword.form.submit")}
+            {saving ? "Đang xử lý..." : "Đổi mật khẩu"}
           </button>
           <button type="button" onClick={() => router.push("/student/profile")}
             className="px-4 py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all">
-            {t("studentChangePassword.back")}
+            Quay lại
           </button>
         </div>
       </form>

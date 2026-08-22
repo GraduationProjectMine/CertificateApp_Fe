@@ -1,23 +1,18 @@
 "use client";
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { certificateApi, type CertificateDto } from "@/features/certificates/services/certificate.api";
-import { useI18n } from "@/features/i18n/I18nContext";
-import toast from "react-hot-toast";
+
+const STATUS_MAP: Record<string, { label: string; className: string }> = {
+  PENDING: { label: "Chờ xử lý", className: styles._26 },
+  APPROVED: { label: "Đã chấp thuận", className: styles._27 },
+  REJECTED: { label: "Từ chối", className: styles._28 },
+};
 
 const DISPUTES_PER_PAGE = 5;
 
 export default function StudentDisputesPage() {
-  const { t } = useI18n();
-  const statusInfo = (status: string): { label: string; className: string } => {
-    const STATUS_MAP: Record<string, { label: string; className: string }> = {
-      PENDING: { label: t("studentDisputes.status.pending"), className: styles._26 },
-      APPROVED: { label: t("studentDisputes.status.approved"), className: styles._27 },
-      REJECTED: { label: t("studentDisputes.status.rejected"), className: styles._28 },
-    };
-    return STATUS_MAP[status] || STATUS_MAP.PENDING;
-  };
   const [disputes, setDisputes] = useState<DisputeDto[]>([]);
   const [certs, setCerts] = useState<CertificateDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +28,7 @@ export default function StudentDisputesPage() {
   const [formDetails, setFormDetails] = useState("");
   const [formError, setFormError] = useState("");
 
-  const fetch = useCallback(async () => {
+  const fetch = async () => {
     setLoading(true);
     setError("");
     try {
@@ -44,13 +39,13 @@ export default function StudentDisputesPage() {
       setDisputes(d);
       setCerts(c);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("studentDisputes.loadError"));
+      setError(err instanceof Error ? err.message : "Không thể tải dữ liệu");
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  };
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetch(); }, []);
 
   // Sort disputes by latest date
   const sortedDisputes = useMemo(() => {
@@ -71,8 +66,8 @@ export default function StudentDisputesPage() {
     e.preventDefault();
     setFormError("");
 
-    if (!formCertId) { setFormError(t("studentDisputes.formError.noCert")); return; }
-    if (formReason.trim().length < 10) { setFormError(t("studentDisputes.formError.reasonLength")); return; }
+    if (!formCertId) { setFormError("Vui lòng chọn văn bằng bản thảo"); return; }
+    if (formReason.trim().length < 10) { setFormError("Lý do phải có ít nhất 10 ký tự"); return; }
 
     setSubmitting(true);
     try {
@@ -81,16 +76,13 @@ export default function StudentDisputesPage() {
         reason: formReason.trim(),
         details: formDetails.trim() || undefined,
       });
-      toast.success(t("studentDisputes.successCreated"));
       setShowModal(false);
       setFormCertId("");
       setFormReason("");
       setFormDetails("");
       fetch();
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("studentDisputes.formError.failed");
-      setFormError(message);
-      toast.error(message);
+      setFormError(err instanceof Error ? err.message : "Gửi yêu cầu thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -100,14 +92,14 @@ export default function StudentDisputesPage() {
     <div className={styles._1}>
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("studentDisputes.header.title")}</h1>
-          <p className={styles._4}>{t("studentDisputes.header.description")}</p>
+          <h1 className={styles._3}>Yêu cầu chỉnh sửa</h1>
+          <p className={styles._4}>Quản lý các yêu cầu chỉnh sửa thông tin văn bằng bản thảo</p>
         </div>
         <button onClick={() => setShowModal(true)} className={styles._5}>
           <svg className={styles._6} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          {t("studentDisputes.newRequest")}
+          Gửi yêu cầu chỉnh sửa
         </button>
       </div>
 
@@ -132,14 +124,14 @@ export default function StudentDisputesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
-          <p className={styles._12}>{t("studentDisputes.empty.title")}</p>
-          <p className={styles._30}>{t("studentDisputes.empty.hint")}</p>
+          <p className={styles._12}>Chưa có yêu cầu chỉnh sửa nào</p>
+          <p className={styles._30}>Nhấn &ldquo;Gửi yêu cầu chỉnh sửa&rdquo; để tạo yêu cầu mới</p>
         </div>
       ) : (
         <>
           <div className={styles._13}>
             {paginatedDisputes.map((d) => {
-              const st = statusInfo(d.status);
+              const st = STATUS_MAP[d.status] || STATUS_MAP.PENDING;
               return (
                 <div key={d.id} className={styles._14}>
                   <div className={styles._15}>
@@ -150,19 +142,19 @@ export default function StudentDisputesPage() {
                         </svg>
                       </div>
                       <div className={styles._19}>
-                        <h3 className={styles._20}>{d.certificate?.certificate_title || t("studentDisputes.card.draftCertificate")}</h3>
+                        <h3 className={styles._20}>{d.certificate?.certificate_title || "Văn bằng bản thảo"}</h3>
                         <p className={styles._22}>{d.reason}</p>
-                        {d.details && <p className="text-xs text-gray-500 mt-1">{t("studentDisputes.card.details")} {d.details}</p>}
+                        {d.details && <p className="text-xs text-gray-500 mt-1">Chi tiết: {d.details}</p>}
                         <p className={styles._31}>{new Date(d.createdAt).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                         {d.status !== "PENDING" && d.reviewer_note && (
                           <div className={styles._32}>
-                            <span className={styles._33}>{t("studentDisputes.card.schoolResponse")}</span>
+                            <span className={styles._33}>Phản hồi từ nhà trường: </span>
                             {d.reviewer_note}
                           </div>
                         )}
                         {d.status !== "PENDING" && d.resolved_at && (
                           <p className={styles._34}>
-                            {t("studentDisputes.card.resolvedAt")} {new Date(d.resolved_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            Đã xử lý: {new Date(d.resolved_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </p>
                         )}
                       </div>
@@ -178,7 +170,7 @@ export default function StudentDisputesPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
               <p className="text-xs text-gray-500 font-semibold">
-                {t("studentDisputes.pagination.showing")} {((currentPage - 1) * DISPUTES_PER_PAGE) + 1} - {Math.min(currentPage * DISPUTES_PER_PAGE, sortedDisputes.length)} {t("studentDisputes.pagination.of")} {sortedDisputes.length} {t("studentDisputes.pagination.requests")}
+                Hiển thị {((currentPage - 1) * DISPUTES_PER_PAGE) + 1} - {Math.min(currentPage * DISPUTES_PER_PAGE, sortedDisputes.length)} trên tổng số {sortedDisputes.length} yêu cầu
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -186,7 +178,7 @@ export default function StudentDisputesPage() {
                   disabled={currentPage === 1}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
-                  {t("studentDisputes.pagination.previous")}
+                  Trang trước
                 </button>
                 {Array.from({ length: totalPages }).map((_, idx) => {
                   const pageNum = idx + 1;
@@ -209,7 +201,7 @@ export default function StudentDisputesPage() {
                   disabled={currentPage === totalPages}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
-                  {t("studentDisputes.pagination.next")}
+                  Trang sau
                 </button>
               </div>
             </div>
@@ -221,7 +213,7 @@ export default function StudentDisputesPage() {
         <div className={styles._35} onClick={() => !submitting && setShowModal(false)}>
           <div className={styles._36} onClick={(e) => e.stopPropagation()}>
             <div className={styles._37}>
-              <h2 className={styles._38}>{t("studentDisputes.form.title")}</h2>
+              <h2 className={styles._38}>Gửi yêu cầu chỉnh sửa</h2>
               <button onClick={() => !submitting && setShowModal(false)} className={styles._39}>
                 <svg className={styles._6} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -233,45 +225,45 @@ export default function StudentDisputesPage() {
               {formError && <div className={styles._41}>{formError}</div>}
 
               <div className={styles._42}>
-                <label className={styles._43}>{t("studentDisputes.form.selectCert")}</label>
+                <label className={styles._43}>Chọn văn bằng</label>
                 <select value={formCertId} onChange={(e) => setFormCertId(e.target.value)} className={styles._44}>
-                  <option value="">{t("studentDisputes.form.selectPlaceholder")}</option>
+                  <option value="">-- Chọn văn bằng bản thảo --</option>
                   {certs.filter((c) => c.status === "DRAFT").map((c) => (
                     <option key={c.certificate_id} value={c.certificate_id}>
-                      {c.certificate_title} - {c.student_fullName} ({t("studentDisputes.form.draftBadge")})
+                      {c.certificate_title} - {c.student_fullName} (Bản thảo)
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className={styles._42}>
-                <label className={styles._43}>{t("studentDisputes.form.reason")} <span className={styles._45}>*</span></label>
+                <label className={styles._43}>Lý do <span className={styles._45}>*</span></label>
                 <textarea
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
                   rows={3}
-                  placeholder={t("studentDisputes.form.reasonPlaceholder")}
+                  placeholder="Mô tả lý do yêu cầu chỉnh sửa (tối thiểu 10 ký tự)"
                   className={styles._44}
                 />
               </div>
 
               <div className={styles._42}>
-                <label className={styles._43}>{t("studentDisputes.form.details")}</label>
+                <label className={styles._43}>Chi tiết thêm</label>
                 <textarea
                   value={formDetails}
                   onChange={(e) => setFormDetails(e.target.value)}
                   rows={4}
-                  placeholder={t("studentDisputes.form.detailsPlaceholder")}
+                  placeholder="Thông tin chi tiết bổ sung (không bắt buộc)"
                   className={styles._44}
                 />
               </div>
 
               <div className={styles._46}>
                 <button type="button" onClick={() => setShowModal(false)} disabled={submitting} className={styles._47}>
-                  {t("studentDisputes.form.cancel")}
+                  Hủy
                 </button>
                 <button type="submit" disabled={submitting} className={styles._48}>
-                  {submitting ? t("studentDisputes.form.submitting") : t("studentDisputes.form.submit")}
+                  {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
                 </button>
               </div>
             </form>

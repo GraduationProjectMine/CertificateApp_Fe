@@ -6,7 +6,6 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import { issuerApi, type IssuerProfile } from "@/features/issuer/services/issuer.api";
 import toast from "react-hot-toast";
 import { useI18n } from "@/features/i18n/I18nContext";
-import { validateEmail, validateMinLength, validateOptionalUrl } from "@/lib/validators";
 
 const emptyProfile = { organization_name: "", contact_email: "", logo_url: "" };
 
@@ -32,35 +31,20 @@ export default function AdminSettingsPage() {
           logo_url: data.logo_url || "",
         });
       })
-      .catch((err) => setProfileError(err instanceof Error ? err.message : t("adminSettings.loadError")))
+      .catch((err) => setProfileError(err instanceof Error ? err.message : "Không thể tải thông tin tổ chức"))
       .finally(() => setLoading(false));
-  }, [t]);
+  }, []);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!canEdit) return;
-    const organizationName = form.organization_name.trim();
-    const contactEmail = form.contact_email.trim();
-    const logoUrl = form.logo_url.trim();
-    if (!validateMinLength(organizationName, 2)) {
-      toast.error(t("common.validation.invalidName"));
-      return;
-    }
-    if (!validateEmail(contactEmail)) {
-      toast.error(t("common.validation.invalidEmail"));
-      return;
-    }
-    if (!validateOptionalUrl(logoUrl)) {
-      toast.error(t("common.validation.invalidUrl"));
-      return;
-    }
     setSaving(true);
     setProfileError("");
     try {
       const updated = await issuerApi.updateProfile({
-        organization_name: organizationName,
-        contact_email: contactEmail,
-        logo_url: logoUrl,
+        organization_name: form.organization_name.trim(),
+        contact_email: form.contact_email.trim(),
+        logo_url: form.logo_url.trim(),
       });
       setProfile(updated);
       setForm({
@@ -68,9 +52,9 @@ export default function AdminSettingsPage() {
         contact_email: updated.contact_email,
         logo_url: updated.logo_url || "",
       });
-      toast.success(t("adminSettings.saveSuccess"));
+      toast.success("Đã cập nhật thông tin tổ chức");
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("adminSettings.saveError");
+      const message = err instanceof Error ? err.message : "Cập nhật tổ chức thất bại";
       setProfileError(message);
       toast.error(message);
     } finally {
@@ -83,12 +67,12 @@ export default function AdminSettingsPage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error(t("adminSettings.logoTypeError"));
+      toast.error("Vui lòng chọn tệp hình ảnh (PNG, JPG, WEBP, SVG)");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error(t("adminSettings.logoSizeError"));
+      toast.error("Dung lượng ảnh tối đa là 5MB");
       return;
     }
 
@@ -101,9 +85,9 @@ export default function AdminSettingsPage() {
       if (profile) {
         setProfile({ ...profile, logo_url: res.logo_url });
       }
-      toast.success(t("adminSettings.logoUploadSuccess"));
+      toast.success("Đã tải lên logo tổ chức thành công!");
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("adminSettings.logoUploadError");
+      const message = err instanceof Error ? err.message : "Tải logo lên thất bại";
       setProfileError(message);
       toast.error(message);
     } finally {
@@ -117,9 +101,9 @@ export default function AdminSettingsPage() {
   return (
     <div className={styles._1}>
       <div>
-<h1 className={styles._2}>{t("adminSettings.title")}</h1>
+        <h1 className={styles._2}>{t("dashboard.settings.title")}</h1>
         <p className={styles._3}>
-          {canEdit ? t("adminSettings.descriptionEdit") : t("adminSettings.descriptionReadOnly")}
+          {canEdit ? "Cập nhật hồ sơ tổ chức phát hành" : "Bạn đang xem hồ sơ tổ chức ở chế độ chỉ đọc"}
         </p>
       </div>
 
@@ -182,29 +166,26 @@ export default function AdminSettingsPage() {
 
       <form onSubmit={handleSave} className={styles._4}>
         <div className="flex items-center justify-between gap-4">
-<h2 className={styles._5}>{t("adminSettings.profileTitle")}</h2>
-          {profile && (
-            <span
-              className={`rounded-full px-3 py-1 text-[10px] font-bold ${profile.is_verified ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
-                }`}
-            >
-              {profile.is_verified ? t("adminSettings.verified") : t("adminSettings.unverified")}
+          <h2 className={styles._5}>Hồ sơ tổ chức</h2>
+          {profile?.is_verified && (
+            <span className="rounded-full px-3 py-1 text-[10px] font-bold bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400 border border-green-200/50 dark:border-green-800/40">
+              Đã xác minh
             </span>
           )}
         </div>
 
         {loading ? (
-          <p className={styles._6}>{t("adminSettings.loading")}</p>
+          <p className={styles._6}>Đang tải thông tin tổ chức...</p>
         ) : (
           <>
             {/* Logo Section */}
-<div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl bg-slate-50 dark:bg-gray-800/40 border border-slate-100 dark:border-gray-800 mb-2">
-              <div className="relative w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+            <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 mb-2">
+              <div className="relative w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
                 {form.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={form.logo_url}
-                    alt={t("adminSettings.logoAlt")}
+                    alt="Logo tổ chức"
                     className="w-full h-full object-contain p-1"
                   />
                 ) : (
@@ -212,20 +193,20 @@ export default function AdminSettingsPage() {
                     <svg className="w-8 h-8 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-[10px] block mt-1">{t("adminSettings.noLogo")}</span>
+                    <span className="text-[10px] block mt-1">Chưa có logo</span>
                   </div>
                 )}
                 {uploadingLogo && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs font-semibold backdrop-blur-[1px]">
-                    {t("adminSettings.uploading")}
+                    Đang tải...
                   </div>
                 )}
               </div>
 
               <div className="flex-1 text-center sm:text-left space-y-2">
-<h3 className="text-sm font-semibold text-slate-800 dark:text-white">{t("adminSettings.logoTitle")}</h3>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Logo tổ chức</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {t("adminSettings.logoDescription")}
+                  Logo sẽ được hiển thị trên chứng chỉ và mẫu văn bằng của tổ chức. Định dạng hỗ trợ: PNG, JPG, WEBP, SVG (tối đa 5MB).
                 </p>
 
                 {canEdit && (
@@ -247,16 +228,16 @@ export default function AdminSettingsPage() {
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                       </svg>
-                      {uploadingLogo ? t("adminSettings.uploadingLogo") : t("adminSettings.uploadLogo")}
+                      {uploadingLogo ? "Đang tải lên Cloud..." : "Tải logo từ máy tính"}
                     </button>
                     {form.logo_url && (
                       <button
                         type="button"
                         onClick={() => setForm({ ...form, logo_url: "" })}
                         disabled={uploadingLogo}
-className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg transition-colors"
+                        className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg transition-colors cursor-pointer"
                       >
-                        {t("adminSettings.removeLogo")}
+                        Gỡ bỏ
                       </button>
                     )}
                   </div>
@@ -265,7 +246,7 @@ className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:ho
             </div>
 
             <div className={styles._17}>
-              <Field label={t("adminSettings.fields.organizationName")}>
+              <Field label="Tên tổ chức">
                 <input
                   required
                   minLength={2}
@@ -275,7 +256,7 @@ className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:ho
                   className={styles._19}
                 />
               </Field>
-              <Field label={t("adminSettings.fields.contactEmail")}>
+              <Field label="Email liên hệ">
                 <input
                   required
                   type="email"
@@ -285,7 +266,7 @@ className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:ho
                   className={styles._19}
                 />
               </Field>
-              <Field label={t("adminSettings.fields.logoUrl")}>
+              <Field label="URL logo">
                 <input
                   type="url"
                   disabled={!canEdit}
@@ -295,14 +276,14 @@ className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:ho
                   className={styles._19}
                 />
               </Field>
-              <Field label={t("adminSettings.fields.walletAddress")}>
-                <input readOnly value={profile?.wallet_address || t("adminSettings.walletNotSet")} className={styles._19} />
+              <Field label="Địa chỉ ví tổ chức">
+                <input readOnly value={profile?.wallet_address || "Chưa thiết lập"} className={styles._19} />
               </Field>
             </div>
             {profileError && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{profileError}</p>}
             {canEdit && (
               <button disabled={saving} className={styles._20}>
-                {saving ? t("adminSettings.saving") : t("adminSettings.save")}
+                {saving ? "Đang lưu..." : "Lưu thông tin"}
               </button>
             )}
           </>

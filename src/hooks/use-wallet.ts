@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+﻿import { useState, useCallback } from "react";
 
 export function useWallet() {
   const [address, setAddress] = useState<string | null>(null);
@@ -12,16 +12,7 @@ export function useWallet() {
         const accounts = await eth.request({ method: "eth_requestAccounts" });
         setAddress(accounts[0]);
       }
-    } catch (err: any) {
-      if (
-        err?.code === 4001 ||
-        err?.code === "ACTION_REJECTED" ||
-        err?.info?.error?.code === 4001 ||
-        (err?.message || "").toLowerCase().includes("user rejected") ||
-        (err?.message || "").toLowerCase().includes("user denied")
-      ) {
-        return;
-      }
+    } catch (err) {
       console.error("Failed to connect wallet", err);
     } finally {
       setIsConnecting(false);

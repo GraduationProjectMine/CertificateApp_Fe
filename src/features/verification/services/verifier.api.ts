@@ -68,7 +68,7 @@ export const verifierApi = {
   verifyAny: async (serialNumber: string, registryNumber: string) => {
     try {
       return await verifierApi.verify(serialNumber, registryNumber);
-    } catch {
+    } catch (err: any) {
       return await verifierApi.verifyOnline(serialNumber, registryNumber);
     }
   },
@@ -77,7 +77,7 @@ export const verifierApi = {
   getAnyCertificate: async (id: string) => {
     try {
       return await verifierApi.getCertificate(id);
-    } catch {
+    } catch (err: any) {
       return await verifierApi.getOnlineCertificate(id);
     }
   },

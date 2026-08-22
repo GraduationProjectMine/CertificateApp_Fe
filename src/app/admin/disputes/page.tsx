@@ -1,31 +1,20 @@
 "use client";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
-import { useI18n } from "@/features/i18n/I18nContext";
-import ConfirmModal from "@/components/common/Modal/ConfirmModal";
-import toast from "react-hot-toast";
 
-type ReviewPayload = {
-  decision: "APPROVED" | "REJECTED";
-  reviewer_note?: string;
-  new_cert_data?: any;
+const STATUS_MAP: Record<string, { label: string; className: string }> = {
+  PENDING: { label: "Chờ xử lý", className: styles._26 },
+  APPROVED: { label: "Đã chấp thuận", className: styles._27 },
+  REJECTED: { label: "Từ chối", className: styles._28 },
 };
 
-const STATUS_CLASS: Record<string, string> = {
-  PENDING: styles._26,
-  APPROVED: styles._27,
-  REJECTED: styles._28,
-};
-
-const STATUS_FILTERS = ["", "PENDING", "APPROVED", "REJECTED"];
-
-const statusLabel = (key: string, t: ReturnType<typeof useI18n>["t"]): string =>
-  ({
-    PENDING: t("adminDisputes.status.pending"),
-    APPROVED: t("adminDisputes.status.approved"),
-    REJECTED: t("adminDisputes.status.rejected"),
-  }[key] ?? (key === "" ? t("adminDisputes.status.all") : key));
+const STATUS_FILTERS = [
+  { value: "", label: "Tất cả" },
+  { value: "PENDING", label: "Chờ xử lý" },
+  { value: "APPROVED", label: "Đã chấp thuận" },
+  { value: "REJECTED", label: "Từ chối" },
+];
 
 export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState<DisputeDto[]>([]);
@@ -39,22 +28,20 @@ export default function AdminDisputesPage() {
   const [reviewerNote, setReviewerNote] = useState("");
   const [newCertData, setNewCertData] = useState("");
   const [reviewError, setReviewError] = useState("");
-  const [pendingReview, setPendingReview] = useState<ReviewPayload | null>(null);
-  const { t } = useI18n();
 
-  const fetch = useCallback(async (status?: string) => {
+  const fetch = async (status?: string) => {
     setLoading(true);
     setError("");
     try {
       setDisputes(await disputeApi.orgList(status || undefined));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminDisputes.loadError"));
+      setError(err instanceof Error ? err.message : "Không thể tải dữ liệu");
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  };
 
-  useEffect(() => { fetch(statusFilter); }, [fetch, statusFilter]);
+  useEffect(() => { fetch(statusFilter); }, [statusFilter]);
 
   const openReview = (d: DisputeDto) => {
     setReviewTarget(d);
@@ -68,43 +55,29 @@ export default function AdminDisputesPage() {
     e.preventDefault();
     if (!reviewTarget) return;
     setReviewError("");
+    setSubmitting(true);
 
     let parsed: any;
     if (decision === "APPROVED" && newCertData.trim()) {
       try {
         parsed = JSON.parse(newCertData);
       } catch {
-        setReviewError(t("adminDisputes.invalidJsonError"));
-        toast.error(t("adminDisputes.invalidJsonError"));
+        setReviewError("Dữ liệu chỉnh sửa không đúng định dạng JSON");
+        setSubmitting(false);
         return;
       }
     }
 
-    setPendingReview({
-      decision,
-      reviewer_note: reviewerNote.trim() || undefined,
-      new_cert_data: parsed,
-    });
-  };
-
-  const executeReview = async () => {
-    if (!reviewTarget || !pendingReview) return;
-    setSubmitting(true);
-    setReviewError("");
     try {
-      await disputeApi.review(reviewTarget.id, pendingReview);
-      toast.success(
-        pendingReview.decision === "APPROVED"
-          ? t("adminDisputes.review.successApproved")
-          : t("adminDisputes.review.successRejected"),
-      );
-      setPendingReview(null);
+      await disputeApi.review(reviewTarget.id, {
+        decision,
+        reviewer_note: reviewerNote.trim() || undefined,
+        new_cert_data: parsed,
+      });
       setReviewTarget(null);
       fetch(statusFilter);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("adminDisputes.reviewError");
-      setReviewError(message);
-      toast.error(message);
+      setReviewError(err instanceof Error ? err.message : "Xử lý thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -112,38 +85,21 @@ export default function AdminDisputesPage() {
 
   return (
     <div className={styles._1}>
-      <ConfirmModal
-        open={!!pendingReview}
-        onClose={() => !submitting && setPendingReview(null)}
-        title={t("adminDisputes.review.confirmTitle")}
-        message={
-          pendingReview?.decision === "APPROVED"
-            ? t("adminDisputes.review.confirmApproveMessage")
-            : t("adminDisputes.review.confirmRejectMessage")
-        }
-        confirmLabel={t("adminDisputes.review.confirm")}
-        cancelLabel={t("adminDisputes.review.cancel")}
-        variant={pendingReview?.decision === "REJECTED" ? "danger" : "primary"}
-        icon={pendingReview?.decision === "REJECTED" ? "danger" : "info"}
-        loading={submitting}
-        onConfirm={() => void executeReview()}
-      />
-
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("adminDisputes.title")}</h1>
-          <p className={styles._4}>{t("adminDisputes.description")}</p>
+          <h1 className={styles._3}>Yêu cầu chỉnh sửa</h1>
+          <p className={styles._4}>Quản lý các yêu cầu chỉnh sửa thông tin văn bằng</p>
         </div>
       </div>
 
       <div className={styles._52}>
-        {STATUS_FILTERS.map((value) => (
+        {STATUS_FILTERS.map((f) => (
           <button
-            key={value}
-            onClick={() => setStatusFilter(value)}
-            className={`${styles._53} ${statusFilter === value ? styles._54 : styles._55}`}
+            key={f.value}
+            onClick={() => setStatusFilter(f.value)}
+            className={`${styles._53} ${statusFilter === f.value ? styles._54 : styles._55}`}
           >
-            {statusLabel(value, t)}
+            {f.label}
           </button>
         ))}
       </div>
@@ -169,12 +125,12 @@ export default function AdminDisputesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className={styles._12}>{t("adminDisputes.emptyState")}</p>
+          <p className={styles._12}>Không có yêu cầu nào</p>
         </div>
       ) : (
         <div className={styles._13}>
           {disputes.map((d) => {
-            const cls = STATUS_CLASS[d.status] || styles._26;
+            const st = STATUS_MAP[d.status] || STATUS_MAP.PENDING;
             return (
               <div key={d.id} className={styles._14}>
                 <div className={styles._15}>
@@ -185,27 +141,28 @@ export default function AdminDisputesPage() {
                       </svg>
                     </div>
                     <div className={styles._19}>
-                      <h3 className={styles._20}>{d.certificate?.certificate_title || t("adminDisputes.certificateDefault")}</h3>
-                      <p className={styles._56}>{`${t("adminDisputes.card.student")}: ${d.certificate?.student_fullName || "N/A"}`}</p>
+                      <h3 className={styles._20}>{d.certificate?.certificate_title || "Văn bằng"}</h3>
+                      <p className={styles._56}>Sinh viên: {d.certificate?.student_fullName || "N/A"}</p>
                       <p className={styles._22}>{d.reason}</p>
                       <p className={styles._31}>{new Date(d.createdAt).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       {d.status !== "PENDING" && d.reviewer_note && (
                         <div className={styles._32}>
-                          <span className={styles._33}>{t("adminDisputes.card.feedback")}</span> {d.reviewer_note}
+                          <span className={styles._33}>Phản hồi: </span>
+                          {d.reviewer_note}
                         </div>
                       )}
                       {d.status !== "PENDING" && d.resolved_at && (
                         <p className={styles._34}>
-                          {`${t("adminDisputes.card.resolvedAt")}: ${new Date(d.resolved_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`}
+                          Đã xử lý: {new Date(d.resolved_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       )}
                     </div>
                   </div>
                   <div className={styles._57}>
-                    <span className={`${styles._0} ${cls}`}>{statusLabel(d.status, t)}</span>
+                    <span className={`${styles._0} ${st.className}`}>{st.label}</span>
                     {d.status === "PENDING" && (
                       <button onClick={() => openReview(d)} className={styles._58}>
-                        {t("adminDisputes.reviewButton")}
+                        Xem xét
                       </button>
                     )}
                   </div>
@@ -220,7 +177,7 @@ export default function AdminDisputesPage() {
         <div className={styles._35} onClick={() => !submitting && setReviewTarget(null)}>
           <div className={styles._36} onClick={(e) => e.stopPropagation()}>
             <div className={styles._37}>
-              <h2 className={styles._38}>{t("adminDisputes.review.title")}</h2>
+              <h2 className={styles._38}>Xem xét yêu cầu</h2>
               <button onClick={() => !submitting && setReviewTarget(null)} className={styles._39}>
                 <svg className={styles._6} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -230,25 +187,25 @@ export default function AdminDisputesPage() {
 
             <div className={styles._59}>
               <div className={styles._60}>
-                <span className={styles._61}>{t("adminDisputes.review.certificate")}</span>
+                <span className={styles._61}>Văn bằng</span>
                 <span className={styles._62}>{reviewTarget.certificate?.certificate_title || "N/A"}</span>
               </div>
               <div className={styles._60}>
-                <span className={styles._61}>{t("adminDisputes.review.student")}</span>
+                <span className={styles._61}>Sinh viên</span>
                 <span className={styles._62}>{reviewTarget.certificate?.student_fullName || "N/A"}</span>
               </div>
               <div className={styles._60}>
-                <span className={styles._61}>{t("adminDisputes.review.reason")}</span>
+                <span className={styles._61}>Lý do</span>
                 <span className={styles._62}>{reviewTarget.reason}</span>
               </div>
               {reviewTarget.details && (
                 <div className={styles._60}>
-                  <span className={styles._61}>{t("adminDisputes.review.details")}</span>
+                  <span className={styles._61}>Chi tiết</span>
                   <span className={styles._62}>{reviewTarget.details}</span>
                 </div>
               )}
               <div className={styles._60}>
-                <span className={styles._61}>{t("adminDisputes.review.submittedAt")}</span>
+                <span className={styles._61}>Ngày gửi</span>
                 <span className={styles._62}>{new Date(reviewTarget.createdAt).toLocaleDateString("vi-VN")}</span>
               </div>
             </div>
@@ -257,7 +214,7 @@ export default function AdminDisputesPage() {
               {reviewError && <div className={styles._41}>{reviewError}</div>}
 
               <div className={styles._42}>
-                <label className={styles._43}>{t("adminDisputes.review.decision")}</label>
+                <label className={styles._43}>Quyết định</label>
                 <div className={styles._63}>
                   <label className={`${styles._64} ${decision === "APPROVED" ? styles._65 : styles._66}`}>
                     <input
@@ -268,7 +225,7 @@ export default function AdminDisputesPage() {
                       onChange={() => setDecision("APPROVED")}
                       className="sr-only"
                     />
-                    {t("adminDisputes.review.approve")}
+                    Chấp thuận
                   </label>
                   <label className={`${styles._64} ${decision === "REJECTED" ? styles._67 : styles._66}`}>
                     <input
@@ -279,42 +236,42 @@ export default function AdminDisputesPage() {
                       onChange={() => setDecision("REJECTED")}
                       className="sr-only"
                     />
-                    {t("adminDisputes.review.reject")}
+                    Từ chối
                   </label>
                 </div>
               </div>
 
               <div className={styles._42}>
-                <label className={styles._43}>{t("adminDisputes.review.reviewerNoteLabel")}</label>
+                <label className={styles._43}>Ghi chú của người xem xét</label>
                 <textarea
                   value={reviewerNote}
                   onChange={(e) => setReviewerNote(e.target.value)}
                   rows={3}
-                  placeholder={t("adminDisputes.review.reviewerNotePlaceholder")}
+                  placeholder="Nhập ghi chú (không bắt buộc)"
                   className={styles._44}
                 />
               </div>
 
               {decision === "APPROVED" && (
                 <div className={styles._42}>
-                  <label className={styles._43}>{t("adminDisputes.review.certDataLabel")}</label>
+                  <label className={styles._43}>Dữ liệu chỉnh sửa (JSON)</label>
                   <textarea
                     value={newCertData}
                     onChange={(e) => setNewCertData(e.target.value)}
                     rows={4}
-                    placeholder={t("adminDisputes.review.certDataPlaceholder")}
+                    placeholder='{"certificate_title": "Tên mới", "issueDate": "2025-01-01", ...}'
                     className={styles._44}
                   />
-                  <p className={styles._68}>{t("adminDisputes.review.certDataHint")}</p>
+                  <p className={styles._68}>Nhập JSON với các trường cần chỉnh sửa (không bắt buộc)</p>
                 </div>
               )}
 
               <div className={styles._46}>
                 <button type="button" onClick={() => setReviewTarget(null)} disabled={submitting} className={styles._47}>
-                  {t("adminDisputes.review.cancel")}
+                  Hủy
                 </button>
                 <button type="submit" disabled={submitting} className={styles._48}>
-                  {submitting ? t("adminDisputes.review.processing") : t("adminDisputes.review.confirm")}
+                  {submitting ? "Đang xử lý..." : "Xác nhận"}
                 </button>
               </div>
             </form>

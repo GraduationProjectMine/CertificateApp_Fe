@@ -1,32 +1,26 @@
 "use client";
 import styles from "./page.module.css";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import type { CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useAuth } from "@/features/auth/components/AuthContext";
-import { useI18n } from "@/features/i18n/I18nContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import { ActionLink, ActionButton } from "@/components/common/TableActions";
 import Pagination from "@/components/common/Pagination";
-import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
 
-function statusLabel(s: string, t: ReturnType<typeof useI18n>["t"]): { label: string; className: string } {
-  const map: Record<string, { label: string; className: string }> = {
-    DRAFT: { label: t("adminCertificates.status.draft"), className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
-    PENDING: { label: t("adminCertificates.status.pending"), className: "bg-amber-55/10 text-warning border-amber-250/50 animate-pulse" },
-    ISSUED: { label: t("adminCertificates.status.issued"), className: "bg-green-55/10 text-green-600 dark:text-green-400 border-green-200/50" },
-    REVOKED: { label: t("adminCertificates.status.revoked"), className: "bg-red-50 dark:bg-red-950/20 text-danger border-red-200/50" },
-  };
-  return map[s] || map.DRAFT;
-}
+const STATUS_MAP: Record<string, { label: string; className: string }> = {
+  DRAFT: { label: "Draft", className: "bg-slate-50 dark:bg-slate-800/20 text-gray-450 border-gray-200/50" },
+  PENDING: { label: "Pending Blockchain", className: "bg-amber-55/10 text-warning border-amber-250/50 animate-pulse" },
+  ISSUED: { label: "Issued", className: "bg-green-55/10 text-green-600 dark:text-green-400 border-green-200/50" },
+  REVOKED: { label: "Revoked", className: "bg-red-50 dark:bg-red-950/20 text-danger border-red-200/50" },
+};
 
 export default function AdminCertificatesPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { t } = useI18n();
   const isIssuer = user?.role === "issuer";
   const [certificates, setCertificates] = useState<CertificateDto[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,7 +31,6 @@ export default function AdminCertificatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteError, setDeleteError] = useState("");
-  const [deleting, setDeleting] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchApproving, setBatchApproving] = useState(false);
@@ -49,38 +42,32 @@ export default function AdminCertificatesPage() {
     total: number;
   } | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     setError("");
     try {
       const data = await certificateApi.list(filterStatus ? { status: filterStatus } : undefined);
       setCertificates(data);
     } catch (err: any) {
-      setError(err.message || t("adminCertificates.genericError"));
+      setError("Đã có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, t]);
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [filterStatus]);
 
-const handleDelete = async () => {
+  const handleDelete = async () => {
     if (!deleteTargetId) return;
     setDeleteError("");
-    setDeleting(true);
     try {
       await certificateApi.delete(deleteTargetId);
       setCertificates((prev) => prev.filter((c) => c.certificate_id !== deleteTargetId));
-      toast.success(t("adminCertificateDetail.deleteSuccess"));
       setDeleteTargetId("");
     } catch (err: any) {
-      const message = err.message || t("adminCertificates.genericError");
-      setDeleteError(message);
-      toast.error(message);
-    } finally {
-      setDeleting(false);
+      setDeleteError("Đã có lỗi xảy ra");
     }
   };
 
@@ -93,15 +80,8 @@ const handleDelete = async () => {
       setBatchApproveResult(result);
       await fetchData();
       setSelectedIds(new Set());
-      if (result.failCount > 0) {
-        toast.error(`${t("adminCertificates.batch.fail")}: ${result.failCount}`);
-      } else {
-        toast.success(`${t("adminCertificates.batch.success")}: ${result.successCount}`);
-      }
     } catch (err: any) {
-      const message = err.message || t("adminCertificates.genericError");
-      setError(message);
-      toast.error(message);
+      setError("Đã có lỗi xảy ra");
     } finally {
       setBatchApproving(false);
     }
@@ -150,8 +130,8 @@ const handleDelete = async () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
             <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-white">{t("adminCertificates.processing.title")}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t("adminCertificates.processing.message")}</p>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">Đang phát hành văn bằng</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đang ghi dữ liệu &amp; tạo văn bằng. Vui lòng không đóng trang...</p>
             </div>
           </div>
         </div>
@@ -160,60 +140,59 @@ const handleDelete = async () => {
       <ConfirmModal
         open={!!deleteTargetId}
         onClose={() => { setDeleteTargetId(""); setDeleteError(""); }}
-        title={t("adminCertificates.deleteModal.title")}
-        message={t("adminCertificates.deleteModal.message")}
-        confirmLabel={t("adminCertificates.deleteModal.confirm")}
-        cancelLabel={t("adminCertificates.deleteModal.cancel")}
+        title="Xóa văn bằng"
+        message="Bạn có chắc chắn muốn xóa văn bằng này? Hành động này không thể hoàn tác."
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
         variant="danger"
         icon="danger"
-        loading={deleting}
         onConfirm={() => void handleDelete()}
       />
 
       <div className={styles._2}>
         <div>
-          <h1 className={styles._3}>{t("adminCertificates.header.title")}</h1>
-          <p className={styles._4}>{t("adminCertificates.header.description")}</p>
+          <h1 className={styles._3}>Quản lý Văn bằng</h1>
+          <p className={styles._4}>Xem, tìm kiếm thông tin văn bằng đã cấp phát, trạng thái ghi blockchain hoặc yêu cầu thu hồi.</p>
         </div>
         <button onClick={() => router.push("/admin/certificates/issue")} className={styles._5}>
-          + {t("adminCertificates.actions.createNew")}
+          + Cấp bằng mới
         </button>
       </div>
 
       <div className={styles._6}>
         <input
           type="text"
-          placeholder={t("adminCertificates.search.placeholder")}
+          placeholder="Tìm kiếm theo mã văn bằng, tên sinh viên, số hiệu..."
           className={styles._7}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <div className={styles._8}>
           <select className={styles._9} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="">{t("adminCertificates.search.allStatuses")}</option>
-            <option value="DRAFT">{t("adminCertificates.status.draft")}</option>
-            <option value="PENDING">{t("adminCertificates.status.pending")}</option>
-            <option value="ISSUED">{t("adminCertificates.status.issued")}</option>
-            <option value="REVOKED">{t("adminCertificates.status.revoked")}</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="DRAFT">Draft</option>
+            <option value="PENDING">Pending Blockchain</option>
+            <option value="ISSUED">Issued</option>
+            <option value="REVOKED">Revoked</option>
           </select>
         </div>
       </div>
 
       {isIssuer && selectedIds.size > 0 && (
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/10">
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{`${t("adminCertificates.batch.selectedPrefix")} ${selectedIds.size} ${t("adminCertificates.batch.pendingCertificates")}`}</span>
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Đã chọn {selectedIds.size} văn bằng PENDING</span>
           <button
             onClick={() => setShowBatchConfirmModal(true)}
             disabled={batchApproving}
             className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-hover disabled:opacity-50 transition-all cursor-pointer shadow-2xs active:scale-95"
           >
-            {batchApproving ? t("adminCertificates.batch.signing") : `${t("adminCertificates.batch.signAll")} (${selectedIds.size})`}
+            {batchApproving ? "Đang ký blockchain..." : `Ký hàng loạt (${selectedIds.size})`}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="rounded-xl border px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 cursor-pointer"
           >
-            {t("adminCertificates.batch.clearSelection")}
+            Bỏ chọn
           </button>
         </div>
       )}
@@ -229,18 +208,18 @@ const handleDelete = async () => {
                 </svg>
               </div>
               <h3 className="text-base font-extrabold text-amber-800 dark:text-amber-300">
-                {t("adminCertificates.batch.confirmTitle")}
+                Xác nhận phát hành lên Blockchain
               </h3>
               <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
-                {t("adminCertificates.batch.confirmBody")}
+                Văn bằng sau khi được tải/phát hành lên Blockchain &amp; IPFS sẽ <strong>KHÔNG THỂ CHỈNH SỬA Hoặc THAY ĐỔI</strong> dữ liệu.
               </p>
               <p className="text-[11px] text-amber-600 dark:text-amber-500 font-normal italic">
-                {t("adminCertificates.batch.confirmBodyEn")}
+                &ldquo;The certificate can&apos;t be changed after uploaded to chain&rdquo;
               </p>
             </div>
 
             <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
-              {t("adminCertificates.batch.confirmCount").replace("{count}", String(selectedIds.size))}
+              Số lượng văn bằng ký hàng loạt: <strong className="text-primary">{selectedIds.size}</strong>
             </div>
 
             <div className="flex items-center gap-3 pt-1">
@@ -249,7 +228,7 @@ const handleDelete = async () => {
                 onClick={() => setShowBatchConfirmModal(false)}
                 className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                {t("adminCertificates.batch.back")}
+                Quay lại
               </button>
               <button
                 type="button"
@@ -259,7 +238,7 @@ const handleDelete = async () => {
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                {t("adminCertificates.batch.submit")}
+                Xác nhận phát hành
               </button>
             </div>
           </div>
@@ -268,18 +247,18 @@ const handleDelete = async () => {
 
       {batchApproveResult && (
         <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-2">{t("adminCertificates.batch.resultTitle")}</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{`${t("adminCertificates.batch.success")}: ${batchApproveResult.successCount} / ${t("adminCertificates.batch.fail")}: ${batchApproveResult.failCount}`}</p>
+          <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-2">Kết quả ký hàng loạt</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Thành công: {batchApproveResult.successCount} / Thất bại: {batchApproveResult.failCount}</p>
           {batchApproveResult.failCount > 0 && (
             <div className="max-h-32 overflow-y-auto space-y-1">
               {batchApproveResult.results.filter((r) => r.status === "FAILED").map((r) => (
                 <div key={r.certificateId} className="text-xs text-red-600">
-                  <span className="font-mono">{r.certificateId.slice(0, 8)}...</span>: {t("adminCertificates.genericError")}
+                  <span className="font-mono">{r.certificateId.slice(0, 8)}...</span>: Đã có lỗi xảy ra
                 </div>
               ))}
             </div>
           )}
-          <button onClick={() => setBatchApproveResult(null)} className="mt-2 text-xs font-bold text-primary hover:underline">{t("adminCertificates.batch.close")}</button>
+          <button onClick={() => setBatchApproveResult(null)} className="mt-2 text-xs font-bold text-primary hover:underline">Đóng</button>
         </div>
       )}
 
@@ -289,11 +268,11 @@ const handleDelete = async () => {
       <div className={styles._10}>
         <div className={styles._11}>
           {loading ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminCertificates.loading")}</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Đang tải...</div>
           ) : error ? (
             <div className="p-8 text-center text-red-500 text-xs">{error}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">{t("adminCertificates.empty")}</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">Không có văn bằng nào.</div>
           ) : (
             <>
               <table className={styles._12}>
@@ -304,19 +283,19 @@ const handleDelete = async () => {
                         <input type="checkbox" checked={selectedIds.size === pendingCount && pendingCount > 0} onChange={toggleSelectAll} className="accent-primary" />
                       </th>
                     )}
-                    <th className={styles._14}>{t("adminCertificates.table.certificateId")}</th>
-                    <th className={styles._14}>{t("adminCertificates.table.student")}</th>
-                    <th className={styles._14}>{t("adminCertificates.table.certificateType")}</th>
-                    <th className={styles._14}>{t("adminCertificates.table.issuedDate")}</th>
+                    <th className={styles._14}>Mã văn bằng</th>
+                    <th className={styles._14}>Sinh viên</th>
+                    <th className={styles._14}>Loại bằng</th>
+                    <th className={styles._14}>Ngày cấp</th>
                     <th className={styles._15}>IPFS Gateway</th>
                     <th className={styles._15}>Blockchain status</th>
-                    <th className={styles._14}>{t("adminCertificates.table.status")}</th>
-                    <th className={styles._16}>{t("adminCertificates.table.actions")}</th>
+                    <th className={styles._14}>Trạng thái</th>
+                    <th className={styles._16}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className={styles._17}>
                   {paginatedCerts.map((cert) => {
-                    const statusStyle = statusLabel(cert.status, t);
+                    const statusStyle = STATUS_MAP[cert.status] || STATUS_MAP.DRAFT;
                     const isPending = cert.status === "PENDING";
                     return (
                       <tr key={cert.certificate_id} className={`${styles._18} ${isPending && isIssuer ? "cursor-pointer" : ""}`}>
@@ -354,11 +333,11 @@ const handleDelete = async () => {
                         </td>
                         <td className={styles._27}>
                           <ActionLink onClick={() => router.push(`/admin/certificates/${cert.certificate_id}`)}>
-                            {t("adminCertificates.actions.detail")}
+                            Chi tiết
                           </ActionLink>
                           {cert.status !== "ISSUED" && cert.status !== "REVOKED" && (
                             <ActionButton onClick={() => setDeleteTargetId(cert.certificate_id)}>
-                              {t("adminCertificates.actions.delete")}
+                              Xóa
                             </ActionButton>
                           )}
                         </td>

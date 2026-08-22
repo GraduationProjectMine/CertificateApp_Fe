@@ -3,8 +3,6 @@ import styles from "./page.module.css";
 import React, { useState } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import AppControls from "@/components/common/AppControls";
-import { useI18n } from "@/features/i18n/I18nContext";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -15,7 +13,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { t, tArr } = useI18n();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -23,19 +20,19 @@ export default function ForgotPasswordPage() {
     setSuccess("");
 
     if (!email.trim()) {
-      setError(t("auth.forgot_password_error_email_empty") || "Vui lòng nhập email tài khoản");
+      setError("Vui lòng nhập email tài khoản");
       return;
     }
 
     if (!isValidEmail(email.trim())) {
-      setError(t("common.validation.invalidEmail") || "Email không hợp lệ");
+      setError("Email không hợp lệ");
       return;
     }
 
     setIsSubmitting(true);
     await new Promise((resolve) => window.setTimeout(resolve, 650));
     setIsSubmitting(false);
-    setSuccess(t("auth.forgot_password_success_msg") || "Nếu email thuộc hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi trong vài phút.");
+    setSuccess("Nếu email thuộc hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi trong vài phút.");
   };
 
   return (
@@ -48,33 +45,30 @@ export default function ForgotPasswordPage() {
           <div className={`motion-float ${styles._6}`} />
           <div className={`motion-float-slow ${styles._7}`} />
 
-          <div className="flex w-full items-center justify-between">
-            <Link href="/" className={styles._8}>
-              <span className={styles._9}>
-                C
-              </span>
-              <span className={styles._10}>CertiChain</span>
-            </Link>
-            <AppControls />
-          </div>
+          <Link href="/" className={styles._8}>
+            <span className={styles._9}>
+              C
+            </span>
+            <span className={styles._10}>CertiChain</span>
+          </Link>
 
           <div className={styles._11} data-reveal>
             <p className={styles._12}>
-              {t("auth.visualPanel.forgotPassword.badge")}
+              Khôi phục quyền truy cập
             </p>
             <h1 className={styles._13}>
-              {t("auth.visualPanel.forgotPassword.title")}
+              Lấy lại tài khoản quản trị một cách an toàn.
             </h1>
             <p className={styles._14}>
-              {t("auth.visualPanel.forgotPassword.description")}
+              Gửi yêu cầu đặt lại mật khẩu qua email đã đăng ký, sau đó quay lại hệ thống để tiếp tục cấp phát và xác minh văn bằng.
             </p>
           </div>
 
           <div className={styles._15} data-reveal>
-            {tArr("auth.visualPanel.forgotPassword.features").map((item, index) => (
-              <div key={index} className={styles._16}>
+            {["Email xác minh", "Liên kết giới hạn", "Bảo vệ phiên"].map((item) => (
+              <div key={item} className={styles._16}>
                 <span className={styles._17} />
-                <span className={styles._18}>{String(item)}</span>
+                <span className={styles._18}>{item}</span>
               </div>
             ))}
           </div>
@@ -88,24 +82,21 @@ export default function ForgotPasswordPage() {
               </span>
               <span className={styles._23}>CertiChain</span>
             </Link>
-            <div className="flex items-center gap-3">
-              <AppControls />
-              <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
-                {t("auth.login_btn")}
-              </Link>
-            </div>
+            <Link href="/auth/login" className={`auth-switch-link ${styles._24}`}>
+              Đăng nhập
+            </Link>
           </div>
 
           <div className={`auth-card-surface ${styles._25}`}>
             <div className={styles._26}>
               <p className={styles._27}>
-                {t("auth.forgot_password")}
+                Quên mật khẩu
               </p>
               <h2 className={styles._28}>
-                {t("auth.forgot_password_subtitle")}
+                Nhận hướng dẫn đặt lại
               </h2>
               <p className={styles._29}>
-                {t("auth.forgot_password_desc")}
+                Nhập email quản trị đã đăng ký. Hệ thống sẽ gửi hướng dẫn khôi phục nếu tài khoản tồn tại.
               </p>
             </div>
 
@@ -124,7 +115,7 @@ export default function ForgotPasswordPage() {
             <form className={styles._32} onSubmit={handleSubmit}>
               <label className={styles._33}>
                 <span className={styles._34}>
-                  {t("auth.email")}
+                  Email tài khoản
                 </span>
                 <input
                   type="email"
@@ -132,21 +123,21 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   className={styles._35}
-                  placeholder={t("auth.email")}
+                  placeholder="admin@truonghoc.edu.vn"
                 />
               </label>
 
               <Button type="submit" disabled={isSubmitting} className={styles._36}>
-                {isSubmitting ? t("auth.loading") : (t("auth.forgot_password_submit") || "Gửi hướng dẫn khôi phục")}
+                {isSubmitting ? "Đang gửi..." : "Gửi hướng dẫn khôi phục"}
               </Button>
             </form>
 
             <div className={styles._37}>
               <Button variant="ghost" href="/auth/login" className={`auth-switch-link ${styles._38}`}>
-                {t("auth.forgot_password_back_login")}
+                Quay lại đăng nhập
               </Button>
               <Button variant="ghost" href="/auth/register" className={`auth-switch-link ${styles._39}`}>
-                {t("auth.no_account")}
+                Chưa có tài khoản trường học?
               </Button>
             </div>
           </div>
