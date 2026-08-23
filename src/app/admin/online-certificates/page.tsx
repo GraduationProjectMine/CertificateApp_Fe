@@ -121,7 +121,7 @@ export default function AdminOnlineCertificatesPage() {
         </div>
       </div>
 
-      {/* Control / Search Panel */}
+      {/* Search Filter Bar */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-5 flex gap-3 items-center flex-wrap shadow-2xs">
         <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
           <input
@@ -133,13 +133,6 @@ export default function AdminOnlineCertificatesPage() {
           />
           <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: 14 }}>🔍</span>
         </div>
-
-        <button
-          onClick={fetchData}
-          className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-colors"
-        >
-          🔄 {t("adminOnlineCertificates.refresh")}
-        </button>
       </div>
 
       {/* Main Data Table */}
@@ -153,10 +146,10 @@ export default function AdminOnlineCertificatesPage() {
             ⚠️ {error}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400">
-            <div className="text-3xl mb-2">📭</div>
-            <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{t("adminOnlineCertificates.empty.title")}</div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          <div className="p-12 text-center">
+            <div className="text-4xl mb-3">📁</div>
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{t("adminOnlineCertificates.empty.title")}</h3>
+            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
               {searchQuery ? t("adminOnlineCertificates.empty.withQuery") : t("adminOnlineCertificates.empty.withoutQuery")}
             </p>
           </div>
@@ -169,8 +162,6 @@ export default function AdminOnlineCertificatesPage() {
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.codeAndName")}</th>
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.studentRecipient")}</th>
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.serialRegistry")}</th>
-                    <th style={{ padding: "14px 16px" }}>IPFS (JSON)</th>
-                    <th style={{ padding: "14px 16px" }}>Blockchain Hash</th>
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.issuedDate")}</th>
                     <th style={{ padding: "14px 16px", textAlign: "center" }}>{t("adminOnlineCertificates.table.actions")}</th>
                   </tr>
@@ -191,34 +182,6 @@ export default function AdminOnlineCertificatesPage() {
                       <td style={{ padding: "14px 16px" }}>
                         <div className="text-slate-700 dark:text-slate-300"><strong className="text-slate-500 dark:text-slate-400">SH:</strong> {cert.serialNumber || "—"}</div>
                         <div className="text-slate-700 dark:text-slate-300"><strong className="text-slate-500 dark:text-slate-400">{t("adminOnlineCertificates.table.registryAbbr")}:</strong> {cert.registryNumber || "—"}</div>
-                      </td>
-
-                      <td style={{ padding: "14px 16px" }}>
-                        {cert.ipfs_cid ? (
-                          <a
-                            href={`https://gateway.pinata.cloud/ipfs/${cert.ipfs_cid}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800 px-2 py-1 rounded-md text-[11px] font-bold no-underline"
-                          >
-                            🌐 IPFS Gateway
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 dark:text-slate-500 text-[11px]">{t("adminOnlineCertificates.table.notSaved")}</span>
-                        )}
-                      </td>
-
-                      <td style={{ padding: "14px 16px" }}>
-                        {cert.tx_hash ? (
-                          <span
-                            title={cert.tx_hash}
-                            className="inline-block bg-emerald-50 dark:bg-emerald-950/30 text-[#147D74] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-1 rounded-md text-[11px] font-bold font-mono"
-                          >
-                            ✓ {cert.tx_hash.slice(0, 10)}...{cert.tx_hash.slice(-6)}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 dark:text-slate-500 text-[11px]">{t("adminOnlineCertificates.table.notRecorded")}</span>
-                        )}
                       </td>
 
                       <td className="p-4 text-xs text-slate-500 dark:text-slate-400">
@@ -251,26 +214,28 @@ export default function AdminOnlineCertificatesPage() {
 
       {/* Detail Modal */}
       {selectedCert && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex justify-between items-start mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <span style={{ background: "rgba(20, 125, 116, 0.1)", color: "#147D74", fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" }}>{t("adminOnlineCertificates.modal.badge")}</span>
-                <h2 className="text-lg font-black text-slate-900 dark:text-white mt-1 m-0">{selectedCert.certificate_title}</h2>
-              </div>
-              <button onClick={() => setSelectedCert(null)} className="bg-none border-none text-xl cursor-pointer text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">✕</button>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: 12 }}>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{t("adminOnlineCertificates.modal.title")}</h3>
+              <button
+                onClick={() => setSelectedCert(null)}
+                className="bg-transparent border-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer p-1"
+              >
+                ✕
+              </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13 }}>
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold mb-0.5">{t("adminOnlineCertificates.modal.certificateId")}</div>
-                <code className="text-xs text-slate-900 dark:text-slate-100 break-all">{selectedCert.certificate_id}</code>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{t("adminOnlineCertificates.modal.certName")}</div>
+                <div className="font-extrabold text-[#147D74] dark:text-emerald-400 text-base mt-0.5">{selectedCert.certificate_title}</div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{t("adminOnlineCertificates.modal.student")}</div>
-                  <div className="font-extrabold text-slate-900 dark:text-white mt-0.5">{selectedCert.student_fullName}</div>
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{t("adminOnlineCertificates.modal.studentName")}</div>
+                  <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedCert.student_fullName}</div>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -290,28 +255,6 @@ export default function AdminOnlineCertificatesPage() {
                   <div className="font-extrabold text-slate-900 dark:text-white mt-0.5">{selectedCert.registryNumber || "—"}</div>
                 </div>
               </div>
-
-              {selectedCert.ipfs_cid && (
-                <div className="bg-sky-50 dark:bg-sky-950/30 p-3 rounded-xl border border-sky-200 dark:border-sky-800">
-                  <div className="text-sky-700 dark:text-sky-300 text-[11px] font-bold">IPFS CID &amp; GATEWAY</div>
-                  <div className="text-[11px] font-mono text-sky-900 dark:text-sky-200 break-all my-1.5">{selectedCert.ipfs_cid}</div>
-                  <a
-                    href={`https://gateway.pinata.cloud/ipfs/${selectedCert.ipfs_cid}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-extrabold text-sky-600 dark:text-sky-400 no-underline"
-                  >
-                    🔗 {t("adminOnlineCertificates.modal.openJson")} →
-                  </a>
-                </div>
-              )}
-
-              {selectedCert.tx_hash && (
-                <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                  <div className="text-[#147D74] dark:text-emerald-300 text-[11px] font-bold">BLOCKCHAIN TRANSACTION HASH</div>
-                  <div className="text-[11px] font-mono text-emerald-900 dark:text-emerald-200 break-all mt-1">{selectedCert.tx_hash}</div>
-                </div>
-              )}
 
               <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                 <Link

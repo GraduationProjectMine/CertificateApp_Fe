@@ -105,25 +105,23 @@ const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
   }
 
   const statusStyle = statusLabel(cert.status, t);
-  const fields = [
-    { label: t("adminCertificateDetail.fields.certificateId"), value: cert.certificate_id },
-    { label: t("adminCertificateDetail.fields.student"), value: cert.student_fullName },
-    { label: t("adminCertificateDetail.fields.certificateTitle"), value: cert.certificate_title },
-    { label: t("adminCertificateDetail.fields.organization"), value: cert.organization_name },
-    { label: t("adminCertificateDetail.fields.dob"), value: cert.dob },
-    { label: t("adminCertificateDetail.fields.placeOfBirth"), value: cert.placeOfBirth },
-    { label: t("adminCertificateDetail.fields.gender"), value: cert.gender },
-    { label: t("adminCertificateDetail.fields.ethnicity"), value: cert.ethnicity },
-    { label: t("adminCertificateDetail.fields.school"), value: cert.schoolName },
-    { label: t("adminCertificateDetail.fields.examCohort"), value: cert.examCohort },
-    { label: t("adminCertificateDetail.fields.examBoard"), value: cert.examBoard },
-    { label: t("adminCertificateDetail.fields.issueLocation"), value: cert.issueLocation },
-    { label: t("adminCertificateDetail.fields.issueDate"), value: cert.issueDate },
-    { label: t("adminCertificateDetail.fields.serialNumber"), value: cert.serialNumber },
-    { label: t("adminCertificateDetail.fields.registryNumber"), value: cert.registryNumber },
-    { label: "IPFS CID", value: cert.ipfs_cid, mono: true },
-    { label: "Tx Hash", value: cert.tx_hash, mono: true },
-    { label: t("adminCertificateDetail.fields.issuedDate"), value: cert.issuedAt ? new Date(cert.issuedAt).toLocaleString("vi-VN") : "-" },
+  const fields: Array<{ key: string; label: string; value: string | null | undefined; mono?: boolean }> = [
+    { key: "certificateId", label: t("adminCertificateDetail.fields.certificateId"), value: cert.certificate_id, mono: true },
+    { key: "student", label: t("adminCertificateDetail.fields.student"), value: cert.student_fullName },
+    { key: "certificateTitle", label: t("adminCertificateDetail.fields.certificateTitle"), value: cert.certificate_title },
+    { key: "organization", label: t("adminCertificateDetail.fields.organization"), value: cert.organization_name },
+    { key: "dob", label: t("adminCertificateDetail.fields.dob"), value: cert.dob },
+    { key: "placeOfBirth", label: t("adminCertificateDetail.fields.placeOfBirth"), value: cert.placeOfBirth },
+    { key: "gender", label: t("adminCertificateDetail.fields.gender"), value: cert.gender },
+    { key: "ethnicity", label: t("adminCertificateDetail.fields.ethnicity"), value: cert.ethnicity },
+    { key: "school", label: t("adminCertificateDetail.fields.school"), value: cert.schoolName },
+    { key: "examCohort", label: t("adminCertificateDetail.fields.examCohort"), value: cert.examCohort },
+    { key: "examBoard", label: t("adminCertificateDetail.fields.examBoard"), value: cert.examBoard },
+    { key: "issueLocation", label: t("adminCertificateDetail.fields.issueLocation"), value: cert.issueLocation },
+    { key: "issueDate", label: t("adminCertificateDetail.fields.issueDate"), value: cert.issueDate },
+    { key: "serialNumber", label: t("adminCertificateDetail.fields.serialNumber"), value: cert.serialNumber },
+    { key: "registryNumber", label: t("adminCertificateDetail.fields.registryNumber"), value: cert.registryNumber },
+    { key: "issuedDate", label: t("adminCertificateDetail.fields.issuedDate"), value: cert.issuedAt ? new Date(cert.issuedAt).toLocaleString("vi-VN") : "-" },
   ];
 
   return (
@@ -140,7 +138,7 @@ const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
         </div>
       )}
 
-<ConfirmModal
+      <ConfirmModal
         open={showSubmitConfirmModal}
         onClose={() => setShowSubmitConfirmModal(false)}
         title={t("adminCertificateDetail.submitConfirm.title")}
@@ -227,7 +225,7 @@ const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
         <div className="divide-y divide-gray-100 dark:divide-gray-800">
           {fields.map((f) => (
             f.value ? (
-              <div key={f.label} className="flex items-center px-6 py-3">
+              <div key={f.key} className="flex items-center px-6 py-3">
                 <span className="w-36 text-xs font-semibold text-gray-500 dark:text-gray-400 shrink-0">{f.label}</span>
                 <span className={`text-xs text-gray-900 dark:text-white ${f.mono ? "font-mono text-[11px]" : ""}`}>
                   {f.value}

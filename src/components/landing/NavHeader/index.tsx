@@ -6,19 +6,12 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
 import { navItems } from "../data";
 import AppControls from "@/components/common/AppControls";
-import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 
 export default function NavHeader() {
   const { user, logout } = useAuth();
   const { t } = useI18n();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  const confirmLogout = () => {
-    setMobileMenuOpen(false);
-    setShowLogoutConfirm(true);
-  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -34,20 +27,6 @@ export default function NavHeader() {
           : "bg-transparent py-3"
       }`}
     >
-      <ConfirmModal
-        open={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        title={t("common.confirm.logoutTitle")}
-        message={t("common.confirm.logoutBody")}
-        confirmLabel={t("common.confirm.logoutConfirm")}
-        cancelLabel={t("common.confirm.logoutCancel")}
-        variant="danger"
-        icon="danger"
-        onConfirm={() => {
-          setShowLogoutConfirm(false);
-          logout();
-        }}
-      />
       <div className={styles._1}>
         <Link href="/" className={`group ${styles._2}`}>
           <div className={styles._3}>
@@ -109,7 +88,7 @@ export default function NavHeader() {
                 {t("nav.dashboard")}
               </Link>
               <button
-                onClick={confirmLogout}
+                onClick={() => logout()}
                 className={styles._17}
               >
                 {t("nav.logout")}
@@ -189,7 +168,10 @@ export default function NavHeader() {
                   {t("nav.dashboard")}
                 </Link>
                 <button
-                  onClick={confirmLogout}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
                   className={styles._32}
                 >
                   {t("nav.logout")}

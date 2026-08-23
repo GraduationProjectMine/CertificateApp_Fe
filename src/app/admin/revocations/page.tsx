@@ -92,7 +92,46 @@ export default function AdminRevocationsPage() {
         <div className={styles._9}><input aria-label={t("adminRevocations.searchAriaLabel")} className={styles._10} placeholder={t("adminRevocations.searchPlaceholder")} value={query} onChange={(event) => setQuery(event.target.value)} /><button className={styles._11} type="button">{t("adminRevocations.searchButton")}</button></div>
         {query && <div className="divide-y rounded-2xl border border-gray-100 dark:border-gray-800">{matches.map((certificate) => <button className="flex w-full items-center justify-between gap-4 p-4 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-800" key={certificate.certificate_id} onClick={() => setSelected(certificate)}><span><strong className="block text-gray-900 dark:text-white">{certificate.student_fullName}</strong><span className="text-gray-500 dark:text-gray-400">{certificate.certificate_title}</span></span><span className="font-mono font-bold text-teal-600">{certificate.serialNumber || certificate.registryNumber}</span></button>)}{matches.length === 0 && <p className="p-4 text-xs text-gray-400 dark:text-gray-500">{t("adminRevocations.noMatches")}</p>}</div>}
 
-        {selected && <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5 dark:border-teal-900 dark:bg-teal-950/10"><div className="grid gap-3 text-xs sm:grid-cols-2"><p><span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.student")}</span><strong>{selected.student_fullName}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.certificate")}</span><strong>{selected.certificate_title}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.serialRegistry")}</span><strong>{selected.serialNumber} / {selected.registryNumber}</strong></p><p><span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.issueTx")}</span><strong className="break-all font-mono">{selected.tx_hash}</strong></p></div><label className="mt-4 block text-xs font-bold text-gray-700 dark:text-gray-300">{t("adminRevocations.step2Title")}<textarea className="mt-2 min-h-24 w-full rounded-xl border border-gray-200 bg-white p-3 font-normal dark:border-gray-700 dark:bg-gray-900" maxLength={500} placeholder={t("adminRevocations.reasonPlaceholder")} value={reason} onChange={(event) => setReason(event.target.value)} /></label><div className="mt-4 flex justify-end gap-2"><button className="rounded-xl border px-4 py-2 text-xs font-bold" onClick={() => setSelected(null)}>{t("adminRevocations.cancel")}</button><button className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={submitting || reason.trim().length < 5} onClick={requestRevoke}>{submitting ? t("adminRevocations.revoking") : t("adminRevocations.confirmRevoke")}</button></div></div>}
+        {selected && (
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5 dark:border-teal-900 dark:bg-teal-950/10">
+            <div className="grid gap-3 text-xs sm:grid-cols-3">
+              <p>
+                <span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.student")}</span>
+                <strong>{selected.student_fullName}</strong>
+              </p>
+              <p>
+                <span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.certificate")}</span>
+                <strong>{selected.certificate_title}</strong>
+              </p>
+              <p>
+                <span className="block text-gray-400 dark:text-gray-500">{t("adminRevocations.serialRegistry")}</span>
+                <strong>{selected.serialNumber} / {selected.registryNumber}</strong>
+              </p>
+            </div>
+            <label className="mt-4 block text-xs font-bold text-gray-700 dark:text-gray-300">
+              {t("adminRevocations.step2Title")}
+              <textarea
+                className="mt-2 min-h-24 w-full rounded-xl border border-gray-200 bg-white p-3 font-normal dark:border-gray-700 dark:bg-gray-900"
+                maxLength={500}
+                placeholder={t("adminRevocations.reasonPlaceholder")}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <button className="rounded-xl border px-4 py-2 text-xs font-bold" onClick={() => setSelected(null)}>
+                {t("adminRevocations.cancel")}
+              </button>
+              <button
+                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+                disabled={submitting || reason.trim().length < 5}
+                onClick={requestRevoke}
+              >
+                {submitting ? t("adminRevocations.revoking") : t("adminRevocations.confirmRevoke")}
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className={styles._13}>

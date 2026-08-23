@@ -17,14 +17,12 @@ interface AdminTopbarProps {
 }
 
 function getBreadcrumbs(pathname: string, t: (path: string) => string) {
-  const segments = pathname.split("/").filter(Boolean);
+  const segments = pathname.split("/").filter((s) => Boolean(s) && s !== "admin");
   return segments.map((segment, index) => {
-    const href = "/" + segments.slice(0, index + 1).join("/");
+    const href = "/admin/" + segments.slice(0, index + 1).join("/");
     const item = menuItems.find((m) => m.path === href);
     const displayTitle = item
       ? t(item.titleKey)
-      : segment === "admin"
-      ? t("adminShell.topbar.breadcrumbAdmin")
       : segment === "certificates"
       ? t("adminShell.topbar.breadcrumbCertificates")
       : segment === "issue"

@@ -13,8 +13,21 @@ import toast from "react-hot-toast";
 const DEFAULT_DESIGN = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
   fields: [
-    { id: "title_label", type: "text", x: 200, y: 180, w: 400, h: 25, font: "serif", size: 14, color: "#c9a84c", align: "center", text: "CHỨNG NHẬN" },
-    { id: "student_name", type: "text", x: 200, y: 300, w: 400, h: 50, font: "serif", size: 36, color: "#1a1a1a", align: "center", dynamic: true, binding: "student_fullName", bold: true },
+    { id: "fld_logo", type: "image", x: 670, y: 35, w: 75, h: 75, dynamic: true, binding: "organization_logo" },
+    { id: "fld_title", type: "text", x: 150, y: 40, w: 500, h: 35, font: "serif", size: 18, color: "#c9a84c", align: "center", text: "BẰNG TỐT NGHIỆP" },
+    { id: "fld_name", type: "text", x: 150, y: 90, w: 500, h: 45, font: "serif", size: 28, color: "#1a1a1a", align: "center", dynamic: true, binding: "student_fullName", bold: true },
+    { id: "fld_dob", type: "text", x: 80, y: 155, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "dob", label: "Ngày sinh:" },
+    { id: "fld_pob", type: "text", x: 420, y: 155, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "placeOfBirth", label: "Nơi sinh:" },
+    { id: "fld_gender", type: "text", x: 80, y: 195, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "gender", label: "Giới tính:" },
+    { id: "fld_ethnicity", type: "text", x: 420, y: 195, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "ethnicity", label: "Dân tộc:" },
+    { id: "fld_school", type: "text", x: 80, y: 235, w: 640, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "schoolName", label: "Trường đào tạo:" },
+    { id: "fld_cohort", type: "text", x: 80, y: 275, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "examCohort", label: "Khóa thi:" },
+    { id: "fld_board", type: "text", x: 420, y: 275, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "examBoard", label: "Hội đồng:" },
+    { id: "fld_loc", type: "text", x: 80, y: 315, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "issueLocation", label: "Nơi cấp:" },
+    { id: "fld_date", type: "text", x: 420, y: 315, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "issueDate", label: "Ngày cấp:" },
+    { id: "fld_serial", type: "text", x: 80, y: 520, w: 260, h: 20, font: "sans-serif", size: 10, color: "#888888", align: "left", dynamic: true, binding: "serialNumber", label: "Số hiệu:" },
+    { id: "fld_registry", type: "text", x: 360, y: 520, w: 260, h: 20, font: "sans-serif", size: 10, color: "#888888", align: "left", dynamic: true, binding: "registryNumber", label: "Số vào sổ:" },
+    { id: "fld_qr", type: "qr", x: 670, y: 470, w: 75, h: 75, dynamic: true, binding: "verification_url" },
   ],
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
