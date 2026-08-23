@@ -37,17 +37,17 @@ export interface CreateCertificatePayload {
   student_fullName?: string;
   template_id?: string;
   certificate_title: string;
-  dob?: string;
-  placeOfBirth?: string;
-  gender?: string;
-  ethnicity?: string;
-  schoolName?: string;
-  examCohort?: string;
-  examBoard?: string;
-  issueLocation?: string;
-  issueDate?: string;
-  serialNumber?: string;
-  registryNumber?: string;
+  dob: string;
+  placeOfBirth: string;
+  gender: string;
+  ethnicity: string;
+  schoolName: string;
+  examCohort: string;
+  examBoard: string;
+  issueLocation: string;
+  issueDate: string;
+  serialNumber: string;
+  registryNumber: string;
   ipfs_cid?: string;
   file_url?: string;
 }
@@ -55,10 +55,20 @@ export interface CreateCertificatePayload {
 export interface OnlineCertificateDto {
   certificate_id: string;
   organization_id: string;
-  student_id: string;
+  student_id: string | null;
   template_id?: string | null;
   certificate_title: string;
+  organization_name?: string | null;
   student_fullName: string;
+  dob?: string | null;
+  placeOfBirth?: string | null;
+  gender?: string | null;
+  ethnicity?: string | null;
+  schoolName?: string | null;
+  examCohort?: string | null;
+  examBoard?: string | null;
+  issueLocation?: string | null;
+  issueDate?: string | null;
   serialNumber?: string | null;
   registryNumber?: string | null;
   ipfs_cid?: string | null;
@@ -202,6 +212,9 @@ export function mapOnlineCertificateDtoToStudentCert(
     PENDING: "VALID",
     DRAFT: "VALID",
   };
+  const titleLower = (dto.certificate_title || "").toLowerCase();
+  const isCertType = titleLower.includes("chứng chỉ") || titleLower.includes("certificate") || titleLower.includes("chứng nhận");
+  const inferredType = isCertType ? "CERTIFICATE" : "BACHELOR_DEGREE";
 
   return {
     id: dto.certificate_id,
@@ -210,12 +223,12 @@ export function mapOnlineCertificateDtoToStudentCert(
     studentName: dto.student_fullName,
     studentCode: "",
     credentialTitle: dto.certificate_title || "Chứng chỉ Online",
-    type: "CERTIFICATE",
+    type: inferredType,
     major: "",
     classification: "",
     gpa: "",
-    issueDate: dto.issuedAt ? dto.issuedAt.split("T")[0] : "",
-    issuerName: "",
+    issueDate: dto.issueDate || (dto.issuedAt ? dto.issuedAt.split("T")[0] : ""),
+    issuerName: dto.organization_name || "",
     issuerLogo: "",
     status: statusMap[dto.status] || "VALID",
     rawStatus: (dto.status as any) || "DRAFT",
@@ -226,6 +239,14 @@ export function mapOnlineCertificateDtoToStudentCert(
     contractAddress: "",
     network: "",
     credentialHash: "",
+    dob: dto.dob,
+    placeOfBirth: dto.placeOfBirth,
+    gender: dto.gender,
+    ethnicity: dto.ethnicity,
+    schoolName: dto.schoolName,
+    examCohort: dto.examCohort,
+    examBoard: dto.examBoard,
+    issueLocation: dto.issueLocation,
     registryNumber: dto.registryNumber || "",
   };
 }

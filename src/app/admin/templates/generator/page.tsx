@@ -77,6 +77,414 @@ const REQUIRED_TEMPLATE_BINDINGS = [
 
 const OPTIONAL_BINDINGS = ["verification_url", "organization_logo"];
 
+function formatToDdMmYyyy(dateStr: string): string {
+  if (!dateStr) return "";
+  const cleaned = dateStr.trim();
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(cleaned)) {
+    const [y, m, d] = cleaned.split(/[-/]/);
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleaned)) {
+    const [d, m, y] = cleaned.split(/[-/]/);
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  return cleaned;
+}
+
+function isValidDdMmYyyy(dateStr: string): boolean {
+  if (!dateStr || typeof dateStr !== "string") return false;
+  const match = dateStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return false;
+
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+
+  if (year < 1900 || year > 2100) return false;
+  if (month < 1 || month > 12) return false;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if (day < 1 || day > daysInMonth) return false;
+
+  return true;
+}
+
+function parseDateParts(dmy: string): { day: number; month: number; year: number } | null {
+  if (!dmy) return null;
+  const match = dmy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const d = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const y = parseInt(match[3], 10);
+  return { day: d, month: m, year: y };
+}
+
+function DateField({
+  value,
+  onChange,
+  placeholder,
+  required,
+  label,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  label?: string;
+}) {
+  const { t } = useI18n();
+  const [showCalendar, setShowCalendar] = useState(false);
+  const parsed = parseDateParts(value);
+  const now = new Date();
+
+  const [viewYear, setViewYear] = useState(parsed?.year || now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(parsed?.month || (now.getMonth() + 1));
+
+  const handleOpenCalendar = () => {
+    const p = parseDateParts(value);
+    if (p) {
+      setViewYear(p.year);
+      setViewMonth(p.month);
+    } else {
+      setViewYear(now.getFullYear());
+      setViewMonth(now.getMonth() + 1);
+    }
+    setShowCalendar(true);
+  };
+
+  const handleTextChange = (raw: string) => {
+    let val = raw.replace(/[^\d/]/g, "");
+    const digits = val.replace(/\//g, "");
+    if (digits.length > 8) return;
+    if (!raw.includes("/") && digits.length >= 2) {
+      if (digits.length <= 2) {
+        val = digits;
+      } else if (digits.length <= 4) {
+        val = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+      } else {
+        val = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+      }
+    }
+    onChange(val.slice(0, 10));
+  };
+
+  const handleSelectDay = (day: number) => {
+    const formatted = `${String(day).padStart(2, "0")}/${String(viewMonth).padStart(2, "0")}/${viewYear}`;
+    onChange(formatted);
+    setShowCalendar(false);
+  };
+
+  const handleSelectToday = () => {
+    const today = new Date();
+    const formatted = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+    onChange(formatted);
+    setShowCalendar(false);
+  };
+
+  const prevMonth = () => {
+    if (viewMonth === 1) {
+      setViewMonth(12);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (viewMonth === 12) {
+      setViewMonth(1);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth - 1, 1).getDay();
+  const startOffset = (firstDayOfWeek + 6) % 7;
+
+  const yearsList = [];
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear + 5; y >= 1950; y--) {
+    yearsList.push(y);
+  }
+
+  const rawMonths = t("adminCertificateIssue.calendar.months");
+  const monthNames = Array.isArray(rawMonths) ? rawMonths : [
+    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+  ];
+
+  const rawDays = t("adminCertificateIssue.calendar.days");
+  const dayNames = Array.isArray(rawDays) ? rawDays : ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+
+  return (
+    <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+      <input
+        type="text"
+        required={required}
+        value={value}
+        onChange={(e) => handleTextChange(e.target.value)}
+        placeholder={placeholder || "dd/mm/yyyy"}
+        maxLength={10}
+        style={{
+          width: "100%",
+          padding: "8px 36px 8px 10px",
+          borderRadius: 8,
+          border: "1px solid var(--border-strong)",
+          fontSize: 12,
+          background: "var(--surface)",
+          color: "var(--text-main)",
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={handleOpenCalendar}
+        title={t("adminCertificateIssue.calendar.selectDate")}
+        style={{
+          position: "absolute",
+          right: 8,
+          top: "50%",
+          transform: "translateY(-50%)",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontSize: 14,
+          padding: 2,
+          color: "var(--text-secondary)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        📅
+      </button>
+
+      {/* Centered Calendar Modal */}
+      {showCalendar && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: 16,
+          }}
+          onClick={() => setShowCalendar(false)}
+        >
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 20,
+              padding: 20,
+              maxWidth: 320,
+              width: "100%",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: 8 }}>
+              <div>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)", margin: 0 }}>
+                  {label ? `${t("adminCertificateIssue.calendar.selectDate")} - ${label}` : t("adminCertificateIssue.calendar.selectDate")}
+                </h3>
+                <p style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "monospace", margin: "2px 0 0 0" }}>
+                  {t("adminCertificateIssue.calendar.formatPrefix")} {value ? `• ${value}` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCalendar(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: "bold",
+                  padding: 4,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Month & Year Selectors & Navigation */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+              <button
+                type="button"
+                onClick={prevMonth}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface-subtle)",
+                  color: "var(--text-main)",
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontWeight: "bold",
+                }}
+              >
+                ◀
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <select
+                  value={viewMonth}
+                  onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "var(--text-main)",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  {monthNames.map((m, idx) => (
+                    <option key={idx + 1} value={idx + 1} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={viewYear}
+                  onChange={(e) => setViewYear(parseInt(e.target.value, 10))}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "var(--text-main)",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  {yearsList.map((y) => (
+                    <option key={y} value={y} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={nextMonth}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface-subtle)",
+                  color: "var(--text-main)",
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontWeight: "bold",
+                }}
+              >
+                ▶
+              </button>
+            </div>
+
+            {/* Days of Week */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, textAlign: "center", fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>
+              {dayNames.map((day, idx) => (
+                <span key={idx} style={{ color: idx === 6 ? "#ef4444" : undefined }}>
+                  {day}
+                </span>
+              ))}
+            </div>
+
+            {/* Calendar Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+              {Array.from({ length: startOffset }).map((_, i) => (
+                <div key={`empty-${i}`} style={{ height: 28 }} />
+              ))}
+
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const dayNum = i + 1;
+                const isSelected = parsed?.day === dayNum && parsed?.month === viewMonth && parsed?.year === viewYear;
+                const isToday = now.getDate() === dayNum && now.getMonth() + 1 === viewMonth && now.getFullYear() === viewYear;
+
+                return (
+                  <button
+                    key={dayNum}
+                    type="button"
+                    onClick={() => handleSelectDay(dayNum)}
+                    style={{
+                      height: 28,
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontWeight: isSelected ? 800 : 500,
+                      cursor: "pointer",
+                      border: "none",
+                      background: isSelected ? "#147D74" : isToday ? "rgba(20,125,116,0.12)" : "transparent",
+                      color: isSelected ? "#ffffff" : isToday ? "#147D74" : "var(--text-main)",
+                      outline: isToday && !isSelected ? "1px dashed #147D74" : "none",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {dayNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer Buttons */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border-subtle)", paddingTop: 8 }}>
+              <button
+                type="button"
+                onClick={handleSelectToday}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#147D74",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {t("adminCertificateIssue.calendar.today")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCalendar(false)}
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {t("adminCertificateIssue.calendar.close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CertificateGeneratorPage() {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -215,8 +623,7 @@ export default function CertificateGeneratorPage() {
         return { valid: false, missingLabel: item.label };
       }
       if (item.key === "issueDate" || item.key === "dob") {
-        const d = new Date(val);
-        if (isNaN(d.getTime())) {
+        if (!isValidDdMmYyyy(val)) {
           return { valid: false, invalidDateLabel: item.label };
         }
       }
@@ -244,7 +651,14 @@ export default function CertificateGeneratorPage() {
         return;
       }
       setImportedFileName(res.fileName);
-      setRecords(res.rows.map((r) => r.record));
+      setRecords(
+        res.rows.map((r) => {
+          const rec = { ...r.record };
+          if (rec.dob) rec.dob = formatToDdMmYyyy(rec.dob);
+          if (rec.issueDate) rec.issueDate = formatToDdMmYyyy(rec.issueDate);
+          return rec;
+        })
+      );
       setActiveRowIndex(0);
       toast.success(`${t("adminTemplateGenerator.importSuccessPrefix")} ${res.totalRows} ${t("adminTemplateGenerator.recordUnit")} ${t("adminTemplateGenerator.importFromFile")} ${res.fileName}`);
     } catch (err: any) {
@@ -372,21 +786,21 @@ export default function CertificateGeneratorPage() {
     setIssuingSingle(true);
     try {
       const payload: CreateCertificatePayload = {
-        student_id: activeRecord.student_id || `SV_${Date.now()}`,
-        student_fullName: activeRecord.student_fullName,
+        student_id: (activeRecord.student_id || `SV_${Date.now()}`).trim(),
+        student_fullName: (activeRecord.student_fullName || "").trim() || undefined,
         template_id: selectedTemplate.id,
-        certificate_title: activeRecord.certificate_title || selectedTemplate.name || "BẰNG TỐT NGHIỆP",
-        dob: activeRecord.dob,
-        placeOfBirth: activeRecord.placeOfBirth,
-        gender: activeRecord.gender,
-        ethnicity: activeRecord.ethnicity,
-        schoolName: activeRecord.schoolName,
-        examCohort: activeRecord.examCohort,
-        examBoard: activeRecord.examBoard,
-        issueLocation: activeRecord.issueLocation,
-        issueDate: activeRecord.issueDate,
-        serialNumber: activeRecord.serialNumber,
-        registryNumber: activeRecord.registryNumber,
+        certificate_title: (activeRecord.certificate_title || selectedTemplate.name || "BẰNG TỐT NGHIỆP").trim(),
+        dob: (activeRecord.dob || "").trim(),
+        placeOfBirth: (activeRecord.placeOfBirth || "").trim(),
+        gender: (activeRecord.gender || "").trim(),
+        ethnicity: (activeRecord.ethnicity || "").trim(),
+        schoolName: (activeRecord.schoolName || "").trim(),
+        examCohort: (activeRecord.examCohort || "").trim(),
+        examBoard: (activeRecord.examBoard || "").trim(),
+        issueLocation: (activeRecord.issueLocation || "").trim(),
+        issueDate: (activeRecord.issueDate || "").trim(),
+        serialNumber: (activeRecord.serialNumber || "").trim(),
+        registryNumber: (activeRecord.registryNumber || "").trim(),
       };
 
       const cert = await certificateApi.templateIssueSingle(payload);
@@ -455,21 +869,21 @@ export default function CertificateGeneratorPage() {
     setIssuingBatch(true);
     try {
       const rows: CreateCertificatePayload[] = records.map((r, i) => ({
-        student_id: r.student_id || `SV_${Date.now()}_${i + 1}`,
-        student_fullName: r.student_fullName,
+        student_id: (r.student_id || `SV_${Date.now()}_${i + 1}`).trim(),
+        student_fullName: (r.student_fullName || "").trim() || undefined,
         template_id: selectedTemplate.id,
-        certificate_title: r.certificate_title || selectedTemplate.name || "BẰNG TỐT NGHIỆP",
-        dob: r.dob,
-        placeOfBirth: r.placeOfBirth,
-        gender: r.gender,
-        ethnicity: r.ethnicity,
-        schoolName: r.schoolName,
-        examCohort: r.examCohort,
-        examBoard: r.examBoard,
-        issueLocation: r.issueLocation,
-        issueDate: r.issueDate,
-        serialNumber: r.serialNumber,
-        registryNumber: r.registryNumber,
+        certificate_title: (r.certificate_title || selectedTemplate.name || "BẰNG TỐT NGHIỆP").trim(),
+        dob: (r.dob || "").trim(),
+        placeOfBirth: (r.placeOfBirth || "").trim(),
+        gender: (r.gender || "").trim(),
+        ethnicity: (r.ethnicity || "").trim(),
+        schoolName: (r.schoolName || "").trim(),
+        examCohort: (r.examCohort || "").trim(),
+        examBoard: (r.examBoard || "").trim(),
+        issueLocation: (r.issueLocation || "").trim(),
+        issueDate: (r.issueDate || "").trim(),
+        serialNumber: (r.serialNumber || "").trim(),
+        registryNumber: (r.registryNumber || "").trim(),
       }));
 
       const batchRes = await certificateApi.templateIssueBatch({
@@ -949,13 +1363,23 @@ export default function CertificateGeneratorPage() {
                       {label}{!OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "#ef4444" }}> *</span>}
                       {OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "var(--text-faint)", fontWeight: 400 }}> {t("adminTemplateGenerator.optionalSuffix")}</span>}
                     </label>
-                    <input
-                      type={(key === "issueDate" || key === "dob") ? "date" : "text"}
-                      value={activeRecord[key] || ""}
-                      onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
-                      placeholder={OPTIONAL_BINDINGS.includes(key) ? t("adminTemplateGenerator.placeholderOptional").replace("{label}", label.toLowerCase()) : `${t("adminTemplateGenerator.enterPrefix")} ${label.toLowerCase()}...`}
-                    />
+                    {(key === "issueDate" || key === "dob") ? (
+                      <DateField
+                        value={activeRecord[key] || ""}
+                        onChange={(val) => handleUpdateActiveField(key, val)}
+                        placeholder="dd/mm/yyyy"
+                        required={!OPTIONAL_BINDINGS.includes(key)}
+                        label={label}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={activeRecord[key] || ""}
+                        onChange={(e) => handleUpdateActiveField(key, e.target.value)}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
+                        placeholder={OPTIONAL_BINDINGS.includes(key) ? t("adminTemplateGenerator.placeholderOptional").replace("{label}", label.toLowerCase()) : `${t("adminTemplateGenerator.enterPrefix")} ${label.toLowerCase()}...`}
+                      />
+                    )}
                   </div>
                 );
               })}
