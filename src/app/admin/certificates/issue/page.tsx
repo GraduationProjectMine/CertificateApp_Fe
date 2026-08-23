@@ -28,10 +28,309 @@ type FormData = {
   file_url: string;
 };
 
+function formatToDdMmYyyy(dateStr: string): string {
+  if (!dateStr) return "";
+  const cleaned = dateStr.trim();
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(cleaned)) {
+    const [y, m, d] = cleaned.split(/[-/]/);
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleaned)) {
+    const [d, m, y] = cleaned.split(/[-/]/);
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  return cleaned;
+}
+
+function isValidDdMmYyyy(dateStr: string): boolean {
+  if (!dateStr || typeof dateStr !== "string") return false;
+  const match = dateStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return false;
+
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+
+  if (year < 1900 || year > 2100) return false;
+  if (month < 1 || month > 12) return false;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if (day < 1 || day > daysInMonth) return false;
+
+  return true;
+}
+
+function parseDateParts(dmy: string): { day: number; month: number; year: number } | null {
+  if (!dmy) return null;
+  const match = dmy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const d = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const y = parseInt(match[3], 10);
+  return { day: d, month: m, year: y };
+}
+
+function DateField({
+  value,
+  onChange,
+  placeholder,
+  required,
+  className,
+  label,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+  label?: string;
+}) {
+  const { t } = useI18n();
+  const [showCalendar, setShowCalendar] = useState(false);
+  const parsed = parseDateParts(value);
+  const now = new Date();
+
+  const [viewYear, setViewYear] = useState(parsed?.year || now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(parsed?.month || (now.getMonth() + 1));
+
+  const handleOpenCalendar = () => {
+    const p = parseDateParts(value);
+    if (p) {
+      setViewYear(p.year);
+      setViewMonth(p.month);
+    } else {
+      setViewYear(now.getFullYear());
+      setViewMonth(now.getMonth() + 1);
+    }
+    setShowCalendar(true);
+  };
+
+  const handleTextChange = (raw: string) => {
+    let val = raw.replace(/[^\d/]/g, "");
+    const digits = val.replace(/\//g, "");
+    if (digits.length > 8) return;
+    if (!raw.includes("/") && digits.length >= 2) {
+      if (digits.length <= 2) {
+        val = digits;
+      } else if (digits.length <= 4) {
+        val = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+      } else {
+        val = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+      }
+    }
+    onChange(val.slice(0, 10));
+  };
+
+  const handleSelectDay = (day: number) => {
+    const formatted = `${String(day).padStart(2, "0")}/${String(viewMonth).padStart(2, "0")}/${viewYear}`;
+    onChange(formatted);
+    setShowCalendar(false);
+  };
+
+  const handleSelectToday = () => {
+    const today = new Date();
+    const formatted = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+    onChange(formatted);
+    setShowCalendar(false);
+  };
+
+  const prevMonth = () => {
+    if (viewMonth === 1) {
+      setViewMonth(12);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (viewMonth === 12) {
+      setViewMonth(1);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth - 1, 1).getDay();
+  const startOffset = (firstDayOfWeek + 6) % 7;
+
+  const yearsList = [];
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear + 5; y >= 1950; y--) {
+    yearsList.push(y);
+  }
+
+  const rawMonths = t("adminCertificateIssue.calendar.months");
+  const monthNames = Array.isArray(rawMonths) ? rawMonths : [
+    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+  ];
+
+  const rawDays = t("adminCertificateIssue.calendar.days");
+  const dayNames = Array.isArray(rawDays) ? rawDays : ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+
+  return (
+    <div className="relative flex items-center">
+      <input
+        type="text"
+        required={required}
+        value={value}
+        onChange={(e) => handleTextChange(e.target.value)}
+        placeholder={placeholder || "dd/mm/yyyy"}
+        maxLength={10}
+        className={`${className} pr-10`}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={handleOpenCalendar}
+        title={t("adminCertificateIssue.calendar.selectDate")}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer bg-transparent border-0 text-sm"
+      >
+        📅
+      </button>
+
+      {/* Centered Calendar Modal */}
+      {showCalendar && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-xs w-full shadow-2xl space-y-3 animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                  {label ? `${t("adminCertificateIssue.calendar.selectDate")} - ${label}` : t("adminCertificateIssue.calendar.selectDate")}
+                </h3>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                  {t("adminCertificateIssue.calendar.formatPrefix")} {value ? `• ${value}` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCalendar(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer bg-transparent border-0 text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Month & Year Selectors & Navigation */}
+            <div className="flex items-center justify-between gap-1.5">
+              <button
+                type="button"
+                onClick={prevMonth}
+                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer bg-transparent border border-slate-200 dark:border-slate-700 text-xs font-bold"
+              >
+                ◀
+              </button>
+
+              <div className="flex items-center gap-1">
+                <select
+                  value={viewMonth}
+                  onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
+                  className="px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-800 dark:text-slate-200 cursor-pointer outline-none"
+                >
+                  {monthNames.map((m, idx) => (
+                    <option key={idx + 1} value={idx + 1}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={viewYear}
+                  onChange={(e) => setViewYear(parseInt(e.target.value, 10))}
+                  className="px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-800 dark:text-slate-200 cursor-pointer outline-none"
+                >
+                  {yearsList.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={nextMonth}
+                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer bg-transparent border border-slate-200 dark:border-slate-700 text-xs font-bold"
+              >
+                ▶
+              </button>
+            </div>
+
+            {/* Days of Week */}
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 py-0.5">
+              {dayNames.map((day, idx) => (
+                <span key={idx} className={idx === 6 ? "text-red-500" : ""}>
+                  {day}
+                </span>
+              ))}
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: startOffset }).map((_, i) => (
+                <div key={`empty-${i}`} className="h-7" />
+              ))}
+
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const dayNum = i + 1;
+                const isSelected = parsed?.day === dayNum && parsed?.month === viewMonth && parsed?.year === viewYear;
+                const isToday = now.getDate() === dayNum && (now.getMonth() + 1) === viewMonth && now.getFullYear() === viewYear;
+                const isSunday = (startOffset + i) % 7 === 6;
+
+                return (
+                  <button
+                    key={dayNum}
+                    type="button"
+                    onClick={() => handleSelectDay(dayNum)}
+                    className={`h-7 w-full rounded-lg text-xs font-semibold flex items-center justify-center transition-all cursor-pointer border-0 ${
+                      isSelected
+                        ? "bg-[#147D74] text-white font-bold shadow-sm scale-105"
+                        : isToday
+                        ? "border border-teal-500 text-[#147D74] dark:text-teal-400 font-bold bg-teal-50/50 dark:bg-teal-950/20"
+                        : isSunday
+                        ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {dayNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={handleSelectToday}
+                className="px-2.5 py-1 text-xs font-bold text-[#147D74] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/20 rounded-lg transition-colors cursor-pointer border-0 bg-transparent"
+              >
+                {t("adminCertificateIssue.calendar.today")}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowCalendar(false)}
+                className="px-3 py-1 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700 bg-transparent"
+              >
+                {t("adminCertificateIssue.calendar.close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const initialForm: FormData = {
   student_id: "",
   student_fullName: "",
-  certificate_title: "",
+  certificate_title: "BẰNG TỐT NGHIỆP TRUNG HỌC PHỔ THÔNG",
   dob: "",
   placeOfBirth: "",
   gender: "",
@@ -106,15 +405,14 @@ export default function IssueCertificatePage() {
     try {
       const res = await ocrApi.extractDiploma(ocrFile, ocrLang);
       const d = res.data;
+      if (d.document_title) {
+        updateField("certificate_title", d.document_title);
+      } else {
+        updateField("certificate_title", "BẰNG TỐT NGHIỆP TRUNG HỌC PHỔ THÔNG");
+      }
       if (d.full_name) updateField("student_fullName", d.full_name);
       if (d.dob) {
-        // Expected format: DD/MM/YYYY
-        const parts = d.dob.split("/");
-        if (parts.length === 3) {
-           updateField("dob", `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
-        } else {
-           updateField("dob", d.dob);
-        }
+        updateField("dob", formatToDdMmYyyy(d.dob));
       }
       if (d.place_of_birth) updateField("placeOfBirth", d.place_of_birth);
       if (d.gender) updateField("gender", d.gender);
@@ -123,7 +421,9 @@ export default function IssueCertificatePage() {
       if (d.exam_cohort) updateField("examCohort", d.exam_cohort);
       if (d.exam_board) updateField("examBoard", d.exam_board);
       if (d.issue_location) updateField("issueLocation", d.issue_location);
-      if (d.issue_date) updateField("issueDate", d.issue_date.split("/").reverse().join("-"));
+      if (d.issue_date) {
+        updateField("issueDate", formatToDdMmYyyy(d.issue_date));
+      }
       if (d.serial_number) updateField("serialNumber", d.serial_number);
       if (d.registry_number) updateField("registryNumber", d.registry_number);
       if (res.ipfs_cid) updateField("ipfs_cid", res.ipfs_cid);
@@ -145,31 +445,68 @@ export default function IssueCertificatePage() {
   };
 
   const handleSubmit = async () => {
-    const studentId = formData.student_id.trim();
-    const certificateTitle = formData.certificate_title.trim();
-    const optional = (value: string) => value.trim() || undefined;
-    if (!studentId || !certificateTitle) {
-      setError(t("adminCertificateIssue.errors.validation"));
-      toast.error(t("adminCertificateIssue.errors.validation"));
+    const requiredFieldDefinitions: Array<{ key: keyof FormData; label: string }> = [
+      { key: "student_id", label: t("adminCertificateIssue.form.student").replace(/\s*\*$/, "") },
+      { key: "student_fullName", label: t("adminCertificateIssue.form.studentName").replace(/\s*\*$/, "") },
+      { key: "certificate_title", label: t("adminCertificateIssue.form.certificateTitle").replace(/\s*\*$/, "") },
+      { key: "dob", label: t("adminCertificateIssue.form.dob").replace(/\s*\*$/, "") },
+      { key: "placeOfBirth", label: t("adminCertificateIssue.form.placeOfBirth").replace(/\s*\*$/, "") },
+      { key: "gender", label: t("adminCertificateIssue.form.gender").replace(/\s*\*$/, "") },
+      { key: "ethnicity", label: t("adminCertificateIssue.form.ethnicity").replace(/\s*\*$/, "") },
+      { key: "schoolName", label: t("adminCertificateIssue.form.school").replace(/\s*\*$/, "") },
+      { key: "examCohort", label: t("adminCertificateIssue.form.examCohort").replace(/\s*\*$/, "") },
+      { key: "examBoard", label: t("adminCertificateIssue.form.examBoard").replace(/\s*\*$/, "") },
+      { key: "issueLocation", label: t("adminCertificateIssue.form.issueLocation").replace(/\s*\*$/, "") },
+      { key: "issueDate", label: t("adminCertificateIssue.form.issueDate").replace(/\s*\*$/, "") },
+      { key: "serialNumber", label: t("adminCertificateIssue.form.serialNumber").replace(/\s*\*$/, "") },
+      { key: "registryNumber", label: t("adminCertificateIssue.form.registryNumber").replace(/\s*\*$/, "") },
+    ];
+
+    const missingLabels = requiredFieldDefinitions
+      .filter((def) => !formData[def.key] || !formData[def.key].trim())
+      .map((def) => def.label);
+
+    if (missingLabels.length > 0) {
+      const missingMsg = (t("adminCertificateIssue.errors.validationMissingFields") || "Please fill in all required fields: {fields}")
+        .replace("{fields}", missingLabels.join(", "));
+      setError(missingMsg);
+      toast.error(missingMsg);
       return;
     }
+
+    if (!isValidDdMmYyyy(formData.dob)) {
+      const msg = t("adminCertificateIssue.errors.invalidDob");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    if (!isValidDdMmYyyy(formData.issueDate)) {
+      const msg = t("adminCertificateIssue.errors.invalidIssueDate");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    const optional = (value: string) => value.trim() || undefined;
     setSubmitting(true);
     setError("");
     try {
       const created = await certificateApi.createDraft({
-        student_id: studentId,
-        certificate_title: certificateTitle,
-        dob: optional(formData.dob),
-        placeOfBirth: optional(formData.placeOfBirth),
-        gender: optional(formData.gender),
-        ethnicity: optional(formData.ethnicity),
-        schoolName: optional(formData.schoolName),
-        examCohort: optional(formData.examCohort),
-        examBoard: optional(formData.examBoard),
-        issueLocation: optional(formData.issueLocation),
-        issueDate: optional(formData.issueDate),
-        serialNumber: optional(formData.serialNumber),
-        registryNumber: optional(formData.registryNumber),
+        student_id: formData.student_id.trim(),
+        student_fullName: formData.student_fullName.trim(),
+        certificate_title: formData.certificate_title.trim(),
+        dob: formData.dob.trim(),
+        placeOfBirth: formData.placeOfBirth.trim(),
+        gender: formData.gender.trim(),
+        ethnicity: formData.ethnicity.trim(),
+        schoolName: formData.schoolName.trim(),
+        examCohort: formData.examCohort.trim(),
+        examBoard: formData.examBoard.trim(),
+        issueLocation: formData.issueLocation.trim(),
+        issueDate: formData.issueDate.trim(),
+        serialNumber: formData.serialNumber.trim(),
+        registryNumber: formData.registryNumber.trim(),
         ipfs_cid: optional(formData.ipfs_cid),
         file_url: optional(formData.file_url),
       });
@@ -320,6 +657,7 @@ export default function IssueCertificatePage() {
             <p className="text-xs text-gray-400">{t("adminCertificateIssue.form.studentsLoading")}</p>
           ) : students.length > 0 ? (
             <select
+              required
               className={styles._30}
               value={formData.student_id}
               onChange={(e) => {
@@ -346,7 +684,9 @@ export default function IssueCertificatePage() {
           <label className={styles._29}>{t("adminCertificateIssue.form.studentName")}</label>
           <input
             type="text"
+            required
             className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.studentName")}
             value={formData.student_fullName}
             onChange={(e) => updateField("student_fullName", e.target.value)}
           />
@@ -355,55 +695,133 @@ export default function IssueCertificatePage() {
           <label className={styles._29}>{t("adminCertificateIssue.form.certificateTitle")}</label>
           <input
             type="text"
+            required
             className={styles._30}
-            placeholder={t("adminCertificateIssue.form.certificateTitlePlaceholder")}
+            placeholder={t("adminCertificateIssue.form.placeholders.certificateTitle")}
             value={formData.certificate_title}
             onChange={(e) => updateField("certificate_title", e.target.value)}
           />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.dob")}</label>
-          <input type="date" className={styles._30} value={formData.dob} onChange={(e) => updateField("dob", e.target.value)} />
+          <DateField
+            required
+            label={t("adminCertificateIssue.form.dob").replace(/\s*\*$/, "")}
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.dob")}
+            value={formData.dob}
+            onChange={(val) => updateField("dob", val)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.placeOfBirth")}</label>
-          <input type="text" className={styles._30} value={formData.placeOfBirth} onChange={(e) => updateField("placeOfBirth", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.placeOfBirth")}
+            value={formData.placeOfBirth}
+            onChange={(e) => updateField("placeOfBirth", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.gender")}</label>
-          <input type="text" className={styles._30} value={formData.gender} onChange={(e) => updateField("gender", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.gender")}
+            value={formData.gender}
+            onChange={(e) => updateField("gender", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.ethnicity")}</label>
-          <input type="text" className={styles._30} value={formData.ethnicity} onChange={(e) => updateField("ethnicity", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.ethnicity")}
+            value={formData.ethnicity}
+            onChange={(e) => updateField("ethnicity", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.school")}</label>
-          <input type="text" className={styles._30} value={formData.schoolName} onChange={(e) => updateField("schoolName", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.school")}
+            value={formData.schoolName}
+            onChange={(e) => updateField("schoolName", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.examCohort")}</label>
-          <input type="text" className={styles._30} value={formData.examCohort} onChange={(e) => updateField("examCohort", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.examCohort")}
+            value={formData.examCohort}
+            onChange={(e) => updateField("examCohort", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.examBoard")}</label>
-          <input type="text" className={styles._30} value={formData.examBoard} onChange={(e) => updateField("examBoard", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.examBoard")}
+            value={formData.examBoard}
+            onChange={(e) => updateField("examBoard", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.issueLocation")}</label>
-          <input type="text" className={styles._30} value={formData.issueLocation} onChange={(e) => updateField("issueLocation", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.issueLocation")}
+            value={formData.issueLocation}
+            onChange={(e) => updateField("issueLocation", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.issueDate")}</label>
-          <input type="date" className={styles._30} value={formData.issueDate} onChange={(e) => updateField("issueDate", e.target.value)} />
+          <DateField
+            required
+            label={t("adminCertificateIssue.form.issueDate").replace(/\s*\*$/, "")}
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.issueDate")}
+            value={formData.issueDate}
+            onChange={(val) => updateField("issueDate", val)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.serialNumber")}</label>
-          <input type="text" className={styles._30} value={formData.serialNumber} onChange={(e) => updateField("serialNumber", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.serialNumber")}
+            value={formData.serialNumber}
+            onChange={(e) => updateField("serialNumber", e.target.value)}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.registryNumber")}</label>
-          <input type="text" className={styles._30} value={formData.registryNumber} onChange={(e) => updateField("registryNumber", e.target.value)} />
+          <input
+            type="text"
+            required
+            className={styles._30}
+            placeholder={t("adminCertificateIssue.form.placeholders.registryNumber")}
+            value={formData.registryNumber}
+            onChange={(e) => updateField("registryNumber", e.target.value)}
+          />
         </div>
       </div>
 

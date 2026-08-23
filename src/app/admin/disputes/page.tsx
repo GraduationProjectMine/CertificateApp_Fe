@@ -3,7 +3,6 @@ import React, { useCallback, useState, useEffect } from "react";
 import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { useI18n } from "@/features/i18n/I18nContext";
-import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import toast from "react-hot-toast";
 
 type ReviewPayload = {
@@ -37,9 +36,7 @@ export default function AdminDisputesPage() {
 
   const [decision, setDecision] = useState<"APPROVED" | "REJECTED">("APPROVED");
   const [reviewerNote, setReviewerNote] = useState("");
-  const [newCertData, setNewCertData] = useState("");
   const [reviewError, setReviewError] = useState("");
-  const [pendingReview, setPendingReview] = useState<ReviewPayload | null>(null);
   const { t } = useI18n();
 
   const fetch = useCallback(async (status?: string) => {
@@ -60,45 +57,24 @@ export default function AdminDisputesPage() {
     setReviewTarget(d);
     setDecision("APPROVED");
     setReviewerNote("");
-    setNewCertData("");
     setReviewError("");
   };
 
   const handleReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewTarget) return;
-    setReviewError("");
-
-    let parsed: any;
-    if (decision === "APPROVED" && newCertData.trim()) {
-      try {
-        parsed = JSON.parse(newCertData);
-      } catch {
-        setReviewError(t("adminDisputes.invalidJsonError"));
-        toast.error(t("adminDisputes.invalidJsonError"));
-        return;
-      }
-    }
-
-    setPendingReview({
-      decision,
-      reviewer_note: reviewerNote.trim() || undefined,
-      new_cert_data: parsed,
-    });
-  };
-
-  const executeReview = async () => {
-    if (!reviewTarget || !pendingReview) return;
     setSubmitting(true);
     setReviewError("");
     try {
-      await disputeApi.review(reviewTarget.id, pendingReview);
+      await disputeApi.review(reviewTarget.id, {
+        decision,
+        reviewer_note: reviewerNote.trim() || undefined,
+      });
       toast.success(
-        pendingReview.decision === "APPROVED"
+        decision === "APPROVED"
           ? t("adminDisputes.review.successApproved")
           : t("adminDisputes.review.successRejected"),
       );
-      setPendingReview(null);
       setReviewTarget(null);
       fetch(statusFilter);
     } catch (err) {
@@ -112,23 +88,6 @@ export default function AdminDisputesPage() {
 
   return (
     <div className={styles._1}>
-      <ConfirmModal
-        open={!!pendingReview}
-        onClose={() => !submitting && setPendingReview(null)}
-        title={t("adminDisputes.review.confirmTitle")}
-        message={
-          pendingReview?.decision === "APPROVED"
-            ? t("adminDisputes.review.confirmApproveMessage")
-            : t("adminDisputes.review.confirmRejectMessage")
-        }
-        confirmLabel={t("adminDisputes.review.confirm")}
-        cancelLabel={t("adminDisputes.review.cancel")}
-        variant={pendingReview?.decision === "REJECTED" ? "danger" : "primary"}
-        icon={pendingReview?.decision === "REJECTED" ? "danger" : "info"}
-        loading={submitting}
-        onConfirm={() => void executeReview()}
-      />
-
       <div className={styles._2}>
         <div>
           <h1 className={styles._3}>{t("adminDisputes.title")}</h1>
@@ -294,20 +253,6 @@ export default function AdminDisputesPage() {
                   className={styles._44}
                 />
               </div>
-
-              {decision === "APPROVED" && (
-                <div className={styles._42}>
-                  <label className={styles._43}>{t("adminDisputes.review.certDataLabel")}</label>
-                  <textarea
-                    value={newCertData}
-                    onChange={(e) => setNewCertData(e.target.value)}
-                    rows={4}
-                    placeholder={t("adminDisputes.review.certDataPlaceholder")}
-                    className={styles._44}
-                  />
-                  <p className={styles._68}>{t("adminDisputes.review.certDataHint")}</p>
-                </div>
-              )}
 
               <div className={styles._46}>
                 <button type="button" onClick={() => setReviewTarget(null)} disabled={submitting} className={styles._47}>

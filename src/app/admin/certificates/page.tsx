@@ -308,8 +308,6 @@ const handleDelete = async () => {
                     <th className={styles._14}>{t("adminCertificates.table.student")}</th>
                     <th className={styles._14}>{t("adminCertificates.table.certificateType")}</th>
                     <th className={styles._14}>{t("adminCertificates.table.issuedDate")}</th>
-                    <th className={styles._15}>IPFS Gateway</th>
-                    <th className={styles._15}>Blockchain status</th>
                     <th className={styles._14}>{t("adminCertificates.table.status")}</th>
                     <th className={styles._16}>{t("adminCertificates.table.actions")}</th>
                   </tr>
@@ -332,20 +330,6 @@ const handleDelete = async () => {
                         <td className={styles._21}>{cert.certificate_title}</td>
                         <td className={styles._14}>
                           {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "-"}
-                        </td>
-                        <td className={styles._15}>
-                          {cert.ipfs_cid ? (
-                            <span className={styles._23}>{cert.ipfs_cid.slice(0, 12)}...</span>
-                          ) : (
-                            <span className={styles._24}>-</span>
-                          )}
-                        </td>
-                        <td className={styles._15}>
-                          {cert.tx_hash ? (
-                            <span className={styles._25}>ON-CHAIN</span>
-                          ) : (
-                            <span className={styles._26}>OFF-CHAIN</span>
-                          )}
                         </td>
                         <td className={styles._14}>
                           <span className={`${styles._0} ${statusStyle.className}`}>

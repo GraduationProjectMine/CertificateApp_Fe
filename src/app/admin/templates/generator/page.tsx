@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import Link from "next/link";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import JSZip from "jszip";
@@ -40,14 +41,39 @@ function getBindingLabels(t: ReturnType<typeof useI18n>["t"]): Record<string, st
 const DEFAULT_DESIGN: DesignData = {
   page: { width: 800, height: 600, bgColor: "#ffffff" },
   fields: [
-    { id: "fld_1", type: "text", x: 200, y: 180, w: 400, h: 30, font: "serif", size: 14, color: "#c9a84c", align: "center", text: "CHỨNG NHẬN" },
-    { id: "fld_2", type: "text", x: 150, y: 280, w: 500, h: 60, font: "serif", size: 36, color: "#1a1a1a", align: "center", dynamic: true, binding: "student_fullName", bold: true },
-    { id: "fld_3", type: "text", x: 200, y: 370, w: 400, h: 20, font: "sans-serif", size: 12, color: "#555555", align: "center", dynamic: true, binding: "dob", label: "Ngày sinh:" },
-    { id: "fld_4", type: "text", x: 50, y: 520, w: 300, h: 20, font: "sans-serif", size: 10, color: "#999999", align: "left", dynamic: true, binding: "serialNumber", label: "Số hiệu:" },
-    { id: "fld_5", type: "qr", x: 680, y: 460, w: 70, h: 70, dynamic: true, binding: "verification_url" },
+    { id: "fld_logo", type: "image", x: 670, y: 35, w: 75, h: 75, dynamic: true, binding: "organization_logo" },
+    { id: "fld_title", type: "text", x: 150, y: 40, w: 500, h: 35, font: "serif", size: 18, color: "#c9a84c", align: "center", text: "BẰNG TỐT NGHIỆP" },
+    { id: "fld_name", type: "text", x: 150, y: 90, w: 500, h: 45, font: "serif", size: 28, color: "#1a1a1a", align: "center", dynamic: true, binding: "student_fullName", bold: true },
+    { id: "fld_dob", type: "text", x: 80, y: 155, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "dob", label: "Ngày sinh:" },
+    { id: "fld_pob", type: "text", x: 420, y: 155, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "placeOfBirth", label: "Nơi sinh:" },
+    { id: "fld_gender", type: "text", x: 80, y: 195, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "gender", label: "Giới tính:" },
+    { id: "fld_ethnicity", type: "text", x: 420, y: 195, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "ethnicity", label: "Dân tộc:" },
+    { id: "fld_school", type: "text", x: 80, y: 235, w: 640, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "schoolName", label: "Trường đào tạo:" },
+    { id: "fld_cohort", type: "text", x: 80, y: 275, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "examCohort", label: "Khóa thi:" },
+    { id: "fld_board", type: "text", x: 420, y: 275, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "examBoard", label: "Hội đồng:" },
+    { id: "fld_loc", type: "text", x: 80, y: 315, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "issueLocation", label: "Nơi cấp:" },
+    { id: "fld_date", type: "text", x: 420, y: 315, w: 300, h: 22, font: "sans-serif", size: 11, color: "#333333", align: "left", dynamic: true, binding: "issueDate", label: "Ngày cấp:" },
+    { id: "fld_serial", type: "text", x: 80, y: 520, w: 260, h: 20, font: "sans-serif", size: 10, color: "#888888", align: "left", dynamic: true, binding: "serialNumber", label: "Số hiệu:" },
+    { id: "fld_registry", type: "text", x: 360, y: 520, w: 260, h: 20, font: "sans-serif", size: 10, color: "#888888", align: "left", dynamic: true, binding: "registryNumber", label: "Số vào sổ:" },
+    { id: "fld_qr", type: "qr", x: 670, y: 470, w: 75, h: 75, dynamic: true, binding: "verification_url" },
   ],
   decorations: [{ type: "border", style: "double", color: "#c9a84c", width: 4 }],
 };
+
+const REQUIRED_TEMPLATE_BINDINGS = [
+  "student_fullName",
+  "dob",
+  "placeOfBirth",
+  "gender",
+  "ethnicity",
+  "schoolName",
+  "examCohort",
+  "examBoard",
+  "issueLocation",
+  "issueDate",
+  "serialNumber",
+  "registryNumber",
+];
 
 const OPTIONAL_BINDINGS = ["verification_url", "organization_logo"];
 
@@ -65,6 +91,7 @@ export default function CertificateGeneratorPage() {
   const [records, setRecords] = useState<Array<Record<string, string>>>([{}]);
   const [activeRowIndex, setActiveRowIndex] = useState<number>(0);
   const [importedFileName, setImportedFileName] = useState<string>("");
+  const [orgLogo, setOrgLogo] = useState<string>("");
 
   const [importing, setImporting] = useState(false);
   const [exportingSingle, setExportingSingle] = useState(false);
@@ -90,6 +117,7 @@ export default function CertificateGeneratorPage() {
         setTemplates(list);
         setStudents(studList);
         if (profileRes && profileRes.logo_url) {
+          setOrgLogo(profileRes.logo_url);
           setRecords((prev) => {
             const next = [...prev];
             if (!next[0]) next[0] = {};
@@ -106,6 +134,9 @@ export default function CertificateGeneratorPage() {
     initData();
   }, []);
 
+  // Dynamically extract bound fields present in the selected template + student_id
+  const bindingLabels = useMemo(() => getBindingLabels(t), [t]);
+
   const handleSelectTemplate = (id: string) => {
     setSelectedTemplateId(id);
     if (!id) {
@@ -114,6 +145,17 @@ export default function CertificateGeneratorPage() {
     }
     const found = templates.find((t) => t.id === id) || null;
     setSelectedTemplate(found);
+    if (found && found.design_data) {
+      const d = found.design_data as DesignData;
+      const boundKeys = new Set((d.fields || []).filter((f) => f.dynamic && f.binding).map((f) => f.binding!));
+      const missing = REQUIRED_TEMPLATE_BINDINGS.filter((k) => !boundKeys.has(k));
+      if (missing.length > 0) {
+        const labels = missing.map((k) => bindingLabels[k] || k);
+        const msg = (t("adminTemplateGenerator.invalidTemplateMissing") || "Invalid template: Missing required fields ({fields})")
+          .replace("{fields}", labels.join(", "));
+        toast.error(msg, { duration: 6000 });
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -132,8 +174,22 @@ export default function CertificateGeneratorPage() {
     return DEFAULT_DESIGN;
   }, [selectedTemplate]);
 
-  // Dynamically extract bound fields present in the selected template + student_id
-  const bindingLabels = useMemo(() => getBindingLabels(t), [t]);
+  // Validation to check whether template has all required online certificate bindings
+  const templateValidation = useMemo(() => {
+    if (!selectedTemplate) return { isValid: true, missingKeys: [] as string[], missingLabels: [] as string[] };
+    const fields = activeDesign.fields || [];
+    const boundKeys = new Set(
+      fields.filter((f) => f.dynamic && f.binding).map((f) => f.binding!)
+    );
+    const missingKeys = REQUIRED_TEMPLATE_BINDINGS.filter((key) => !boundKeys.has(key));
+    const missingLabels = missingKeys.map((key) => bindingLabels[key] || key);
+    return {
+      isValid: missingKeys.length === 0,
+      missingKeys,
+      missingLabels,
+    };
+  }, [selectedTemplate, activeDesign, bindingLabels]);
+
   const boundFields = useMemo(() => {
     const fields = activeDesign.fields || [];
     const bound = fields.filter((f) => f.dynamic && f.binding);
@@ -201,6 +257,10 @@ export default function CertificateGeneratorPage() {
 
   const exportSinglePdf = async () => {
     if (!canvasRef.current) return;
+    if (!templateValidation.isValid) {
+      toast.error(t("adminTemplateGenerator.templateNotValidActionBlocked").replace("{fields}", templateValidation.missingLabels.join(", ")));
+      return;
+    }
     const check = validateRecord(activeRecord);
     if (!check.valid) {
       if (check.invalidDateLabel) {
@@ -241,6 +301,10 @@ export default function CertificateGeneratorPage() {
 
   const exportBatchZip = async () => {
     if (!canvasRef.current || records.length === 0) return;
+    if (!templateValidation.isValid) {
+      toast.error(t("adminTemplateGenerator.templateNotValidActionBlocked").replace("{fields}", templateValidation.missingLabels.join(", ")));
+      return;
+    }
     setExportingBatch(true);
     setBatchProgress(`0 / ${records.length}`);
     try {
@@ -346,6 +410,10 @@ export default function CertificateGeneratorPage() {
   // Request confirmation before issuing single certificate
   const requestIssueSingle = () => {
     if (!selectedTemplate) return;
+    if (!templateValidation.isValid) {
+      toast.error(t("adminTemplateGenerator.templateNotValidActionBlocked").replace("{fields}", templateValidation.missingLabels.join(", ")));
+      return;
+    }
     const check = validateRecord(activeRecord);
     if (!check.valid) {
       if (check.invalidDateLabel) {
@@ -361,6 +429,10 @@ export default function CertificateGeneratorPage() {
   // Request confirmation before issuing batch certificates
   const requestIssueBatch = () => {
     if (!selectedTemplate || records.length === 0) return;
+    if (!templateValidation.isValid) {
+      toast.error(t("adminTemplateGenerator.templateNotValidActionBlocked").replace("{fields}", templateValidation.missingLabels.join(", ")));
+      return;
+    }
     for (let i = 0; i < records.length; i++) {
       const check = validateRecord(records[i]);
       if (!check.valid) {
@@ -459,12 +531,13 @@ export default function CertificateGeneratorPage() {
     const content = (() => {
       if (field.type === "image" || field.binding === "organization_logo") {
         const rawSrc = field.binding ? activeRecord[field.binding] : field.src;
-        const imgSrc = rawSrc || field.src || activeRecord.organization_logo;
+        const imgSrc = rawSrc || field.src || activeRecord.organization_logo || orgLogo;
         if (imgSrc && (imgSrc.startsWith("http") || imgSrc.startsWith("data:") || imgSrc.startsWith("/"))) {
           return (
             <img
               src={imgSrc}
               alt={field.label || t("adminTemplateGenerator.logoAlt")}
+              crossOrigin="anonymous"
               style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
             />
           );
@@ -592,7 +665,6 @@ export default function CertificateGeneratorPage() {
           <div className="flex items-center justify-between px-8 py-2.5 bg-slate-50/90 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-nowrap gap-4">
             {/* Group 1: Import Data */}
             <label className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 shrink-0">
-              <span>📥</span>
               <span>{importing ? t("adminTemplateGenerator.importing") : t("adminTemplateGenerator.importCsv")}</span>
               <input type="file" accept=".csv,.xlsx,.xls" onChange={handleImportFile} disabled={importing} className="hidden" />
             </label>
@@ -631,7 +703,6 @@ export default function CertificateGeneratorPage() {
                 className="px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-800 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-900/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.issueSingleTitle")}
               >
-                <span>🚀</span>
                 <span>{issuingSingle ? t("adminTemplateGenerator.issuing") : t("adminTemplateGenerator.issueSingle")}</span>
               </button>
               <button
@@ -640,7 +711,6 @@ export default function CertificateGeneratorPage() {
                 className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.issueBatchTitle")}
               >
-                <span>🚀</span>
                 <span>{issuingBatch ? t("adminTemplateGenerator.issuing") : `${t("adminTemplateGenerator.issueBatch")} (${records.length})`}</span>
               </button>
             </div>
@@ -739,7 +809,7 @@ export default function CertificateGeneratorPage() {
       ) : (
         /* Loaded Template Workspace */
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          {/* Dynamic Input Side Panel */}
+            {/* Dynamic Input Side Panel */}
           <div style={{ width: 340, background: "var(--surface)", borderRight: "1px solid var(--border)", padding: 16, overflowY: "auto", display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid var(--border-subtle)" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#147D74", marginBottom: 2 }}>{t("adminTemplateGenerator.templatePrefix")} {selectedTemplate.name}</div>
@@ -748,6 +818,28 @@ export default function CertificateGeneratorPage() {
                 {t("adminTemplateGenerator.dynamicLabelsPrefix")} <strong style={{ color: "#147D74" }}>{boundFields.length} {t("adminTemplateGenerator.dynamicLabelsUnit")}</strong> {t("adminTemplateGenerator.dynamicLabelsSuffix")}
               </p>
             </div>
+
+            {/* Template Validity Alert Banner */}
+            {!templateValidation.isValid && (
+              <div style={{ marginBottom: 14, padding: 12, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#991b1b" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, marginBottom: 4 }}>
+                  <span>⚠️</span>
+                  <span>{t("adminTemplateGenerator.invalidTemplateBannerTitle")}</span>
+                </div>
+                <p style={{ fontSize: 11, lineHeight: 1.4, margin: "0 0 8px 0" }}>
+                  {(t("adminTemplateGenerator.invalidTemplateMissing") || "Missing required fields: {fields}")
+                    .replace("{fields}", templateValidation.missingLabels.join(", "))}
+                </p>
+                {selectedTemplate && (
+                  <Link
+                    href={`/admin/templates/editor/${selectedTemplate.id}`}
+                    style={{ display: "inline-block", fontSize: 11, fontWeight: 700, color: "#dc2626", textDecoration: "underline" }}
+                  >
+                    {t("adminTemplateGenerator.editTemplateBtn")} →
+                  </Link>
+                )}
+              </div>
+            )}
 
             {/* Record Navigator */}
             <div style={{ marginBottom: 16, background: "var(--surface-subtle)", border: "1px solid var(--border)", padding: 10, borderRadius: 10 }}>
@@ -877,7 +969,29 @@ export default function CertificateGeneratorPage() {
           </div>
 
           {/* Center Live Canvas Workspace */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto", padding: 24, background: "var(--page-bg)" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", overflow: "auto", padding: 24, background: "var(--page-bg)" }}>
+            {!templateValidation.isValid && (
+              <div style={{ width: "100%", maxWidth: 800, marginBottom: 16, padding: "12px 16px", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, boxShadow: "0 2px 8px rgba(239,68,68,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 20 }}>⚠️</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#991b1b" }}>{t("adminTemplateGenerator.invalidTemplateBannerTitle")}</div>
+                    <div style={{ fontSize: 11, color: "#b91c1c", marginTop: 2 }}>
+                      {(t("adminTemplateGenerator.invalidTemplateMissing") || "Missing required fields: {fields}")
+                        .replace("{fields}", templateValidation.missingLabels.join(", "))}
+                    </div>
+                  </div>
+                </div>
+                {selectedTemplate && (
+                  <Link
+                    href={`/admin/templates/editor/${selectedTemplate.id}`}
+                    style={{ whiteSpace: "nowrap", padding: "6px 14px", background: "#dc2626", color: "#fff", borderRadius: 8, fontSize: 11, fontWeight: 700, textDecoration: "none", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                  >
+                    {t("adminTemplateGenerator.editTemplateBtn")}
+                  </Link>
+                )}
+              </div>
+            )}
             <div
               ref={canvasRef}
               style={{

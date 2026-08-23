@@ -219,9 +219,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('auth_user');
       localStorage.removeItem('auth_login_time');
       setUser(null);
-      // Tear down the protected tree atomically. Unlike pathname-based state,
-      // this also completes correctly when logout starts while already on `/`.
-      window.location.replace('/');
+      setIsLoggingOut(false);
+      if (typeof window !== 'undefined') {
+        if (window.location.pathname === '/') {
+          window.location.reload();
+        } else {
+          window.location.href = '/';
+        }
+      }
     }
   }, []);
 
