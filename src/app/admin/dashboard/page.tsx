@@ -108,9 +108,6 @@ export default function AdminDashboardPage() {
       <div className={styles._3}>
         <div>
           <h1 className={styles._4}>{t("adminDashboard.header.title")}</h1>
-          <p className={styles._5}>
-            {t("adminDashboard.header.description")}
-          </p>
         </div>
         <div className={styles._6}>
           <Link href="/admin/certificates/issue" className={styles._7}>

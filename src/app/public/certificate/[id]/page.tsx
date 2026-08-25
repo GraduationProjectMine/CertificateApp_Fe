@@ -39,7 +39,13 @@ export default function PublicCredentialPage() {
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className={`px-6 py-5 ${isValid ? "bg-emerald-600" : isRevoked ? "bg-amber-600" : "bg-red-600"} text-white`}>
             <p className="text-xs font-bold uppercase tracking-[0.2em]">Kết quả xác minh</p>
-            <h1 className="mt-2 text-2xl font-black">{isValid ? "Văn bằng hợp lệ" : isRevoked ? "Văn bằng đã bị thu hồi" : "Không thể xác thực blockchain"}</h1>
+            <h1 className="mt-2 text-2xl font-black">
+              {isValid
+                ? "Văn bằng hợp lệ"
+                : isRevoked
+                ? "Văn bằng đã bị thu hồi"
+                : "Văn bằng không tồn tại trên blockchain"}
+            </h1>
             <p className="mt-1 text-sm opacity-90">{detail.certificateTitle}</p>
           </div>
 
