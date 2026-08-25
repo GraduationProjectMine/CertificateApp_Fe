@@ -54,7 +54,17 @@
 }
 
 ._14 {
- @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all;
+ @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all;
+}
+
+._14::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+:global(.dark) ._14::placeholder {
+  color: #6b7280;
+  opacity: 1;
 }
 
 ._15 {
@@ -118,7 +128,17 @@
 }
 
 ._30 {
- @apply w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900;
+ @apply w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all;
+}
+
+._30::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+:global(.dark) ._30::placeholder {
+  color: #6b7280;
+  opacity: 1;
 }
 
 ._31 {

@@ -330,7 +330,7 @@ function DateField({
 const initialForm: FormData = {
   student_id: "",
   student_fullName: "",
-  certificate_title: "BẰNG TỐT NGHIỆP TRUNG HỌC PHỔ THÔNG",
+  certificate_title: "",
   dob: "",
   placeOfBirth: "",
   gender: "",
