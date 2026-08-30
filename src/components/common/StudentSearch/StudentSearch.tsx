@@ -287,6 +287,7 @@ export default function StudentSearch({
           zIndex: 50,
         }}>
           {t("adminTemplateGenerator.noStudentsFound")}
+          
         </div>
       )}
     </div>
