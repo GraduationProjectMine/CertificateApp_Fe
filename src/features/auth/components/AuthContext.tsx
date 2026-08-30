@@ -85,14 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
     async function initAuth() {
       const token = localStorage.getItem('token');
       const savedUserStr = localStorage.getItem('auth_user');
@@ -225,21 +219,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('auth_user');
       localStorage.removeItem('auth_login_time');
       setUser(null);
-      setIsLoggingOut(false);
-      if (typeof window !== 'undefined') {
-        if (window.location.pathname === '/') {
-          window.location.reload();
-        } else {
-          window.location.href = '/';
-        }
-      }
+      // Tear down the protected tree atomically. Unlike pathname-based state,
+      // this also completes correctly when logout starts while already on `/`.
+      window.location.replace('/');
     }
   }, []);
 
   // 1-Hour Session Expiry Timer and Visibility/Focus Listener
   useEffect(() => {
-    if (!mounted || !user) return;
-    if (typeof window === 'undefined') return;
+    if (!user) return;
 
     const checkSessionExpiry = () => {
       const loginTimeStr = localStorage.getItem('auth_login_time');
@@ -253,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSessionExpiry();
 
     const loginTimeStr = localStorage.getItem('auth_login_time');
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     if (loginTimeStr) {
       const loginTime = parseInt(loginTimeStr, 10);
