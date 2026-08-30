@@ -7,6 +7,7 @@ import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import StudentSearch from "@/components/common/StudentSearch/StudentSearch";
 import toast from "react-hot-toast";
 
 type FormData = {
@@ -354,16 +355,8 @@ export default function IssueCertificatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; status: string } | null>(null);
   const [error, setError] = useState("");
-  const [students, setStudents] = useState<StudentDto[]>([]);
-  const [studentsLoading, setStudentsLoading] = useState(true);
-  const [studentsError, setStudentsError] = useState("");
 
-  useEffect(() => {
-    studentApi.list()
-      .then(setStudents)
-      .catch((err) => setStudentsError(err instanceof Error ? err.message : t("adminCertificateIssue.errors.studentsLoad")))
-      .finally(() => setStudentsLoading(false));
-  }, [t]);
+  
 
   // OCR
   const [inputMode, setInputMode] = useState<"manual" | "ocr">("manual");
@@ -653,32 +646,15 @@ export default function IssueCertificatePage() {
       <div className={styles._28}>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.student")}</label>
-          {studentsLoading ? (
-            <p className="text-xs text-gray-400">{t("adminCertificateIssue.form.studentsLoading")}</p>
-          ) : students.length > 0 ? (
-            <select
-              required
-              className={styles._30}
-              value={formData.student_id}
-              onChange={(e) => {
-                const s = students.find((s) => s.student_id === e.target.value);
-                updateField("student_id", e.target.value);
-                if (s) updateField("student_fullName", s.student_fullName);
-              }}
-            >
-              <option value="">{t("adminCertificateIssue.form.selectStudent")}</option>
-              {students.map((s) => (
-                <option key={s.student_id} value={s.student_id}>
-                  {s.student_fullName} ({s.email})
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 rounded-lg">
-              {studentsError || t("adminCertificateIssue.form.noStudents")}{' '}
-              <Link href="/admin/students/create" className="underline">{t("adminCertificateIssue.form.createStudent")}</Link> {t("adminCertificateIssue.form.beforeIssuing")}
-            </div>
-          )}
+          <StudentSearch
+            value={formData.student_id}
+            onChange={(studentId, studentFullName) => {
+              updateField("student_id", studentId);
+              if (studentFullName) updateField("student_fullName", studentFullName);
+            }}
+            placeholder={t("adminCertificateIssue.form.searchStudentPlaceholder")}
+            className={styles._30}
+          />
         </div>
         <div>
           <label className={styles._29}>{t("adminCertificateIssue.form.studentName")}</label>

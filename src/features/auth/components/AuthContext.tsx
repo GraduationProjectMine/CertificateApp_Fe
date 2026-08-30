@@ -85,8 +85,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     async function initAuth() {
       const token = localStorage.getItem('token');
       const savedUserStr = localStorage.getItem('auth_user');
@@ -232,7 +238,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 1-Hour Session Expiry Timer and Visibility/Focus Listener
   useEffect(() => {
-    if (!user) return;
+    if (!mounted || !user) return;
+    if (typeof window === 'undefined') return;
 
     const checkSessionExpiry = () => {
       const loginTimeStr = localStorage.getItem('auth_login_time');
@@ -246,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSessionExpiry();
 
     const loginTimeStr = localStorage.getItem('auth_login_time');
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     if (loginTimeStr) {
       const loginTime = parseInt(loginTimeStr, 10);

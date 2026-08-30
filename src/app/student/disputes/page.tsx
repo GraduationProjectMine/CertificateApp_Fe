@@ -4,11 +4,13 @@ import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { certificateApi, type CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import { useAuth } from "@/features/auth/components/AuthContext";
 import toast from "react-hot-toast";
 
 const DISPUTES_PER_PAGE = 5;
 
 export default function StudentDisputesPage() {
+  const { user } = useAuth();
   const { t } = useI18n();
   const statusInfo = (status: string): { label: string; className: string } => {
     const STATUS_MAP: Record<string, { label: string; className: string }> = {
@@ -34,12 +36,13 @@ export default function StudentDisputesPage() {
   const [formError, setFormError] = useState("");
 
   const fetch = useCallback(async () => {
+    if (!user?.id) return;
     setLoading(true);
     setError("");
     try {
       const [d, c] = await Promise.all([
         disputeApi.myDisputes(),
-        certificateApi.list(),
+        certificateApi.list({ student_id: user.id }),
       ]);
       setDisputes(d);
       setCerts(c);
@@ -48,7 +51,7 @@ export default function StudentDisputesPage() {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, user?.id]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -236,9 +239,9 @@ export default function StudentDisputesPage() {
                 <label className={styles._43}>{t("studentDisputes.form.selectCert")}</label>
                 <select value={formCertId} onChange={(e) => setFormCertId(e.target.value)} className={styles._44}>
                   <option value="">{t("studentDisputes.form.selectPlaceholder")}</option>
-                  {certs.filter((c) => c.status === "DRAFT").map((c) => (
+                  {certs.filter((c) => c.status !== "REVOKED").map((c) => (
                     <option key={c.certificate_id} value={c.certificate_id}>
-                      {c.certificate_title} - {c.student_fullName} ({t("studentDisputes.form.draftBadge")})
+                      {c.certificate_title} - {c.student_fullName} {c.status === "DRAFT" ? `(${t("studentDisputes.form.draftBadge")})` : c.status === "ISSUED" ? "(Đã phát hành)" : `(${c.status})`}
                     </option>
                   ))}
                 </select>

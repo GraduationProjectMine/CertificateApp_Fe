@@ -2,11 +2,11 @@ import "./globals.css";
 import { geistSans, geistMono } from "./fonts";
 import styles from "./layout.module.css";
 export { metadata } from "./metadata";
-import { AuthProvider } from "@/features/auth/components/AuthContext";
 import { ThemeProvider } from "@/features/theme/ThemeContext";
 import { I18nProvider } from "@/features/i18n/I18nContext";
 import { AppMotion } from "@/components/motion/AppMotion";
 import ToastProvider from "@/components/common/ToastProvider";
+import AuthProviderWrapper from "@/components/auth/AuthProviderWrapper";
 
 const themeScript = `
 (function(){try{var t=localStorage.getItem("certichain_theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()
@@ -29,10 +29,10 @@ export default function RootLayout({
       <body className={styles._1}>
         <ThemeProvider>
           <I18nProvider>
-            <AuthProvider>
+            <AuthProviderWrapper>
               <ToastProvider />
               <AppMotion>{children}</AppMotion>
-            </AuthProvider>
+            </AuthProviderWrapper>
           </I18nProvider>
         </ThemeProvider>
       </body>

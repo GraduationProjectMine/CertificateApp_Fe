@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback } from "react";
+import ReactDOM from "react-dom";
 import styles from "./modal.module.css";
 
 interface ModalProps {
@@ -13,7 +14,7 @@ interface ModalProps {
   footer?: React.ReactNode;
 }
 
-export default function Modal({
+function ModalContent({
   open,
   onClose,
   title,
@@ -75,4 +76,8 @@ export default function Modal({
       </div>
     </div>
   );
+}
+
+export default function Modal(props: ModalProps) {
+  return ReactDOM.createPortal(<ModalContent {...props} />, document.body);
 }

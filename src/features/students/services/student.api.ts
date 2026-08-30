@@ -48,6 +48,8 @@ export interface ImportBatchDto {
 
 export const studentApi = {
   list: () => request<StudentDto[]>('/students'),
+  search: (query: string, limit = 20) =>
+    request<StudentDto[]>(`/students/search?q=${encodeURIComponent(query)}&limit=${limit}`),
   get: (id: string) => request<StudentDto>(`/students/${id}`),
   create: (data: { name: string; email: string; password: string }) =>
     request<{ message: string; student: StudentDto }>('/students', {
@@ -69,16 +71,15 @@ export const studentApi = {
       body: formData,
     });
   },
-  downloadTemplate: () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const url = `${API_URL}/students/import/template`;
+  downloadTemplate: async () => {
+    const csv = await request<string>('/students/import/template');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = token ? `${url}?token=${token}` : url;
+    link.href = url;
     link.download = 'student-import-template.csv';
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   },
   importHistory: () => request<ImportBatchDto[]>('/students/import/history'),
 
