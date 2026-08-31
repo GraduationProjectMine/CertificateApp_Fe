@@ -1321,6 +1321,16 @@ confirm: {
         successApproved: "Đã chấp thuận yêu cầu chỉnh sửa",
         successRejected: "Đã từ chối yêu cầu chỉnh sửa",
       },
+      comparison: {
+        title: "Bảng so sánh: Dữ liệu hiện tại ↔ Đề xuất chỉnh sửa",
+        highlightDesc: "Màu đỏ = dữ liệu cũ (sẽ bị thay), Màu xanh = dữ liệu mới (đề xuất)",
+        field: "Trường thông tin",
+        current: "Hiện tại",
+        proposed: "Đề xuất",
+        noChangesDetected: "Không phát hiện thay đổi cụ thể trong chi tiết khiếu nại.",
+        reasonOnly: "Chỉ có lý do khiếu nại: ",
+        summary: "Có {changed}/{total} trường thông tin được yêu cầu thay đổi.",
+      },
     },
     adminRevocations: {
       headerTitle: "Thu hồi văn bằng",
@@ -1513,6 +1523,7 @@ confirm: {
         details: "Chi tiết:",
         schoolResponse: "Phản hồi từ nhà trường: ",
         resolvedAt: "Đã xử lý:",
+        viewDetail: "Xem chi tiết",
       },
       pagination: {
         showing: "Hiển thị",
@@ -1540,6 +1551,18 @@ confirm: {
         failed: "Gửi yêu cầu thất bại",
       },
       successCreated: "Đã gửi yêu cầu chỉnh sửa",
+      view: {
+        title: "Chi tiết yêu cầu",
+        certificate: "Văn bằng",
+        student: "Sinh viên",
+        reason: "Lý do",
+        details: "Chi tiết",
+        submittedAt: "Ngày gửi",
+        status: "Trạng thái",
+        reviewerNote: "Phản hồi nhà trường",
+        resolvedAt: "Ngày xử lý",
+        comparisonTitle: "So sánh dữ liệu",
+      },
     },
     studentDisputeNew: {
       header: {
@@ -3193,6 +3216,16 @@ confirm: {
         successApproved: "Correction request approved",
         successRejected: "Correction request rejected",
       },
+      comparison: {
+        title: "Comparison: Current Data ↔ Proposed Changes",
+        highlightDesc: "Red = old data (to be replaced), Green = new data (proposed)",
+        field: "Field",
+        current: "Current",
+        proposed: "Proposed",
+        noChangesDetected: "No specific changes detected in the dispute details.",
+        reasonOnly: "Only dispute reason provided: ",
+        summary: "{changed}/{total} fields requested to be changed.",
+      },
     },
     adminRevocations: {
       headerTitle: "Revoke Certificates",
@@ -3385,6 +3418,7 @@ confirm: {
         details: "Details:",
         schoolResponse: "Institution response: ",
         resolvedAt: "Processed:",
+        viewDetail: "View detail",
       },
       pagination: {
         showing: "Showing",
@@ -3412,6 +3446,18 @@ confirm: {
         failed: "Failed to send request",
       },
       successCreated: "Correction request sent",
+      view: {
+        title: "Request detail",
+        certificate: "Credential",
+        student: "Student",
+        reason: "Reason",
+        details: "Details",
+        submittedAt: "Submitted on",
+        status: "Status",
+        reviewerNote: "Institution response",
+        resolvedAt: "Processed on",
+        comparisonTitle: "Data comparison",
+      },
     },
     studentDisputeNew: {
       header: {

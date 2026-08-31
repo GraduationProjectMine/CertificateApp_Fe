@@ -6,6 +6,7 @@ import { certificateApi, type CertificateDto } from "@/features/certificates/ser
 import { useI18n } from "@/features/i18n/I18nContext";
 import { useAuth } from "@/features/auth/components/AuthContext";
 import toast from "react-hot-toast";
+import DisputeComparison from "@/components/dispute/DisputeComparison";
 
 const DISPUTES_PER_PAGE = 5;
 
@@ -25,6 +26,7 @@ export default function StudentDisputesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [viewTarget, setViewTarget] = useState<DisputeDto | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Pagination state
@@ -170,7 +172,15 @@ export default function StudentDisputesPage() {
                         )}
                       </div>
                     </div>
-                    <span className={`${styles._0} ${st.className}`}>{st.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`${styles._0} ${st.className}`}>{st.label}</span>
+                      <button
+                        onClick={() => setViewTarget(d)}
+                        className="px-3 py-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all"
+                      >
+                        {t("studentDisputes.card.viewDetail")}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -278,6 +288,65 @@ export default function StudentDisputesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewTarget && (
+        <div className={styles._35} onClick={() => !submitting && setViewTarget(null)}>
+          <div className={styles._36} onClick={(e) => e.stopPropagation()}>
+            <div className={styles._37}>
+              <h2 className={styles._38}>{t("studentDisputes.view.title")}</h2>
+              <button onClick={() => setViewTarget(null)} className={styles._39}>
+                <svg className={styles._6} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className={styles._59}>
+              <div className={styles._60}>
+                <span className={styles._61}>{t("studentDisputes.view.certificate")}</span>
+                <span className={styles._62}>{viewTarget.certificate?.certificate_title || "N/A"}</span>
+              </div>
+              <div className={styles._60}>
+                <span className={styles._61}>{t("studentDisputes.view.reason")}</span>
+                <span className={styles._62}>{viewTarget.reason}</span>
+              </div>
+              {viewTarget.details && (
+                <div className={styles._60}>
+                  <span className={styles._61}>{t("studentDisputes.view.details")}</span>
+                  <span className={styles._62}>{viewTarget.details}</span>
+                </div>
+              )}
+              <div className={styles._60}>
+                <span className={styles._61}>{t("studentDisputes.view.submittedAt")}</span>
+                <span className={styles._62}>{new Date(viewTarget.createdAt).toLocaleDateString("vi-VN")}</span>
+              </div>
+              <div className={styles._60}>
+                <span className={styles._61}>{t("studentDisputes.view.status")}</span>
+                <span className={`${styles._0} ${statusInfo(viewTarget.status).className}`}>{statusInfo(viewTarget.status).label}</span>
+              </div>
+              {viewTarget.reviewer_note && (
+                <div className={styles._60}>
+                  <span className={styles._61}>{t("studentDisputes.view.reviewerNote")}</span>
+                  <span className={styles._62}>{viewTarget.reviewer_note}</span>
+                </div>
+              )}
+              {viewTarget.resolved_at && (
+                <div className={styles._60}>
+                  <span className={styles._61}>{t("studentDisputes.view.resolvedAt")}</span>
+                  <span className={styles._62}>{new Date(viewTarget.resolved_at).toLocaleDateString("vi-VN")}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Comparison Table */}
+            <DisputeComparison
+              certificate={viewTarget.certificate || {}}
+              disputeDetails={viewTarget.details}
+              disputeReason={viewTarget.reason}
+            />
           </div>
         </div>
       )}
