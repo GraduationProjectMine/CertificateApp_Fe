@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
+import { useAuth } from "@/features/auth/components/AuthContext";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
 import { certificateApi, type CertificateDto } from "@/features/certificates/services/certificate.api";
 import { useI18n } from "@/features/i18n/I18nContext";
 import toast from "react-hot-toast";
 
 export default function NewDisputePage() {
+  const { user } = useAuth();
   const router = useRouter();
   const { t } = useI18n();
   const [certs, setCerts] = useState<CertificateDto[]>([]);
@@ -20,11 +22,12 @@ export default function NewDisputePage() {
   const [formDetails, setFormDetails] = useState("");
 
   useEffect(() => {
-    certificateApi.list()
+    if (!user?.id) return;
+    certificateApi.list({ student_id: user.id })
       .then(setCerts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,9 +83,9 @@ export default function NewDisputePage() {
                   className={styles._44}
                 >
                   <option value="">{t("studentDisputeNew.form.selectPlaceholder")}</option>
-                  {certs.filter((c) => c.status === "DRAFT").map((c) => (
+                  {certs.filter((c) => c.status !== "REVOKED").map((c) => (
                     <option key={c.certificate_id} value={c.certificate_id}>
-                      {c.certificate_title} - {c.student_fullName} ({t("studentDisputeNew.form.draftBadge")})
+                      {c.certificate_title} - {c.student_fullName} {c.status === "DRAFT" ? `(${t("studentDisputeNew.form.draftBadge")})` : c.status === "ISSUED" ? "(Đã phát hành)" : `(${c.status})`}
                     </option>
                   ))}
                 </select>

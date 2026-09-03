@@ -11,6 +11,8 @@ import { studentApi, type StudentDto } from "@/features/students/services/studen
 import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import Pagination from "@/components/common/Pagination";
+import StrictInput from "@/components/common/StrictInput/StrictInput";
+import StudentSearch from "@/components/common/StudentSearch/StudentSearch";
 import { useI18n } from "@/features/i18n/I18nContext";
 
 function downloadFile(content: Blob, filename: string) {
@@ -519,179 +521,138 @@ export default function AdminBatchesPage() {
             </span>
           </div>
 
-          <div className={styles._28}>
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.studentId")} *</label>
-              {students.length > 0 ? (
-                <select
-                  className={styles._30}
-                  value={activeRecord.student_id || ""}
-                  onChange={(e) => {
-                    const s = students.find((st) => st.student_id === e.target.value);
-                    handleFieldEdit("student_id", e.target.value);
-                    if (s) handleFieldEdit("student_fullName", s.student_fullName);
-                  }}
-                >
-                  <option value="">{t("adminBatches.selectStudent")}</option>
-                  {students.map((s) => (
-                    <option key={s.student_id} value={s.student_id}>
-                      {s.student_fullName} ({s.email})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  className={styles._30}
-                  placeholder={t("adminBatches.placeholder.studentId")}
-                  value={activeRecord.student_id || ""}
-                  onChange={(e) => handleFieldEdit("student_id", e.target.value)}
-                />
-              )}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StudentSearch
+              label={t("adminBatches.requiredField.studentId")}
+              placeholder={t("adminBatches.placeholder.studentId")}
+              value={activeRecord.student_id || ""}
+              onChange={(studentId, studentFullName) => {
+                handleFieldEdit("student_id", studentId);
+                if (studentFullName) {
+                  handleFieldEdit("student_fullName", studentFullName);
+                }
+              }}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.studentFullName")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.studentFullName")}
-                value={activeRecord.student_fullName || ""}
-                onChange={(e) => handleFieldEdit("student_fullName", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="student_fullName"
+              label={t("adminBatches.requiredField.studentFullName")}
+              placeholder={t("adminBatches.placeholder.studentFullName")}
+              value={activeRecord.student_fullName || ""}
+              onChange={(val) => handleFieldEdit("student_fullName", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.certificateTitle")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.certificateTitle")}
-                value={activeRecord.certificate_title || ""}
-                onChange={(e) => handleFieldEdit("certificate_title", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="certificate_title"
+              label={t("adminBatches.requiredField.certificateTitle")}
+              placeholder={t("adminBatches.placeholder.certificateTitle")}
+              value={activeRecord.certificate_title || ""}
+              onChange={(val) => handleFieldEdit("certificate_title", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.dob")} *</label>
-              <input
-                type="date"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.dob")}
-                value={activeRecord.dob || ""}
-                onChange={(e) => handleFieldEdit("dob", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="dob"
+              label={t("adminBatches.requiredField.dob")}
+              placeholder={t("adminBatches.placeholder.dob")}
+              value={activeRecord.dob || ""}
+              onChange={(val) => handleFieldEdit("dob", val)}
+              required
+              type="date"
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.placeOfBirth")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.location")}
-                value={activeRecord.placeOfBirth || ""}
-                onChange={(e) => handleFieldEdit("placeOfBirth", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="placeOfBirth"
+              label={t("adminBatches.requiredField.placeOfBirth")}
+              placeholder={t("adminBatches.placeholder.location")}
+              value={activeRecord.placeOfBirth || ""}
+              onChange={(val) => handleFieldEdit("placeOfBirth", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.gender")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.gender")}
-                value={activeRecord.gender || ""}
-                onChange={(e) => handleFieldEdit("gender", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="gender"
+              label={t("adminBatches.requiredField.gender")}
+              placeholder={t("adminBatches.placeholder.gender")}
+              value={activeRecord.gender || ""}
+              onChange={(val) => handleFieldEdit("gender", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.ethnicity")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.ethnicity")}
-                value={activeRecord.ethnicity || ""}
-                onChange={(e) => handleFieldEdit("ethnicity", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="ethnicity"
+              label={t("adminBatches.requiredField.ethnicity")}
+              placeholder={t("adminBatches.placeholder.ethnicity")}
+              value={activeRecord.ethnicity || ""}
+              onChange={(val) => handleFieldEdit("ethnicity", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.schoolName")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.schoolName")}
-                value={activeRecord.schoolName || ""}
-                onChange={(e) => handleFieldEdit("schoolName", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="schoolName"
+              label={t("adminBatches.requiredField.schoolName")}
+              placeholder={t("adminBatches.placeholder.schoolName")}
+              value={activeRecord.schoolName || ""}
+              onChange={(val) => handleFieldEdit("schoolName", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.examCohort")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.examCohort")}
-                value={activeRecord.examCohort || ""}
-                onChange={(e) => handleFieldEdit("examCohort", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="examCohort"
+              label={t("adminBatches.requiredField.examCohort")}
+              placeholder={t("adminBatches.placeholder.examCohort")}
+              value={activeRecord.examCohort || ""}
+              onChange={(val) => handleFieldEdit("examCohort", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.examBoard")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.examBoard")}
-                value={activeRecord.examBoard || ""}
-                onChange={(e) => handleFieldEdit("examBoard", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="examBoard"
+              label={t("adminBatches.requiredField.examBoard")}
+              placeholder={t("adminBatches.placeholder.examBoard")}
+              value={activeRecord.examBoard || ""}
+              onChange={(val) => handleFieldEdit("examBoard", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.issueLocation")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.location")}
-                value={activeRecord.issueLocation || ""}
-                onChange={(e) => handleFieldEdit("issueLocation", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="issueLocation"
+              label={t("adminBatches.requiredField.issueLocation")}
+              placeholder={t("adminBatches.placeholder.location")}
+              value={activeRecord.issueLocation || ""}
+              onChange={(val) => handleFieldEdit("issueLocation", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.issueDate")} *</label>
-              <input
-                type="date"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.issueDate")}
-                value={activeRecord.issueDate || ""}
-                onChange={(e) => handleFieldEdit("issueDate", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="issueDate"
+              label={t("adminBatches.requiredField.issueDate")}
+              placeholder={t("adminBatches.placeholder.issueDate")}
+              value={activeRecord.issueDate || ""}
+              onChange={(val) => handleFieldEdit("issueDate", val)}
+              required
+              type="date"
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.serialNumber")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.serialNumber")}
-                value={activeRecord.serialNumber || ""}
-                onChange={(e) => handleFieldEdit("serialNumber", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="serialNumber"
+              label={t("adminBatches.requiredField.serialNumber")}
+              placeholder={t("adminBatches.placeholder.serialNumber")}
+              value={activeRecord.serialNumber || ""}
+              onChange={(val) => handleFieldEdit("serialNumber", val)}
+              required
+            />
 
-            <div>
-              <label className={styles._29}>{t("adminBatches.requiredField.registryNumber")} *</label>
-              <input
-                type="text"
-                className={styles._30}
-                placeholder={t("adminBatches.placeholder.registryNumber")}
-                value={activeRecord.registryNumber || ""}
-                onChange={(e) => handleFieldEdit("registryNumber", e.target.value)}
-              />
-            </div>
+            <StrictInput
+              fieldKey="registryNumber"
+              label={t("adminBatches.requiredField.registryNumber")}
+              placeholder={t("adminBatches.placeholder.registryNumber")}
+              value={activeRecord.registryNumber || ""}
+              onChange={(val) => handleFieldEdit("registryNumber", val)}
+              required
+            />
           </div>
         </div>
 

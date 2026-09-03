@@ -7,6 +7,8 @@ import { ocrApi } from "@/features/ocr/services/api";
 import { certificateApi } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { useI18n } from "@/features/i18n/I18nContext";
+import StudentSearch from "@/components/common/StudentSearch/StudentSearch";
+import StrictInput from "@/components/common/StrictInput/StrictInput";
 import toast from "react-hot-toast";
 
 type FormData = {
@@ -354,16 +356,8 @@ export default function IssueCertificatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; status: string } | null>(null);
   const [error, setError] = useState("");
-  const [students, setStudents] = useState<StudentDto[]>([]);
-  const [studentsLoading, setStudentsLoading] = useState(true);
-  const [studentsError, setStudentsError] = useState("");
 
-  useEffect(() => {
-    studentApi.list()
-      .then(setStudents)
-      .catch((err) => setStudentsError(err instanceof Error ? err.message : t("adminCertificateIssue.errors.studentsLoad")))
-      .finally(() => setStudentsLoading(false));
-  }, [t]);
+  
 
   // OCR
   const [inputMode, setInputMode] = useState<"manual" | "ocr">("manual");
@@ -651,178 +645,122 @@ export default function IssueCertificatePage() {
 
       {/* Form */}
       <div className={styles._28}>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.student")}</label>
-          {studentsLoading ? (
-            <p className="text-xs text-gray-400">{t("adminCertificateIssue.form.studentsLoading")}</p>
-          ) : students.length > 0 ? (
-            <select
-              required
-              className={styles._30}
-              value={formData.student_id}
-              onChange={(e) => {
-                const s = students.find((s) => s.student_id === e.target.value);
-                updateField("student_id", e.target.value);
-                if (s) updateField("student_fullName", s.student_fullName);
-              }}
-            >
-              <option value="">{t("adminCertificateIssue.form.selectStudent")}</option>
-              {students.map((s) => (
-                <option key={s.student_id} value={s.student_id}>
-                  {s.student_fullName} ({s.email})
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 rounded-lg">
-              {studentsError || t("adminCertificateIssue.form.noStudents")}{' '}
-              <Link href="/admin/students/create" className="underline">{t("adminCertificateIssue.form.createStudent")}</Link> {t("adminCertificateIssue.form.beforeIssuing")}
-            </div>
-          )}
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.studentName")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.studentName")}
-            value={formData.student_fullName}
-            onChange={(e) => updateField("student_fullName", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.certificateTitle")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.certificateTitle")}
-            value={formData.certificate_title}
-            onChange={(e) => updateField("certificate_title", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.dob")}</label>
-          <DateField
-            required
-            label={t("adminCertificateIssue.form.dob").replace(/\s*\*$/, "")}
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.dob")}
-            value={formData.dob}
-            onChange={(val) => updateField("dob", val)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.placeOfBirth")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.placeOfBirth")}
-            value={formData.placeOfBirth}
-            onChange={(e) => updateField("placeOfBirth", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.gender")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.gender")}
-            value={formData.gender}
-            onChange={(e) => updateField("gender", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.ethnicity")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.ethnicity")}
-            value={formData.ethnicity}
-            onChange={(e) => updateField("ethnicity", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.school")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.school")}
-            value={formData.schoolName}
-            onChange={(e) => updateField("schoolName", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.examCohort")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.examCohort")}
-            value={formData.examCohort}
-            onChange={(e) => updateField("examCohort", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.examBoard")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.examBoard")}
-            value={formData.examBoard}
-            onChange={(e) => updateField("examBoard", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.issueLocation")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.issueLocation")}
-            value={formData.issueLocation}
-            onChange={(e) => updateField("issueLocation", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.issueDate")}</label>
-          <DateField
-            required
-            label={t("adminCertificateIssue.form.issueDate").replace(/\s*\*$/, "")}
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.issueDate")}
-            value={formData.issueDate}
-            onChange={(val) => updateField("issueDate", val)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.serialNumber")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.serialNumber")}
-            value={formData.serialNumber}
-            onChange={(e) => updateField("serialNumber", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.registryNumber")}</label>
-          <input
-            type="text"
-            required
-            className={styles._30}
-            placeholder={t("adminCertificateIssue.form.placeholders.registryNumber")}
-            value={formData.registryNumber}
-            onChange={(e) => updateField("registryNumber", e.target.value)}
-          />
-        </div>
+        <StudentSearch
+          label={t("adminCertificateIssue.form.student")}
+          required
+          value={formData.student_id}
+          onChange={(studentId, studentFullName) => {
+            updateField("student_id", studentId);
+            if (studentFullName) updateField("student_fullName", studentFullName);
+          }}
+          placeholder={t("adminCertificateIssue.form.searchStudentPlaceholder")}
+        />
+        <StrictInput
+          fieldKey="student_fullName"
+          label={t("adminCertificateIssue.form.studentName")}
+          placeholder={t("adminCertificateIssue.form.placeholders.studentName")}
+          value={formData.student_fullName}
+          onChange={(val) => updateField("student_fullName", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="certificate_title"
+          label={t("adminCertificateIssue.form.certificateTitle")}
+          placeholder={t("adminCertificateIssue.form.placeholders.certificateTitle")}
+          value={formData.certificate_title}
+          onChange={(val) => updateField("certificate_title", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="dob"
+          label={t("adminCertificateIssue.form.dob")}
+          placeholder={t("adminCertificateIssue.form.placeholders.dob")}
+          value={formData.dob}
+          onChange={(val) => updateField("dob", val)}
+          required
+          type="date"
+        />
+        <StrictInput
+          fieldKey="placeOfBirth"
+          label={t("adminCertificateIssue.form.placeOfBirth")}
+          placeholder={t("adminCertificateIssue.form.placeholders.placeOfBirth")}
+          value={formData.placeOfBirth}
+          onChange={(val) => updateField("placeOfBirth", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="gender"
+          label={t("adminCertificateIssue.form.gender")}
+          placeholder={t("adminCertificateIssue.form.placeholders.gender")}
+          value={formData.gender}
+          onChange={(val) => updateField("gender", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="ethnicity"
+          label={t("adminCertificateIssue.form.ethnicity")}
+          placeholder={t("adminCertificateIssue.form.placeholders.ethnicity")}
+          value={formData.ethnicity}
+          onChange={(val) => updateField("ethnicity", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="schoolName"
+          label={t("adminCertificateIssue.form.school")}
+          placeholder={t("adminCertificateIssue.form.placeholders.school")}
+          value={formData.schoolName}
+          onChange={(val) => updateField("schoolName", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="examCohort"
+          label={t("adminCertificateIssue.form.examCohort")}
+          placeholder={t("adminCertificateIssue.form.placeholders.examCohort")}
+          value={formData.examCohort}
+          onChange={(val) => updateField("examCohort", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="examBoard"
+          label={t("adminCertificateIssue.form.examBoard")}
+          placeholder={t("adminCertificateIssue.form.placeholders.examBoard")}
+          value={formData.examBoard}
+          onChange={(val) => updateField("examBoard", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="issueLocation"
+          label={t("adminCertificateIssue.form.issueLocation")}
+          placeholder={t("adminCertificateIssue.form.placeholders.issueLocation")}
+          value={formData.issueLocation}
+          onChange={(val) => updateField("issueLocation", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="issueDate"
+          label={t("adminCertificateIssue.form.issueDate")}
+          placeholder={t("adminCertificateIssue.form.placeholders.issueDate")}
+          value={formData.issueDate}
+          onChange={(val) => updateField("issueDate", val)}
+          required
+          type="date"
+        />
+        <StrictInput
+          fieldKey="serialNumber"
+          label={t("adminCertificateIssue.form.serialNumber")}
+          placeholder={t("adminCertificateIssue.form.placeholders.serialNumber")}
+          value={formData.serialNumber}
+          onChange={(val) => updateField("serialNumber", val)}
+          required
+        />
+        <StrictInput
+          fieldKey="registryNumber"
+          label={t("adminCertificateIssue.form.registryNumber")}
+          placeholder={t("adminCertificateIssue.form.placeholders.registryNumber")}
+          value={formData.registryNumber}
+          onChange={(val) => updateField("registryNumber", val)}
+          required
+        />
       </div>
 
       {error && <div className="text-[11px] text-red-500 bg-red-50 dark:bg-red-950/20 px-4 py-2 rounded-lg">{error}</div>}

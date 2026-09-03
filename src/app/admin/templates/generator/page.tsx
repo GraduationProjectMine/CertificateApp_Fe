@@ -10,6 +10,7 @@ import type { CertificateTemplate, TemplateField, DesignData } from "@/features/
 import { certificateApi, type CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
+import StudentSearch from "@/components/common/StudentSearch/StudentSearch";
 import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
 
@@ -517,13 +518,11 @@ export default function CertificateGeneratorPage() {
   useEffect(() => {
     const initData = async () => {
       try {
-        const [list, studList, profileRes] = await Promise.all([
+        const [list, profileRes] = await Promise.all([
           templateApi.list(),
-          studentApi.list().catch(() => []),
           issuerApi.getProfile().catch(() => null),
         ]);
         setTemplates(list);
-        setStudents(studList);
         if (profileRes && profileRes.logo_url) {
           setOrgLogo(profileRes.logo_url);
           setRecords((prev) => {
@@ -1321,36 +1320,27 @@ export default function CertificateGeneratorPage() {
             {/* Dynamic Input Form (Only for bound fields in the active template) */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
               {boundFields.map(({ key, label }) => {
-                if (key === "student_id" && students.length > 0) {
+                if (key === "student_id") {
                   return (
                     <div key={key}>
                       <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-faint)", marginBottom: 4 }}>
                         {label}{!OPTIONAL_BINDINGS.includes(key) && <span style={{ color: "#ef4444" }}> *</span>} {t("adminTemplateGenerator.selectOrManualSuffix")}
                       </label>
-                      <select
+                      <StudentSearch
                         value={activeRecord[key] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleUpdateActiveField("student_id", val);
-                          const st = students.find((s) => s.student_id === val);
-                          if (st) {
-                            handleUpdateActiveField("student_fullName", st.student_fullName);
+                        onChange={(studentId, studentFullName) => {
+                          handleUpdateActiveField("student_id", studentId);
+                          if (studentFullName) {
+                            handleUpdateActiveField("student_fullName", studentFullName);
                           }
                         }}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box", marginBottom: 4 }}
-                      >
-                        <option value="" style={{ background: "var(--surface)", color: "var(--text-main)" }}>{t("adminTemplateGenerator.selectExistingStudent")}</option>
-                        {students.map((st) => (
-                          <option key={st.student_id} value={st.student_id} style={{ background: "var(--surface)", color: "var(--text-main)" }}>
-                            {st.student_id} - {st.student_fullName}
-                          </option>
-                        ))}
-                      </select>
+                        placeholder={t("adminTemplateGenerator.searchStudentPlaceholder")}
+                      />
                       <input
                         type="text"
                         value={activeRecord[key] || ""}
                         onChange={(e) => handleUpdateActiveField(key, e.target.value)}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", fontSize: 12, background: "var(--surface)", color: "var(--text-main)", outline: "none", boxSizing: "border-box", marginTop: 8 }}
                         placeholder={t("adminTemplateGenerator.enterNewStudentId")}
                       />
                     </div>

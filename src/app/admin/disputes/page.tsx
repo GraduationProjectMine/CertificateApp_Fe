@@ -4,6 +4,7 @@ import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { useI18n } from "@/features/i18n/I18nContext";
 import toast from "react-hot-toast";
+import DisputeComparison from "@/components/dispute/DisputeComparison";
 
 type ReviewPayload = {
   decision: "APPROVED" | "REJECTED";
@@ -211,6 +212,13 @@ export default function AdminDisputesPage() {
                 <span className={styles._62}>{new Date(reviewTarget.createdAt).toLocaleDateString("vi-VN")}</span>
               </div>
             </div>
+
+            {/* Comparison Table */}
+            <DisputeComparison
+              certificate={reviewTarget.certificate || {}}
+              disputeDetails={reviewTarget.details}
+              disputeReason={reviewTarget.reason}
+            />
 
             <form onSubmit={handleReview} className={styles._40}>
               {reviewError && <div className={styles._41}>{reviewError}</div>}
