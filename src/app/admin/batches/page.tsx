@@ -12,6 +12,7 @@ import { useAuth } from "@/features/auth/components/AuthContext";
 import ConfirmModal from "@/components/common/Modal/ConfirmModal";
 import Pagination from "@/components/common/Pagination";
 import StrictInput from "@/components/common/StrictInput/StrictInput";
+import StudentSearch from "@/components/common/StudentSearch/StudentSearch";
 import { useI18n } from "@/features/i18n/I18nContext";
 
 function downloadFile(content: Blob, filename: string) {
@@ -521,12 +522,16 @@ export default function AdminBatchesPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <StrictInput
-              fieldKey="student_id"
+            <StudentSearch
               label={t("adminBatches.requiredField.studentId")}
-              placeholder={students.length > 0 ? t("adminBatches.selectStudent") : t("adminBatches.placeholder.studentId")}
+              placeholder={t("adminBatches.placeholder.studentId")}
               value={activeRecord.student_id || ""}
-              onChange={(val) => handleFieldEdit("student_id", val)}
+              onChange={(studentId, studentFullName) => {
+                handleFieldEdit("student_id", studentId);
+                if (studentFullName) {
+                  handleFieldEdit("student_fullName", studentFullName);
+                }
+              }}
               required
             />
 

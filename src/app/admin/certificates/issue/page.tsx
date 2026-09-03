@@ -645,18 +645,16 @@ export default function IssueCertificatePage() {
 
       {/* Form */}
       <div className={styles._28}>
-        <div>
-          <label className={styles._29}>{t("adminCertificateIssue.form.student")}</label>
-          <StudentSearch
-            value={formData.student_id}
-            onChange={(studentId, studentFullName) => {
-              updateField("student_id", studentId);
-              if (studentFullName) updateField("student_fullName", studentFullName);
-            }}
-            placeholder={t("adminCertificateIssue.form.searchStudentPlaceholder")}
-            className={styles._30}
-          />
-        </div>
+        <StudentSearch
+          label={t("adminCertificateIssue.form.student")}
+          required
+          value={formData.student_id}
+          onChange={(studentId, studentFullName) => {
+            updateField("student_id", studentId);
+            if (studentFullName) updateField("student_fullName", studentFullName);
+          }}
+          placeholder={t("adminCertificateIssue.form.searchStudentPlaceholder")}
+        />
         <StrictInput
           fieldKey="student_fullName"
           label={t("adminCertificateIssue.form.studentName")}

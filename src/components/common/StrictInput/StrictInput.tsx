@@ -102,11 +102,13 @@ export default function StrictInput({
     ? formatDdMmYyyy(value) 
     : value;
 
+  const cleanLabel = label ? label.replace(/\s*\*+$/, "").trim() : "";
+
   return (
     <div className={`relative ${className}`}>
       {label && (
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-faint)", marginBottom: 4 }}>
-          {label}{required && <span style={{ color: "#ef4444" }}> *</span>}
+          {cleanLabel}{required && <span style={{ color: "#ef4444" }}> *</span>}
         </label>
       )}
       <input
