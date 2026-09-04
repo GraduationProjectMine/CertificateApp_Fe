@@ -9,7 +9,7 @@ import type { StudentCertificate } from "@/features/certificates/types";
 import { disputeApi } from "@/features/dispute/services/dispute.api";
 import toast from "react-hot-toast";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 5;
 
 export default function StudentCertificatesPage() {
   const { user } = useAuth();
@@ -310,7 +310,7 @@ export default function StudentCertificatesPage() {
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
+          {filtered.length > 0 && (
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
               <p className="text-xs text-gray-500 font-semibold">
                 {t("studentCertificates.pagination.showing")} {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} {t("studentCertificates.pagination.of")} {filtered.length} {t("studentCertificates.pagination.certificates")}
@@ -432,7 +432,7 @@ export default function StudentCertificatesPage() {
           </div>
 
           {/* Pagination Controls for Draft Tab */}
-          {totalPages > 1 && (
+          {filtered.length > 0 && (
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
               <p className="text-xs text-gray-500 font-semibold">
                 {t("studentCertificates.pagination.showing")} {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} {t("studentCertificates.pagination.of")} {filtered.length} {t("studentCertificates.pagination.drafts")}

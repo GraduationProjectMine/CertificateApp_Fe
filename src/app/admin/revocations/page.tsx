@@ -38,7 +38,7 @@ export default function AdminRevocationsPage() {
       ]);
 
       const onlineIssued: ExtendedCertDto[] = onlineData
-        .filter((c: any) => c.status === "ISSUED" || !c.status)
+        .filter((c: any) => c.status === "ISSUED" || c.status === "REVOKE_FAILED" || !c.status)
         .map((c: any) => ({
           ...c,
           isOnline: true,

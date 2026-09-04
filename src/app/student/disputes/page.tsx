@@ -188,7 +188,7 @@ export default function StudentDisputesPage() {
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
+          {sortedDisputes.length > 0 && (
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800 mt-6">
               <p className="text-xs text-gray-500 font-semibold">
                 {t("studentDisputes.pagination.showing")} {((currentPage - 1) * DISPUTES_PER_PAGE) + 1} - {Math.min(currentPage * DISPUTES_PER_PAGE, sortedDisputes.length)} {t("studentDisputes.pagination.of")} {sortedDisputes.length} {t("studentDisputes.pagination.requests")}

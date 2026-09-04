@@ -1013,6 +1013,26 @@ export default function CertificateGeneratorPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "var(--page-bg)", fontFamily: "sans-serif", color: "var(--text-main)", transition: "background 0.3s, color 0.3s" }}>
+      {(issuingSingle || issuingBatch || exportingSingle || exportingBatch) && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[99999] p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="w-14 h-14 border-4 border-[#147D74] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">
+                {issuingSingle || issuingBatch
+                  ? t("adminCertificateIssue.processing.title")
+                  : t("adminTemplateGenerator.exportingPdf")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {exportingBatch && batchProgress
+                  ? `${t("adminTemplateGenerator.creatingZipProgress")} (${batchProgress})...`
+                  : t("adminCertificateIssue.processing.message")}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Toolbar - 2-Row Layout */}
       <div className="flex flex-col bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-slate-800 shadow-2xs shrink-0 transition-colors">
         {/* Row 1: Title, Template Selector, Record Badge & Zoom Controls */}
@@ -1092,7 +1112,11 @@ export default function CertificateGeneratorPage() {
                 className="px-3 py-1 text-xs font-bold text-sky-700 dark:text-sky-300 bg-white dark:bg-slate-800 hover:bg-sky-100/80 dark:hover:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.exportPdfTitle")}
               >
-                <span>📄</span>
+                {exportingSingle ? (
+                  <div className="w-3.5 h-3.5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                ) : (
+                  <span>📄</span>
+                )}
                 <span>{exportingSingle ? t("adminTemplateGenerator.exportingPdf") : t("adminTemplateGenerator.exportPdf")}</span>
               </button>
               <button
@@ -1101,7 +1125,11 @@ export default function CertificateGeneratorPage() {
                 className="px-3 py-1 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.exportZipTitle")}
               >
-                <span>📦</span>
+                {exportingBatch ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                ) : (
+                  <span>📦</span>
+                )}
                 <span>{exportingBatch ? `${t("adminTemplateGenerator.creatingZipProgress")} (${batchProgress})...` : `${t("adminTemplateGenerator.exportZipAll")} (${records.length})`}</span>
               </button>
             </div>
@@ -1116,6 +1144,9 @@ export default function CertificateGeneratorPage() {
                 className="px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-800 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-900/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.issueSingleTitle")}
               >
+                {issuingSingle && (
+                  <div className="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                )}
                 <span>{issuingSingle ? t("adminTemplateGenerator.issuing") : t("adminTemplateGenerator.issueSingle")}</span>
               </button>
               <button
@@ -1124,6 +1155,9 @@ export default function CertificateGeneratorPage() {
                 className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs transition-all inline-flex items-center gap-1.5 active:scale-95 shrink-0"
                 title={t("adminTemplateGenerator.issueBatchTitle")}
               >
+                {issuingBatch && (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                )}
                 <span>{issuingBatch ? t("adminTemplateGenerator.issuing") : `${t("adminTemplateGenerator.issueBatch")} (${records.length})`}</span>
               </button>
             </div>
