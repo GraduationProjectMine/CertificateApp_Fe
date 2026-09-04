@@ -980,6 +980,7 @@ confirm: {
         studentRecipient: "Sinh viên / Người nhận",
         serialRegistry: "Số hiệu / Số sổ",
         issuedDate: "Ngày cấp",
+        status: "Trạng thái",
         actions: "Hành động",
         registryAbbr: "Sổ",
         notSaved: "Chưa lưu",
@@ -1593,6 +1594,9 @@ confirm: {
       type: {
         certIssued: "Văn bằng mới",
         certRevoked: "Thu hồi văn bằng",
+        disputeApproved: "Chấp thuận chỉnh sửa",
+        disputeRejected: "Từ chối chỉnh sửa",
+        disputePending: "Yêu cầu chỉnh sửa",
         info: "Thông báo",
       },
       header: {
@@ -1610,6 +1614,13 @@ confirm: {
       empty: {
         title: "Chưa có thông báo nào",
         description: "Bạn sẽ nhận thông báo khi có văn bằng mới được cấp.",
+      },
+      pagination: {
+        showing: "Hiển thị",
+        of: "trên tổng số",
+        notifications: "thông báo",
+        previous: "Trang trước",
+        next: "Trang sau",
       },
     },
     studentProfile: {
@@ -2875,6 +2886,7 @@ confirm: {
         studentRecipient: "Student / Recipient",
         serialRegistry: "Serial / Registry",
         issuedDate: "Issue date",
+        status: "Status",
         actions: "Actions",
         registryAbbr: "Reg",
         notSaved: "Not saved",
@@ -3488,6 +3500,9 @@ confirm: {
       type: {
         certIssued: "New credential",
         certRevoked: "Credential revoked",
+        disputeApproved: "Correction approved",
+        disputeRejected: "Correction rejected",
+        disputePending: "Correction request",
         info: "Notification",
       },
       header: {
@@ -3505,6 +3520,13 @@ confirm: {
       empty: {
         title: "No notifications yet",
         description: "You will receive a notification when a new credential is issued.",
+      },
+      pagination: {
+        showing: "Showing",
+        of: "of",
+        notifications: "notifications",
+        previous: "Previous",
+        next: "Next",
       },
     },
     studentProfile: {

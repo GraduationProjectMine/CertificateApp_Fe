@@ -1,10 +1,11 @@
 "use client";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import styles from "./page.module.css";
 import { disputeApi, type DisputeDto } from "@/features/dispute/services/dispute.api";
 import { useI18n } from "@/features/i18n/I18nContext";
 import toast from "react-hot-toast";
 import DisputeComparison from "@/components/dispute/DisputeComparison";
+import Pagination from "@/components/common/Pagination";
 
 type ReviewPayload = {
   decision: "APPROVED" | "REJECTED";
@@ -19,6 +20,7 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 const STATUS_FILTERS = ["", "PENDING", "APPROVED", "REJECTED"];
+const DISPUTES_PER_PAGE = 5;
 
 const statusLabel = (key: string, t: ReturnType<typeof useI18n>["t"]): string =>
   ({
@@ -32,6 +34,7 @@ export default function AdminDisputesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [reviewTarget, setReviewTarget] = useState<DisputeDto | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -52,7 +55,16 @@ export default function AdminDisputesPage() {
     }
   }, [t]);
 
-  useEffect(() => { fetch(statusFilter); }, [fetch, statusFilter]);
+  useEffect(() => {
+    setCurrentPage(1);
+    fetch(statusFilter);
+  }, [fetch, statusFilter]);
+
+  const totalPages = Math.ceil(disputes.length / DISPUTES_PER_PAGE);
+  const paginatedDisputes = useMemo(() => {
+    const start = (currentPage - 1) * DISPUTES_PER_PAGE;
+    return disputes.slice(start, start + DISPUTES_PER_PAGE);
+  }, [disputes, currentPage]);
 
   const openReview = (d: DisputeDto) => {
     setReviewTarget(d);
@@ -132,48 +144,60 @@ export default function AdminDisputesPage() {
           <p className={styles._12}>{t("adminDisputes.emptyState")}</p>
         </div>
       ) : (
-        <div className={styles._13}>
-          {disputes.map((d) => {
-            const cls = STATUS_CLASS[d.status] || styles._26;
-            return (
-              <div key={d.id} className={styles._14}>
-                <div className={styles._15}>
-                  <div className={styles._16}>
-                    <div className={styles._17}>
-                      <svg className={styles._18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
+        <>
+          <div className={styles._13}>
+            {paginatedDisputes.map((d) => {
+              const cls = STATUS_CLASS[d.status] || styles._26;
+              return (
+                <div key={d.id} className={styles._14}>
+                  <div className={styles._15}>
+                    <div className={styles._16}>
+                      <div className={styles._17}>
+                        <svg className={styles._18} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className={styles._19}>
+                        <h3 className={styles._20}>{d.certificate?.certificate_title || t("adminDisputes.certificateDefault")}</h3>
+                        <p className={styles._56}>{`${t("adminDisputes.card.student")}: ${d.certificate?.student_fullName || "N/A"}`}</p>
+                        <p className={styles._22}>{d.reason}</p>
+                        <p className={styles._31}>{new Date(d.createdAt).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                        {d.status !== "PENDING" && d.reviewer_note && (
+                          <div className={styles._32}>
+                            <span className={styles._33}>{t("adminDisputes.card.feedback")}</span> {d.reviewer_note}
+                          </div>
+                        )}
+                        {d.status !== "PENDING" && d.resolved_at && (
+                          <p className={styles._34}>
+                            {`${t("adminDisputes.card.resolvedAt")}: ${new Date(d.resolved_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className={styles._19}>
-                      <h3 className={styles._20}>{d.certificate?.certificate_title || t("adminDisputes.certificateDefault")}</h3>
-                      <p className={styles._56}>{`${t("adminDisputes.card.student")}: ${d.certificate?.student_fullName || "N/A"}`}</p>
-                      <p className={styles._22}>{d.reason}</p>
-                      <p className={styles._31}>{new Date(d.createdAt).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
-                      {d.status !== "PENDING" && d.reviewer_note && (
-                        <div className={styles._32}>
-                          <span className={styles._33}>{t("adminDisputes.card.feedback")}</span> {d.reviewer_note}
-                        </div>
-                      )}
-                      {d.status !== "PENDING" && d.resolved_at && (
-                        <p className={styles._34}>
-                          {`${t("adminDisputes.card.resolvedAt")}: ${new Date(d.resolved_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`}
-                        </p>
+                    <div className={styles._57}>
+                      <span className={`${styles._0} ${cls}`}>{statusLabel(d.status, t)}</span>
+                      {d.status === "PENDING" && (
+                        <button onClick={() => openReview(d)} className={styles._58}>
+                          {t("adminDisputes.reviewButton")}
+                        </button>
                       )}
                     </div>
-                  </div>
-                  <div className={styles._57}>
-                    <span className={`${styles._0} ${cls}`}>{statusLabel(d.status, t)}</span>
-                    {d.status === "PENDING" && (
-                      <button onClick={() => openReview(d)} className={styles._58}>
-                        {t("adminDisputes.reviewButton")}
-                      </button>
-                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60 shadow-sm mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={disputes.length}
+              itemsPerPage={DISPUTES_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </>
       )}
 
       {reviewTarget && (

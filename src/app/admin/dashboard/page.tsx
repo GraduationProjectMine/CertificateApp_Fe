@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../../../features/auth/components/AuthContext";
 import { useI18n } from "@/features/i18n/I18nContext";
-import { certificateApi, type CertificateDto } from "../../../features/certificates/services/certificate.api";
+import { certificateApi, type CertificateDto, type OnlineCertificateDto } from "../../../features/certificates/services/certificate.api";
 
 function timeAgo(dateStr: string, t: ReturnType<typeof useI18n>['t']): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -27,38 +27,67 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [certs, setCerts] = useState<CertificateDto[]>([]);
+  const [onlineCerts, setOnlineCerts] = useState<OnlineCertificateDto[]>([]);
   const { t } = useI18n();
 
   useEffect(() => {
-    certificateApi
-      .list()
-      .then((certsData) => {
+    Promise.all([
+      certificateApi.list(),
+      certificateApi.listOnline().catch(() => []),
+    ])
+      .then(([certsData, onlineData]) => {
         setCerts(certsData);
+        setOnlineCerts(onlineData);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const issuedCount = certs.filter((c) => c.status === "ISSUED").length;
-  const pendingCount = certs.filter((c) => c.status === "PENDING").length;
-  const revokedCount = certs.filter((c) => c.status === "REVOKED").length;
+  const totalStudents = new Set(
+    [...certs.map((c) => c.student_id), ...onlineCerts.map((c) => c.student_id)].filter(Boolean)
+  ).size;
+  const issuedCount =
+    certs.filter((c) => c.status === "ISSUED").length +
+    onlineCerts.filter((c) => c.status === "ISSUED").length;
+  const pendingCount =
+    certs.filter((c) => c.status === "PENDING").length +
+    onlineCerts.filter((c) => c.status === "PENDING").length;
+  const revokedCount =
+    certs.filter((c) => c.status === "REVOKED").length +
+    onlineCerts.filter((c) => c.status === "REVOKED").length;
 
-  const recentTx = certs
-    .filter((c) => c.tx_hash)
-    .sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime())
-    .slice(0, 5)
-    .map((c) => ({
+  const allTxItems = [
+    ...certs.filter((c) => c.tx_hash).map((c) => ({
       id: c.certificate_id,
       txHash: shortHash(c.tx_hash!),
       studentName: c.student_fullName,
       credentialType: c.certificate_title,
+      issuedAt: c.issuedAt,
+    })),
+    ...onlineCerts.filter((c) => c.tx_hash).map((c) => ({
+      id: c.certificate_id,
+      txHash: shortHash(c.tx_hash!),
+      studentName: c.student_fullName,
+      credentialType: c.certificate_title,
+      issuedAt: c.issuedAt,
+    })),
+  ];
+
+  const recentTx = allTxItems
+    .sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime())
+    .slice(0, 5)
+    .map((c) => ({
+      id: c.id,
+      txHash: c.txHash,
+      studentName: c.studentName,
+      credentialType: c.credentialType,
       time: timeAgo(c.issuedAt, t),
     }));
 
   const stats = [
     {
       title: t("adminDashboard.stats.totalStudents"),
-      value: loading ? "..." : String(new Set(certs.map((c) => c.student_id)).size),
+      value: loading ? "..." : String(totalStudents),
       change: t("adminDashboard.stats.studentData"),
       colorClass: "border-l-primary",
       icon: (

@@ -56,6 +56,36 @@ export default function AdminOnlineCertificatesPage() {
     return filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   }, [filtered, currentPage]);
 
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "REVOKED":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40">
+            {t("adminCertificates.status.revoked") || "Đã thu hồi"}
+          </span>
+        );
+      case "REVOKE_FAILED":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/40">
+            Lỗi thu hồi
+          </span>
+        );
+      case "REVOKE_PENDING":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40">
+            Đang thu hồi
+          </span>
+        );
+      case "ISSUED":
+      default:
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/40">
+            {t("adminCertificates.status.issued") || "Đã phát hành"}
+          </span>
+        );
+    }
+  };
+
   return (
     <div style={{ padding: "24px 32px", maxWidth: 1400, margin: "0 auto" }}>
       {/* Header Banner */}
@@ -99,31 +129,9 @@ export default function AdminOnlineCertificatesPage() {
         </div>
       </div>
 
-      {/* Stats Counter Bar */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
-          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t("adminOnlineCertificates.stats.total")}</div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white">{certificates.length}</div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#147D74", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{t("adminOnlineCertificates.stats.blockchain")}</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "#147D74" }}>
-            {certificates.filter(c => !!c.tx_hash).length}
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
-          <div className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-1">{t("adminOnlineCertificates.stats.ipfs")}</div>
-          <div className="text-2xl font-black text-sky-600 dark:text-sky-400">
-            {certificates.filter(c => !!c.ipfs_cid).length}
-          </div>
-        </div>
-      </div>
-
       {/* Search Filter Bar */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-5 flex gap-3 items-center flex-wrap shadow-2xs">
-        <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
+        <div className="relative flex-1 min-w-[260px]">
           <input
             type="text"
             value={searchQuery}
@@ -131,7 +139,9 @@ export default function AdminOnlineCertificatesPage() {
             placeholder={t("adminOnlineCertificates.searchPlaceholder")}
             className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none"
           />
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: 14 }}>🔍</span>
+          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
       </div>
 
@@ -163,6 +173,7 @@ export default function AdminOnlineCertificatesPage() {
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.studentRecipient")}</th>
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.serialRegistry")}</th>
                     <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.issuedDate")}</th>
+                    <th style={{ padding: "14px 16px" }}>{t("adminOnlineCertificates.table.status")}</th>
                     <th style={{ padding: "14px 16px", textAlign: "center" }}>{t("adminOnlineCertificates.table.actions")}</th>
                   </tr>
                 </thead>
@@ -171,12 +182,10 @@ export default function AdminOnlineCertificatesPage() {
                     <tr key={cert.certificate_id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                       <td style={{ padding: "14px 16px" }}>
                         <div className="font-bold text-slate-900 dark:text-white">{cert.certificate_title}</div>
-                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">ID: {cert.certificate_id}</div>
                       </td>
 
                       <td style={{ padding: "14px 16px" }}>
                         <div className="font-bold text-slate-800 dark:text-slate-200">{cert.student_fullName}</div>
-                        {cert.student_id && <div className="text-[11px] text-slate-500 dark:text-slate-400">SV: {cert.student_id}</div>}
                       </td>
 
                       <td style={{ padding: "14px 16px" }}>
@@ -186,6 +195,10 @@ export default function AdminOnlineCertificatesPage() {
 
                       <td className="p-4 text-xs text-slate-500 dark:text-slate-400">
                         {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("vi-VN") : "—"}
+                      </td>
+
+                      <td style={{ padding: "14px 16px" }}>
+                        {renderStatusBadge(cert.status)}
                       </td>
 
                       <td style={{ padding: "14px 16px", textAlign: "center" }}>
@@ -256,6 +269,18 @@ export default function AdminOnlineCertificatesPage() {
                 </div>
               </div>
 
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{t("adminOnlineCertificates.modal.certificateId")}</div>
+                  <div className="font-mono text-xs text-slate-700 dark:text-slate-300 mt-0.5 break-all">{selectedCert.certificate_id}</div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">{t("adminOnlineCertificates.table.status")}</div>
+                  <div className="mt-1">{renderStatusBadge(selectedCert.status)}</div>
+                </div>
+              </div>
+
               <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                 <Link
                   href="/public/verify"
@@ -272,7 +297,7 @@ export default function AdminOnlineCertificatesPage() {
                     textDecoration: "none"
                   }}
                 >
-                  🔍 {t("adminOnlineCertificates.modal.openVerify")}
+                  {t("adminOnlineCertificates.modal.openVerify")}
                 </Link>
                 <button
                   onClick={() => setSelectedCert(null)}
