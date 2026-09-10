@@ -84,15 +84,17 @@ export const fieldValidations: Record<string, ValidationRule> = {
   },
   serialNumber: {
     type: "alphanumeric",
-    pattern: /^[A-Z0-9]+$/i,
-    message: "Chỉ được nhập chữ in hoa và số (VD: B0123456)",
-    maxLength: 20,
+    pattern: /^[A-Z0-9\s-]+$/i,
+    message: "Chỉ được nhập chữ in hoa, số và dấu gạch ngang (VD: B-0123456, B 589312)",
+    allowSpaces: true,
+    maxLength: 30,
   },
   registryNumber: {
     type: "alphanumeric",
-    pattern: /^[\dA-Z/]+$/i,
-    message: "Chỉ được nhập số, chữ in hoa và dấu gạch chéo (VD: 1234/2024/THPT)",
-    maxLength: 30,
+    pattern: /^[\dA-Z/\s-]+$/i,
+    message: "Chỉ được nhập số, chữ in hoa, dấu gạch chéo và gạch ngang (VD: 02047-0199, 1234/2024/THPT)",
+    allowSpaces: true,
+    maxLength: 40,
   },
 };
 
@@ -182,7 +184,9 @@ export function sanitizeInput(fieldKey: string, value: string): string {
       break;
       
     case "alphanumeric":
-      sanitized = value.replace(/[^a-zA-Z0-9/-]/g, "").toUpperCase();
+      sanitized = rule.allowSpaces
+        ? value.replace(/[^a-zA-Z0-9/\s-]/g, "").toUpperCase()
+        : value.replace(/[^a-zA-Z0-9/-]/g, "").toUpperCase();
       break;
       
     case "date":
