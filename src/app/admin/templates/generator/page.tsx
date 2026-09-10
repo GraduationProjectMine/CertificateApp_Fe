@@ -10,6 +10,7 @@ import type { CertificateTemplate, TemplateField, DesignData } from "@/features/
 import { certificateApi, type CreateCertificatePayload } from "@/features/certificates/services/certificate.api";
 import { studentApi, type StudentDto } from "@/features/students/services/student.api";
 import { issuerApi } from "@/features/issuer/services/issuer.api";
+import { verifierApi } from "@/features/verification/services/verifier.api";
 import StudentSearch from "@/components/common/StudentSearch/StudentSearch";
 import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
@@ -253,7 +254,6 @@ function DateField({
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          fontSize: 14,
           padding: 2,
           color: "var(--text-secondary)",
           display: "flex",
@@ -261,7 +261,9 @@ function DateField({
           justifyContent: "center",
         }}
       >
-        📅
+        <svg style={{ width: 14, height: 14 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
       </button>
 
       {/* Centered Calendar Modal */}
@@ -683,6 +685,41 @@ export default function CertificateGeneratorPage() {
       toast.error(t("adminTemplateGenerator.exportPdfMissing").replace("{field}", check.missingLabel || ""));
       return;
     }
+    // Block export if the certificate is not uploaded / issued yet
+    let isUploaded = Boolean(
+      activeRecord.certificate_id ||
+      activeRecord.verification_url ||
+      activeRecord.is_uploaded === "true"
+    );
+
+    if (!isUploaded && activeRecord.serialNumber && activeRecord.registryNumber) {
+      try {
+        const checkCert = await verifierApi.verify(activeRecord.serialNumber, activeRecord.registryNumber);
+        if (checkCert && checkCert.isValid && checkCert.certificateDetails?.certificateId) {
+          const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+          const cId = checkCert.certificateDetails.certificateId;
+          isUploaded = true;
+          setRecords((prev) => {
+            const next = [...prev];
+            next[activeRowIndex] = {
+              ...next[activeRowIndex],
+              certificate_id: cId,
+              verification_url: `${baseUrl}/public/certificate/${cId}`,
+              is_uploaded: "true",
+            };
+            return next;
+          });
+        }
+      } catch {
+        // Not found in system
+      }
+    }
+
+    if (!isUploaded) {
+      toast.error(t("adminTemplateGenerator.certNotUploadedExportBlocked"));
+      return;
+    }
+
     setExportingSingle(true);
     try {
       const canvas = await html2canvas(canvasRef.current, {
@@ -718,6 +755,49 @@ export default function CertificateGeneratorPage() {
       toast.error(t("adminTemplateGenerator.templateNotValidActionBlocked").replace("{fields}", templateValidation.missingLabels.join(", ")));
       return;
     }
+
+    // Pre-check all records for completeness and upload status
+    for (let i = 0; i < records.length; i++) {
+      const row = records[i];
+      const rowCheck = validateRecord(row);
+      if (!rowCheck.valid) {
+        if (rowCheck.invalidDateLabel) {
+          toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", rowCheck.invalidDateLabel));
+        } else {
+          toast.error(t("adminTemplateGenerator.batchExportMissing").replace("{row}", String(i + 1)).replace("{field}", rowCheck.missingLabel || ""));
+        }
+        setActiveRowIndex(i);
+        return;
+      }
+
+      let isRowUploaded = Boolean(row.certificate_id || row.verification_url || row.is_uploaded === "true");
+      if (!isRowUploaded && row.serialNumber && row.registryNumber) {
+        try {
+          const checkCert = await verifierApi.verify(row.serialNumber, row.registryNumber);
+          if (checkCert && checkCert.isValid && checkCert.certificateDetails?.certificateId) {
+            isRowUploaded = true;
+            const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+            records[i].certificate_id = checkCert.certificateDetails.certificateId;
+            records[i].verification_url = `${baseUrl}/public/certificate/${checkCert.certificateDetails.certificateId}`;
+            records[i].is_uploaded = "true";
+          }
+        } catch {
+          // Not uploaded
+        }
+      }
+
+      if (!isRowUploaded) {
+        const studentName = row.student_fullName || row.student_id || `cert_${i + 1}`;
+        toast.error(
+          (t("adminTemplateGenerator.batchCertNotUploadedExportBlocked") || "Certificate at row {row} ({name}) is not uploaded/issued yet.")
+            .replace("{row}", String(i + 1))
+            .replace("{name}", studentName)
+        );
+        setActiveRowIndex(i);
+        return;
+      }
+    }
+
     setExportingBatch(true);
     setBatchProgress(`0 / ${records.length}`);
     try {
@@ -727,16 +807,6 @@ export default function CertificateGeneratorPage() {
       const isLandscape = activeDesign.page.width >= activeDesign.page.height;
 
       for (let i = 0; i < records.length; i++) {
-        const rowCheck = validateRecord(records[i]);
-        if (!rowCheck.valid) {
-          if (rowCheck.invalidDateLabel) {
-            toast.error(t("adminTemplateGenerator.invalidDate").replace("{field}", rowCheck.invalidDateLabel));
-          } else {
-            toast.error(t("adminTemplateGenerator.batchExportMissing").replace("{row}", String(i + 1)).replace("{field}", rowCheck.missingLabel || ""));
-          }
-          setActiveRowIndex(i);
-          return;
-        }
         setBatchProgress(`${i + 1} / ${records.length}`);
         setActiveRowIndex(i);
         await new Promise((r) => setTimeout(r, 100));
@@ -805,9 +875,16 @@ export default function CertificateGeneratorPage() {
       const cert = await certificateApi.templateIssueSingle(payload);
       const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
       const certId = cert.certificate_id || cert.serialNumber;
-      if (certId) {
-        handleUpdateActiveField("verification_url", `${baseUrl}/public/certificate/${certId}`);
-      }
+      setRecords((prev) => {
+        const next = [...prev];
+        next[activeRowIndex] = {
+          ...next[activeRowIndex],
+          certificate_id: cert.certificate_id || "",
+          verification_url: certId ? `${baseUrl}/public/certificate/${certId}` : "",
+          is_uploaded: "true",
+        };
+        return next;
+      });
       setIssueResult({
         type: "SINGLE",
         data: cert,
@@ -896,7 +973,12 @@ export default function CertificateGeneratorPage() {
           prev.map((rec, idx) => {
             const item = batchRes.results[idx];
             if (item && item.certificate_id) {
-              return { ...rec, verification_url: `${baseUrl}/public/certificate/${item.certificate_id}` };
+              return {
+                ...rec,
+                certificate_id: item.certificate_id,
+                verification_url: `${baseUrl}/public/certificate/${item.certificate_id}`,
+                is_uploaded: "true",
+              };
             }
             return rec;
           })
@@ -957,7 +1039,9 @@ export default function CertificateGeneratorPage() {
         }
         return (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#64748b", fontSize: 11 }}>
-            <span style={{ fontSize: 18 }}>🖼</span>
+            <svg style={{ width: 20, height: 20, marginBottom: 4 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
             <span>{field.label || t("adminTemplateGenerator.logoLabel")}</span>
           </div>
         );
@@ -1039,7 +1123,10 @@ export default function CertificateGeneratorPage() {
         <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-nowrap gap-4">
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xl">🎓</span>
+              <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c3 3 9 3 12 0v-5" />
+              </svg>
               <h1 className="text-base font-extrabold text-slate-900 dark:text-white m-0 whitespace-nowrap">{t("adminTemplateGenerator.title")}</h1>
             </div>
 
@@ -1069,11 +1156,42 @@ export default function CertificateGeneratorPage() {
                 {/* Record Status Badge in Top Bar */}
                 <div className="flex items-center gap-2 text-xs shrink-0">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-800 dark:text-blue-300 font-bold shadow-2xs whitespace-nowrap">
-                    📄 {t("adminTemplateGenerator.recordBadge")}: <strong className="text-blue-600 dark:text-blue-400">{activeRowIndex + 1}</strong> / {records.length}
+                    <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    {t("adminTemplateGenerator.recordBadge")}: <strong className="text-blue-600 dark:text-blue-400">{activeRowIndex + 1}</strong> / {records.length}
                   </span>
-                  {importedFileName ? (
+                  {/* Upload / Issue Status Badge */}
+                  {Boolean(activeRecord.certificate_id || activeRecord.verification_url || activeRecord.is_uploaded === "true") ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold whitespace-nowrap">
-                      📁 {importedFileName}
+                      <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {t("adminTemplateGenerator.statusUploaded")}
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-300 font-semibold whitespace-nowrap"
+                      title={t("adminTemplateGenerator.notUploadedTooltip")}
+                    >
+                      <svg className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      {t("adminTemplateGenerator.statusNotUploaded")}
+                    </span>
+                  )}
+                  {importedFileName ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold whitespace-nowrap">
+                      <svg className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      </svg>
+                      {importedFileName}
                     </span>
                   ) : (
                     <span className="text-slate-400 dark:text-slate-500 font-normal text-[11px] whitespace-nowrap">{t("adminTemplateGenerator.manualDataSuffix")}</span>
@@ -1115,7 +1233,11 @@ export default function CertificateGeneratorPage() {
                 {exportingSingle ? (
                   <div className="w-3.5 h-3.5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin shrink-0" />
                 ) : (
-                  <span>📄</span>
+                  <svg className="w-3.5 h-3.5 shrink-0 text-sky-600 dark:text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
                 )}
                 <span>{exportingSingle ? t("adminTemplateGenerator.exportingPdf") : t("adminTemplateGenerator.exportPdf")}</span>
               </button>
@@ -1128,7 +1250,11 @@ export default function CertificateGeneratorPage() {
                 {exportingBatch ? (
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
                 ) : (
-                  <span>📦</span>
+                  <svg className="w-3.5 h-3.5 shrink-0 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
                 )}
                 <span>{exportingBatch ? `${t("adminTemplateGenerator.creatingZipProgress")} (${batchProgress})...` : `${t("adminTemplateGenerator.exportZipAll")} (${records.length})`}</span>
               </button>
@@ -1181,7 +1307,14 @@ export default function CertificateGeneratorPage() {
         /* Empty / Initial Template Selection Screen */
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, background: "var(--page-bg-subtle)" }}>
           <div style={{ textAlign: "center", maxWidth: 600, marginBottom: 32 }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>🎓</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(20, 125, 116, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#147D74" }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
+              </div>
+            </div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-main)", marginBottom: 8 }}>{t("adminTemplateGenerator.selectTemplateTitle")}</h2>
             <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
               {t("adminTemplateGenerator.selectTemplateDescription")}
@@ -1270,7 +1403,11 @@ export default function CertificateGeneratorPage() {
             {!templateValidation.isValid && (
               <div style={{ marginBottom: 14, padding: 12, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#991b1b" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12, marginBottom: 4 }}>
-                  <span>⚠️</span>
+                  <svg style={{ width: 15, height: 15, flexShrink: 0, color: "#dc2626" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
                   <span>{t("adminTemplateGenerator.invalidTemplateBannerTitle")}</span>
                 </div>
                 <p style={{ fontSize: 11, lineHeight: 1.4, margin: "0 0 8px 0" }}>
@@ -1291,8 +1428,17 @@ export default function CertificateGeneratorPage() {
             {/* Record Navigator */}
             <div style={{ marginBottom: 16, background: "var(--surface-subtle)", border: "1px solid var(--border)", padding: 10, borderRadius: 10 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-body)" }}>
-                  {importedFileName ? `📁 ${importedFileName}` : t("adminTemplateGenerator.manualRecordLabel")}
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-body)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  {importedFileName ? (
+                    <>
+                      <svg style={{ width: 13, height: 13, color: "var(--text-secondary)" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <span>{importedFileName}</span>
+                    </>
+                  ) : (
+                    t("adminTemplateGenerator.manualRecordLabel")
+                  )}
                   {importedFileName && (
                     <button
                       onClick={() => {
@@ -1421,7 +1567,11 @@ export default function CertificateGeneratorPage() {
             {!templateValidation.isValid && (
               <div style={{ width: "100%", maxWidth: 800, marginBottom: 16, padding: "12px 16px", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, boxShadow: "0 2px 8px rgba(239,68,68,0.08)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 20 }}>⚠️</span>
+                  <svg style={{ width: 22, height: 22, flexShrink: 0, color: "#dc2626" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 800, color: "#991b1b" }}>{t("adminTemplateGenerator.invalidTemplateBannerTitle")}</div>
                     <div style={{ fontSize: 11, color: "#b91c1c", marginTop: 2 }}>
